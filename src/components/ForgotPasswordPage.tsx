@@ -43,19 +43,22 @@ export function ForgotPasswordPage({ onBackToLogin, onResetPassword }: ForgotPas
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-black to-gray-900 relative overflow-hidden flex items-center justify-center p-4">
-      {/* Animated background elements */}
-      <div className="fixed inset-0 overflow-hidden pointer-events-none">
+    <div className="min-h-screen bg-gradient-to-br from-background via-background to-background dark:from-gray-900 dark:via-black dark:to-gray-900 relative overflow-hidden flex items-center justify-center p-4">
+      {/* Animated background elements - only show in dark theme */}
+      <div className="fixed inset-0 overflow-hidden pointer-events-none opacity-0 dark:opacity-100 transition-opacity duration-500">
         <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-purple-500/10 rounded-full blur-3xl animate-pulse"></div>
         <div className="absolute top-3/4 right-1/4 w-96 h-96 bg-blue-500/10 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '1s' }}></div>
         <div className="absolute bottom-1/4 left-1/3 w-96 h-96 bg-cyan-500/10 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '2s' }}></div>
       </div>
 
+      {/* Light theme background pattern */}
+      <div className="fixed inset-0 overflow-hidden pointer-events-none opacity-100 dark:opacity-0 transition-opacity duration-500 bg-gradient-to-br from-blue-50/50 via-indigo-50/30 to-purple-50/50"></div>
+
       {/* Subtle grid overlay */}
-      <div className="fixed inset-0 opacity-5 pointer-events-none" style={{
+      <div className="fixed inset-0 opacity-5 dark:opacity-5 pointer-events-none" style={{
         backgroundImage: `
-          linear-gradient(rgba(255, 255, 255, 0.1) 1px, transparent 1px),
-          linear-gradient(90deg, rgba(255, 255, 255, 0.1) 1px, transparent 1px)
+          linear-gradient(rgba(0, 0, 0, 0.1) 1px, transparent 1px),
+          linear-gradient(90deg, rgba(0, 0, 0, 0.1) 1px, transparent 1px)
         `,
         backgroundSize: '50px 50px'
       }}></div>
@@ -68,19 +71,19 @@ export function ForgotPasswordPage({ onBackToLogin, onResetPassword }: ForgotPas
             <Building2 className="w-8 h-8 text-white" />
             <div className="absolute inset-0 bg-gradient-to-br from-purple-400/20 to-blue-400/20 rounded-2xl blur-lg"></div>
           </div>
-          <h1 className="text-3xl text-white/90 mb-2">Architectural Pro</h1>
-          <p className="text-white/60">Reset your password</p>
+          <h1 className="text-3xl text-foreground mb-2">Architectural Pro</h1>
+          <p className="text-muted-foreground">Reset your password</p>
         </div>
 
         {/* Reset Password Card */}
-        <Card className="bg-black/20 border-white/10 backdrop-blur-xl relative overflow-hidden">
+        <Card className="bg-card/20 dark:bg-black/20 border-border backdrop-blur-xl relative overflow-hidden">
           <div className="absolute inset-0 bg-gradient-to-br from-purple-500/5 to-blue-500/5"></div>
           
           <CardHeader className="relative z-10 text-center pb-6">
             {!isEmailSent ? (
               <>
-                <CardTitle className="text-white/90 text-xl">Forgot Password?</CardTitle>
-                <p className="text-white/60 text-sm">
+                <CardTitle className="text-card-foreground text-xl">Forgot Password?</CardTitle>
+                <p className="text-muted-foreground text-sm">
                   No worries! Enter your email address and we'll send you a reset link.
                 </p>
               </>
@@ -89,8 +92,8 @@ export function ForgotPasswordPage({ onBackToLogin, onResetPassword }: ForgotPas
                 <div className="inline-flex items-center justify-center w-16 h-16 bg-green-500/20 rounded-full mb-4">
                   <Check className="w-8 h-8 text-green-400" />
                 </div>
-                <CardTitle className="text-white/90 text-xl">Check Your Email</CardTitle>
-                <p className="text-white/60 text-sm">
+                <CardTitle className="text-card-foreground text-xl">Check Your Email</CardTitle>
+                <p className="text-muted-foreground text-sm">
                   We've sent a password reset link to{" "}
                   <span className="text-purple-400">{email}</span>
                 </p>
@@ -103,16 +106,16 @@ export function ForgotPasswordPage({ onBackToLogin, onResetPassword }: ForgotPas
               <form onSubmit={handleSubmit} className="space-y-4">
                 {/* Email Field */}
                 <div className="space-y-2">
-                  <Label htmlFor="email" className="text-white/70">Email Address</Label>
+                  <Label htmlFor="email" className="text-muted-foreground">Email Address</Label>
                   <div className="relative">
-                    <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 text-white/40 w-4 h-4" />
+                    <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
                     <Input
                       id="email"
                       type="email"
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
                       placeholder="john@architecturalpro.com"
-                      className="pl-10 bg-white/5 border-white/10 text-white placeholder:text-white/40 focus:ring-2 focus:ring-purple-500/50 focus:border-purple-500/50"
+                      className="pl-10 bg-card/50 border-border text-foreground placeholder:text-muted-foreground focus:ring-2 focus:ring-purple-500/50 focus:border-purple-500/50"
                       required
                     />
                   </div>
@@ -144,11 +147,11 @@ export function ForgotPasswordPage({ onBackToLogin, onResetPassword }: ForgotPas
               <div className="space-y-4">
                 {/* Instructions */}
                 <div className="space-y-3 text-center">
-                  <div className="flex items-center justify-center space-x-2 text-white/60">
+                  <div className="flex items-center justify-center space-x-2 text-muted-foreground">
                     <Clock className="w-4 h-4" />
                     <span className="text-sm">Link expires in 15 minutes</span>
                   </div>
-                  <p className="text-white/60 text-sm">
+                  <p className="text-muted-foreground text-sm">
                     Didn't receive the email? Check your spam folder or click below to resend.
                   </p>
                 </div>
@@ -159,11 +162,11 @@ export function ForgotPasswordPage({ onBackToLogin, onResetPassword }: ForgotPas
                   variant="outline"
                   onClick={handleResendEmail}
                   disabled={isLoading}
-                  className="w-full bg-white/5 border-white/10 text-white/70 hover:bg-white/10 hover:text-white"
+                  className="w-full bg-card/50 border-border text-muted-foreground hover:bg-card hover:text-foreground"
                 >
                   {isLoading ? (
                     <>
-                      <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin mr-2"></div>
+                      <div className="w-4 h-4 border-2 border-current/30 border-t-current rounded-full animate-spin mr-2"></div>
                       Resending...
                     </>
                   ) : (
@@ -177,7 +180,7 @@ export function ForgotPasswordPage({ onBackToLogin, onResetPassword }: ForgotPas
             )}
 
             {/* Back to Login */}
-            <div className="text-center pt-4 border-t border-white/10">
+            <div className="text-center pt-4 border-t border-border">
               <Button
                 type="button"
                 variant="link"
@@ -193,7 +196,7 @@ export function ForgotPasswordPage({ onBackToLogin, onResetPassword }: ForgotPas
 
         {/* Help Text */}
         <div className="mt-6 text-center">
-          <p className="text-white/50 text-xs">
+          <p className="text-muted-foreground/70 text-xs">
             Still having trouble? Contact our support team at{" "}
             <span className="text-purple-400">support@architecturalpro.com</span>
           </p>

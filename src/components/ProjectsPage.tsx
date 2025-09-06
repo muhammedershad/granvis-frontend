@@ -230,7 +230,11 @@ const mockProjects: Project[] = [
 
 const ITEMS_PER_PAGE = 8;
 
-export function ProjectsPage() {
+interface ProjectsPageProps {
+  onProjectSelect?: (projectId: string) => void;
+}
+
+export function ProjectsPage({ onProjectSelect }: ProjectsPageProps) {
   const [projects, setProjects] = useState<Project[]>(mockProjects);
   const [currentPage, setCurrentPage] = useState(1);
   const [viewType, setViewType] = useState<ProjectViewType>("cards");
@@ -379,12 +383,12 @@ export function ProjectsPage() {
       {/* Header */}
       <div className="flex flex-col space-y-4 md:flex-row md:items-center md:justify-between md:space-y-0">
         <div>
-          <h1 className="text-white/90">Project Management</h1>
-          <p className="text-white/60">Track and manage your architectural projects</p>
+          <h1 className="text-foreground">Project Management</h1>
+          <p className="text-muted-foreground">Track and manage your architectural projects</p>
         </div>
         
         <div className="flex items-center space-x-2">
-          <div className="flex items-center bg-white/5 rounded-lg p-1 border border-white/10">
+          <div className="flex items-center bg-white/20 dark:bg-white/5 rounded-lg p-1 border border-white/30 dark:border-white/10 shadow-lg shadow-gray-200/50 dark:shadow-black/20">
             <Button
               variant={viewType === "cards" ? "default" : "ghost"}
               size="sm"
@@ -392,8 +396,8 @@ export function ProjectsPage() {
               className={cn(
                 "px-3",
                 viewType === "cards" 
-                  ? "bg-gradient-to-r from-purple-500 to-blue-500 text-white" 
-                  : "text-white/70 hover:text-white"
+                  ? "bg-gradient-to-r from-purple-500 to-blue-500 text-white shadow-lg" 
+                  : "text-muted-foreground hover:text-foreground"
               )}
             >
               <Grid3X3 className="w-4 h-4" />
@@ -405,30 +409,27 @@ export function ProjectsPage() {
               className={cn(
                 "px-3",
                 viewType === "table" 
-                  ? "bg-gradient-to-r from-purple-500 to-blue-500 text-white" 
-                  : "text-white/70 hover:text-white"
+                  ? "bg-gradient-to-r from-purple-500 to-blue-500 text-white shadow-lg" 
+                  : "text-muted-foreground hover:text-foreground"
               )}
             >
               <List className="w-4 h-4" />
             </Button>
           </div>
           
-          <Button variant="outline" className="bg-white/5 border-white/10 text-white/70 hover:bg-white/10">
+          <Button variant="outline" className="bg-white/60 dark:bg-white/5 border-white/40 dark:border-white/10 text-muted-foreground hover:bg-white/80 dark:hover:bg-white/10 shadow-lg shadow-gray-200/50 dark:shadow-black/20">
             <Download className="w-4 h-4 mr-2" />
             Export
           </Button>
           
           <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
             <DialogTrigger asChild>
-              <Button className="bg-gradient-to-r from-purple-500 to-blue-500 hover:from-purple-600 hover:to-blue-600 border-0">
+              <Button className="bg-gradient-to-r from-purple-500 to-blue-500 hover:from-purple-600 hover:to-blue-600 border-0 shadow-lg shadow-purple-200/50 dark:shadow-purple-500/25">
                 <Plus className="w-4 h-4 mr-2" />
                 New Project
               </Button>
             </DialogTrigger>
-            <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto bg-black/90 border-white/10">
-              <DialogHeader>
-                <DialogTitle className="text-white/90">Create New Project</DialogTitle>
-              </DialogHeader>
+            <DialogContent className="max-w-7xl max-h-[95vh] overflow-y-auto backdrop-blur-xl bg-card/95 dark:bg-card/95 border-border/50 shadow-2xl">
               <AddProjectForm onSubmit={handleAddProject} onCancel={() => setIsAddDialogOpen(false)} />
             </DialogContent>
           </Dialog>
@@ -437,105 +438,112 @@ export function ProjectsPage() {
 
       {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 xl:grid-cols-6 gap-4">
-        <Card className="p-4 bg-black/20 border-white/10 backdrop-blur-xl relative overflow-hidden">
-          <div className="absolute inset-0 bg-gradient-to-br from-blue-500/5 to-purple-500/5"></div>
+        <Card className="p-4 backdrop-blur-xl bg-white/70 dark:bg-black/20 border-white/20 dark:border-white/10 relative overflow-hidden shadow-xl shadow-gray-200/50 dark:shadow-black/50">
+          <div className="absolute inset-0 bg-gradient-to-br from-blue-100/60 via-indigo-50/40 to-purple-50/60 opacity-100 dark:opacity-0 transition-opacity duration-300"></div>
+          <div className="absolute inset-0 bg-gradient-to-br from-blue-500/5 to-purple-500/5 opacity-0 dark:opacity-100 transition-opacity duration-300"></div>
           <div className="relative flex items-center space-x-3">
-            <div className="p-3 bg-blue-500/20 rounded-xl border border-blue-500/30">
-              <Building2 className="w-6 h-6 text-blue-400" />
+            <div className="p-3 bg-blue-500/20 rounded-xl border border-blue-500/30 shadow-lg shadow-blue-200/50 dark:shadow-blue-500/20">
+              <Building2 className="w-6 h-6 text-blue-600 dark:text-blue-400" />
             </div>
             <div>
-              <p className="text-white/60 text-sm">Total Projects</p>
-              <p className="text-white/90 text-2xl">{stats.total}</p>
+              <p className="text-muted-foreground text-sm">Total Projects</p>
+              <p className="text-foreground text-2xl">{stats.total}</p>
             </div>
           </div>
         </Card>
         
-        <Card className="p-4 bg-black/20 border-white/10 backdrop-blur-xl relative overflow-hidden">
-          <div className="absolute inset-0 bg-gradient-to-br from-green-500/5 to-emerald-500/5"></div>
+        <Card className="p-4 backdrop-blur-xl bg-white/70 dark:bg-black/20 border-white/20 dark:border-white/10 relative overflow-hidden shadow-xl shadow-gray-200/50 dark:shadow-black/50">
+          <div className="absolute inset-0 bg-gradient-to-br from-green-100/60 to-emerald-50/40 opacity-100 dark:opacity-0 transition-opacity duration-300"></div>
+          <div className="absolute inset-0 bg-gradient-to-br from-green-500/5 to-emerald-500/5 opacity-0 dark:opacity-100 transition-opacity duration-300"></div>
           <div className="relative flex items-center space-x-3">
-            <div className="p-3 bg-green-500/20 rounded-xl border border-green-500/30">
-              <TrendingUp className="w-6 h-6 text-green-400" />
+            <div className="p-3 bg-green-500/20 rounded-xl border border-green-500/30 shadow-lg shadow-green-200/50 dark:shadow-green-500/20">
+              <TrendingUp className="w-6 h-6 text-green-600 dark:text-green-400" />
             </div>
             <div>
-              <p className="text-white/60 text-sm">In Progress</p>
-              <p className="text-white/90 text-2xl">{stats.inProgress}</p>
+              <p className="text-muted-foreground text-sm">In Progress</p>
+              <p className="text-foreground text-2xl">{stats.inProgress}</p>
             </div>
           </div>
         </Card>
         
-        <Card className="p-4 bg-black/20 border-white/10 backdrop-blur-xl relative overflow-hidden">
-          <div className="absolute inset-0 bg-gradient-to-br from-purple-500/5 to-pink-500/5"></div>
+        <Card className="p-4 backdrop-blur-xl bg-white/70 dark:bg-black/20 border-white/20 dark:border-white/10 relative overflow-hidden shadow-xl shadow-gray-200/50 dark:shadow-black/50">
+          <div className="absolute inset-0 bg-gradient-to-br from-purple-100/60 to-pink-50/40 opacity-100 dark:opacity-0 transition-opacity duration-300"></div>
+          <div className="absolute inset-0 bg-gradient-to-br from-purple-500/5 to-pink-500/5 opacity-0 dark:opacity-100 transition-opacity duration-300"></div>
           <div className="relative flex items-center space-x-3">
-            <div className="p-3 bg-purple-500/20 rounded-xl border border-purple-500/30">
-              <CheckCircle className="w-6 h-6 text-purple-400" />
+            <div className="p-3 bg-purple-500/20 rounded-xl border border-purple-500/30 shadow-lg shadow-purple-200/50 dark:shadow-purple-500/20">
+              <CheckCircle className="w-6 h-6 text-purple-600 dark:text-purple-400" />
             </div>
             <div>
-              <p className="text-white/60 text-sm">Completed</p>
-              <p className="text-white/90 text-2xl">{stats.completed}</p>
+              <p className="text-muted-foreground text-sm">Completed</p>
+              <p className="text-foreground text-2xl">{stats.completed}</p>
             </div>
           </div>
         </Card>
         
-        <Card className="p-4 bg-black/20 border-white/10 backdrop-blur-xl relative overflow-hidden">
-          <div className="absolute inset-0 bg-gradient-to-br from-yellow-500/5 to-orange-500/5"></div>
+        <Card className="p-4 backdrop-blur-xl bg-white/70 dark:bg-black/20 border-white/20 dark:border-white/10 relative overflow-hidden shadow-xl shadow-gray-200/50 dark:shadow-black/50">
+          <div className="absolute inset-0 bg-gradient-to-br from-yellow-100/60 to-orange-50/40 opacity-100 dark:opacity-0 transition-opacity duration-300"></div>
+          <div className="absolute inset-0 bg-gradient-to-br from-yellow-500/5 to-orange-500/5 opacity-0 dark:opacity-100 transition-opacity duration-300"></div>
           <div className="relative flex items-center space-x-3">
-            <div className="p-3 bg-yellow-500/20 rounded-xl border border-yellow-500/30">
-              <Pause className="w-6 h-6 text-yellow-400" />
+            <div className="p-3 bg-yellow-500/20 rounded-xl border border-yellow-500/30 shadow-lg shadow-yellow-200/50 dark:shadow-yellow-500/20">
+              <Pause className="w-6 h-6 text-yellow-600 dark:text-yellow-400" />
             </div>
             <div>
-              <p className="text-white/60 text-sm">On Hold</p>
-              <p className="text-white/90 text-2xl">{stats.onHold}</p>
+              <p className="text-muted-foreground text-sm">On Hold</p>
+              <p className="text-foreground text-2xl">{stats.onHold}</p>
             </div>
           </div>
         </Card>
         
-        <Card className="p-4 bg-black/20 border-white/10 backdrop-blur-xl relative overflow-hidden">
-          <div className="absolute inset-0 bg-gradient-to-br from-cyan-500/5 to-blue-500/5"></div>
+        <Card className="p-4 backdrop-blur-xl bg-white/70 dark:bg-black/20 border-white/20 dark:border-white/10 relative overflow-hidden shadow-xl shadow-gray-200/50 dark:shadow-black/50">
+          <div className="absolute inset-0 bg-gradient-to-br from-cyan-100/60 to-blue-50/40 opacity-100 dark:opacity-0 transition-opacity duration-300"></div>
+          <div className="absolute inset-0 bg-gradient-to-br from-cyan-500/5 to-blue-500/5 opacity-0 dark:opacity-100 transition-opacity duration-300"></div>
           <div className="relative flex items-center space-x-3">
-            <div className="p-3 bg-cyan-500/20 rounded-xl border border-cyan-500/30">
-              <DollarSign className="w-6 h-6 text-cyan-400" />
+            <div className="p-3 bg-cyan-500/20 rounded-xl border border-cyan-500/30 shadow-lg shadow-cyan-200/50 dark:shadow-cyan-500/20">
+              <DollarSign className="w-6 h-6 text-cyan-600 dark:text-cyan-400" />
             </div>
             <div>
-              <p className="text-white/60 text-sm">Total Budget</p>
-              <p className="text-white/90 text-xl">${(stats.totalBudget / 1000000).toFixed(1)}M</p>
+              <p className="text-muted-foreground text-sm">Total Budget</p>
+              <p className="text-foreground text-xl">${(stats.totalBudget / 1000000).toFixed(1)}M</p>
             </div>
           </div>
         </Card>
         
-        <Card className="p-4 bg-black/20 border-white/10 backdrop-blur-xl relative overflow-hidden">
-          <div className="absolute inset-0 bg-gradient-to-br from-indigo-500/5 to-purple-500/5"></div>
+        <Card className="p-4 backdrop-blur-xl bg-white/70 dark:bg-black/20 border-white/20 dark:border-white/10 relative overflow-hidden shadow-xl shadow-gray-200/50 dark:shadow-black/50">
+          <div className="absolute inset-0 bg-gradient-to-br from-indigo-100/60 to-purple-50/40 opacity-100 dark:opacity-0 transition-opacity duration-300"></div>
+          <div className="absolute inset-0 bg-gradient-to-br from-indigo-500/5 to-purple-500/5 opacity-0 dark:opacity-100 transition-opacity duration-300"></div>
           <div className="relative flex items-center space-x-3">
-            <div className="p-3 bg-indigo-500/20 rounded-xl border border-indigo-500/30">
-              <TrendingUp className="w-6 h-6 text-indigo-400" />
+            <div className="p-3 bg-indigo-500/20 rounded-xl border border-indigo-500/30 shadow-lg shadow-indigo-200/50 dark:shadow-indigo-500/20">
+              <TrendingUp className="w-6 h-6 text-indigo-600 dark:text-indigo-400" />
             </div>
             <div>
-              <p className="text-white/60 text-sm">Avg Progress</p>
-              <p className="text-white/90 text-2xl">{stats.avgProgress}%</p>
+              <p className="text-muted-foreground text-sm">Avg Progress</p>
+              <p className="text-foreground text-2xl">{stats.avgProgress}%</p>
             </div>
           </div>
         </Card>
       </div>
 
       {/* Filters */}
-      <Card className="p-6 bg-black/20 border-white/10 backdrop-blur-xl">
-        <div className="space-y-4">
-          <h3 className="text-white/90 text-lg">Search & Filter Projects</h3>
+      <Card className="p-6 backdrop-blur-xl bg-white/70 dark:bg-black/20 border-white/20 dark:border-white/10 shadow-xl shadow-gray-200/50 dark:shadow-black/50">
+        <div className="absolute inset-0 bg-gradient-to-br from-blue-50/60 via-indigo-50/40 to-purple-50/60 opacity-100 dark:opacity-0 transition-opacity duration-300"></div>
+        <div className="relative space-y-4">
+          <h3 className="text-foreground text-lg">Search & Filter Projects</h3>
           
           <div className="grid grid-cols-1 md:grid-cols-6 gap-4">
             <div className="md:col-span-2">
               <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-white/40 w-4 h-4" />
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
                 <Input
                   placeholder="Search projects..."
                   value={filters.search}
                   onChange={(e) => setFilters(prev => ({ ...prev, search: e.target.value }))}
-                  className="pl-10 bg-white/5 border-white/10 text-white placeholder:text-white/40 focus:ring-2 focus:ring-purple-500/50"
+                  className="pl-10 bg-white/60 dark:bg-white/5 border-white/40 dark:border-white/10 text-foreground placeholder:text-muted-foreground focus:ring-2 focus:ring-purple-500/50 shadow-sm"
                 />
               </div>
             </div>
             
             <Select value={filters.type} onValueChange={(value) => setFilters(prev => ({ ...prev, type: value }))}>
-              <SelectTrigger className="bg-white/5 border-white/10 text-white">
+              <SelectTrigger className="bg-white/60 dark:bg-white/5 border-white/40 dark:border-white/10 text-foreground shadow-sm">
                 <SelectValue placeholder="Project Type" />
               </SelectTrigger>
               <SelectContent>
@@ -547,7 +555,7 @@ export function ProjectsPage() {
             </Select>
             
             <Select value={filters.status} onValueChange={(value) => setFilters(prev => ({ ...prev, status: value }))}>
-              <SelectTrigger className="bg-white/5 border-white/10 text-white">
+              <SelectTrigger className="bg-white/60 dark:bg-white/5 border-white/40 dark:border-white/10 text-foreground shadow-sm">
                 <SelectValue placeholder="Status" />
               </SelectTrigger>
               <SelectContent>
@@ -559,7 +567,7 @@ export function ProjectsPage() {
             </Select>
             
             <Select value={filters.priority} onValueChange={(value) => setFilters(prev => ({ ...prev, priority: value }))}>
-              <SelectTrigger className="bg-white/5 border-white/10 text-white">
+              <SelectTrigger className="bg-white/60 dark:bg-white/5 border-white/40 dark:border-white/10 text-foreground shadow-sm">
                 <SelectValue placeholder="Priority" />
               </SelectTrigger>
               <SelectContent>
@@ -573,7 +581,7 @@ export function ProjectsPage() {
             <Button 
               variant="outline" 
               onClick={() => setFilters({ search: "", type: "all", status: "all", priority: "all", client: "", projectManager: "" })}
-              className="bg-white/5 border-white/10 text-white/70 hover:bg-white/10"
+              className="bg-white/60 dark:bg-white/5 border-white/40 dark:border-white/10 text-muted-foreground hover:bg-white/80 dark:hover:bg-white/10 shadow-sm"
             >
               <Filter className="w-4 h-4 mr-2" />
               Clear
@@ -581,7 +589,7 @@ export function ProjectsPage() {
           </div>
           
           {filteredAndSortedProjects.length !== projects.length && (
-            <div className="text-white/60 text-sm">
+            <div className="text-muted-foreground text-sm">
               Showing {filteredAndSortedProjects.length} of {projects.length} projects
             </div>
           )}
@@ -594,24 +602,32 @@ export function ProjectsPage() {
           {paginatedProjects.map((project) => {
             const TypeIcon = getTypeIcon(project.type);
             return (
-              <Card key={project.id} className="bg-black/20 border-white/10 backdrop-blur-xl hover:bg-white/5 transition-all duration-300 group relative overflow-hidden">
-                <div className="absolute inset-0 bg-gradient-to-br from-purple-500/5 to-blue-500/5 opacity-0 group-hover:opacity-100 transition-opacity"></div>
+              <Card 
+                key={project.id} 
+                className="backdrop-blur-xl bg-white/70 dark:bg-black/20 border-white/20 dark:border-white/10 hover:bg-white/80 dark:hover:bg-white/5 transition-all duration-300 group relative overflow-hidden shadow-xl shadow-gray-200/50 dark:shadow-black/50 hover:shadow-2xl dark:hover:shadow-black/70 cursor-pointer"
+                onClick={() => onProjectSelect?.(project.id)}
+              >
+                {/* Light theme gradient overlay */}
+                <div className="absolute inset-0 bg-gradient-to-br from-purple-50/60 via-blue-50/40 to-cyan-50/60 opacity-100 dark:opacity-0 transition-opacity duration-300"></div>
+                
+                {/* Dark theme gradient overlay */}
+                <div className="absolute inset-0 bg-gradient-to-br from-purple-500/5 to-blue-500/5 opacity-0 dark:opacity-100 group-hover:opacity-100 transition-opacity"></div>
                 
                 <CardHeader className="relative z-10">
                   <div className="flex items-start justify-between">
                     <div className="flex items-center space-x-3">
-                      <div className="p-2 bg-white/10 rounded-lg">
-                        <TypeIcon className="w-5 h-5 text-white/70" />
+                      <div className="p-2 bg-white/60 dark:bg-white/10 rounded-lg shadow-lg shadow-gray-200/50 dark:shadow-black/20">
+                        <TypeIcon className="w-5 h-5 text-muted-foreground" />
                       </div>
                       <div>
-                        <CardTitle className="text-white/90 text-base">{project.name}</CardTitle>
-                        <p className="text-white/60 text-sm">{project.client}</p>
+                        <CardTitle className="text-foreground text-base">{project.name}</CardTitle>
+                        <p className="text-muted-foreground text-sm">{project.client}</p>
                       </div>
                     </div>
                     
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" size="icon" className="text-white/70 hover:text-white opacity-0 group-hover:opacity-100 transition-opacity">
+                        <Button variant="ghost" size="icon" className="text-muted-foreground hover:text-foreground opacity-0 group-hover:opacity-100 transition-opacity">
                           <MoreHorizontal className="w-4 h-4" />
                         </Button>
                       </DropdownMenuTrigger>
@@ -626,7 +642,7 @@ export function ProjectsPage() {
                         </DropdownMenuItem>
                         <DropdownMenuSeparator />
                         <DropdownMenuItem 
-                          className="text-red-400"
+                          className="text-red-600 dark:text-red-400"
                           onClick={() => handleDeleteProject(project.id)}
                         >
                           <Trash2 className="w-4 h-4 mr-2" />
@@ -648,35 +664,35 @@ export function ProjectsPage() {
                 </CardHeader>
                 
                 <CardContent className="relative z-10 space-y-4">
-                  <p className="text-white/60 text-sm line-clamp-2">{project.description}</p>
+                  <p className="text-muted-foreground text-sm line-clamp-2">{project.description}</p>
                   
                   <div className="space-y-3">
                     <div className="flex items-center justify-between text-sm">
-                      <span className="text-white/60">Progress</span>
-                      <span className="text-white/90">{project.progressPercentage}%</span>
+                      <span className="text-muted-foreground">Progress</span>
+                      <span className="text-foreground">{project.progressPercentage}%</span>
                     </div>
                     <Progress 
                       value={project.progressPercentage} 
-                      className="h-2 bg-white/10"
+                      className="h-2 bg-gray-200/60 dark:bg-white/10"
                     />
                   </div>
                   
                   <div className="grid grid-cols-2 gap-4 text-sm">
                     <div className="flex items-center space-x-2">
-                      <DollarSign className="w-4 h-4 text-white/40" />
-                      <span className="text-white/70">${(project.totalBudget / 1000).toFixed(0)}K</span>
+                      <DollarSign className="w-4 h-4 text-muted-foreground" />
+                      <span className="text-muted-foreground">${(project.totalBudget / 1000).toFixed(0)}K</span>
                     </div>
                     <div className="flex items-center space-x-2">
-                      <Calendar className="w-4 h-4 text-white/40" />
-                      <span className="text-white/70">{new Date(project.deadline).toLocaleDateString()}</span>
+                      <Calendar className="w-4 h-4 text-muted-foreground" />
+                      <span className="text-muted-foreground">{new Date(project.deadline).toLocaleDateString()}</span>
                     </div>
                     <div className="flex items-center space-x-2">
-                      <Users className="w-4 h-4 text-white/40" />
-                      <span className="text-white/70">{project.teamMembers.length + 1}</span>
+                      <Users className="w-4 h-4 text-muted-foreground" />
+                      <span className="text-muted-foreground">{project.teamMembers.length + 1}</span>
                     </div>
                     <div className="flex items-center space-x-2">
-                      <MapPin className="w-4 h-4 text-white/40" />
-                      <span className="text-white/70">{project.location.city}</span>
+                      <MapPin className="w-4 h-4 text-muted-foreground" />
+                      <span className="text-muted-foreground">{project.location.city}</span>
                     </div>
                   </div>
                 </CardContent>
@@ -685,51 +701,54 @@ export function ProjectsPage() {
           })}
         </div>
       ) : (
-        <Card className="bg-black/20 border-white/10 backdrop-blur-xl">
-          <div className="overflow-x-auto">
+        <Card className="backdrop-blur-xl bg-white/70 dark:bg-black/20 border-white/20 dark:border-white/10 shadow-xl shadow-gray-200/50 dark:shadow-black/50">
+          {/* Light theme gradient overlay */}
+          <div className="absolute inset-0 bg-gradient-to-br from-blue-50/60 via-indigo-50/40 to-purple-50/60 opacity-100 dark:opacity-0 transition-opacity duration-300"></div>
+          
+          <div className="relative overflow-x-auto">
             <Table>
               <TableHeader>
-                <TableRow className="border-white/10">
-                  <TableHead className="text-white/70">
+                <TableRow className="border-white/40 dark:border-white/10">
+                  <TableHead className="text-muted-foreground">
                     <Button 
                       variant="ghost" 
                       onClick={() => handleSort("name")}
-                      className="h-auto p-0 text-white/70 hover:text-white"
+                      className="h-auto p-0 text-muted-foreground hover:text-foreground"
                     >
                       Project {getSortIcon("name")}
                     </Button>
                   </TableHead>
-                  <TableHead className="text-white/70">Type</TableHead>
-                  <TableHead className="text-white/70">Client</TableHead>
-                  <TableHead className="text-white/70">Status</TableHead>
-                  <TableHead className="text-white/70">Progress</TableHead>
-                  <TableHead className="text-white/70">Budget</TableHead>
-                  <TableHead className="text-white/70">Deadline</TableHead>
-                  <TableHead className="text-white/70">Actions</TableHead>
+                  <TableHead className="text-muted-foreground">Type</TableHead>
+                  <TableHead className="text-muted-foreground">Client</TableHead>
+                  <TableHead className="text-muted-foreground">Status</TableHead>
+                  <TableHead className="text-muted-foreground">Progress</TableHead>
+                  <TableHead className="text-muted-foreground">Budget</TableHead>
+                  <TableHead className="text-muted-foreground">Deadline</TableHead>
+                  <TableHead className="text-muted-foreground">Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {paginatedProjects.map((project) => {
                   const TypeIcon = getTypeIcon(project.type);
                   return (
-                    <TableRow key={project.id} className="border-white/10 hover:bg-white/5">
+                    <TableRow key={project.id} className="border-white/40 dark:border-white/10 hover:bg-white/60 dark:hover:bg-white/5">
                       <TableCell>
                         <div className="flex items-center space-x-3">
-                          <div className="p-2 bg-white/10 rounded-lg">
-                            <TypeIcon className="w-4 h-4 text-white/70" />
+                          <div className="p-2 bg-white/60 dark:bg-white/10 rounded-lg shadow-sm">
+                            <TypeIcon className="w-4 h-4 text-muted-foreground" />
                           </div>
                           <div>
-                            <p className="text-white/90">{project.name}</p>
-                            <p className="text-white/50 text-sm">{project.category}</p>
+                            <p className="text-foreground">{project.name}</p>
+                            <p className="text-muted-foreground text-sm">{project.category}</p>
                           </div>
                         </div>
                       </TableCell>
                       <TableCell>
-                        <Badge variant="outline" className="text-white/70">
+                        <Badge variant="outline" className="text-muted-foreground border-border">
                           {project.type}
                         </Badge>
                       </TableCell>
-                      <TableCell className="text-white/70">{project.client}</TableCell>
+                      <TableCell className="text-muted-foreground">{project.client}</TableCell>
                       <TableCell>
                         <Badge className={cn("flex items-center space-x-1 w-fit", getStatusColor(project.status))}>
                           {getStatusIcon(project.status)}
@@ -739,19 +758,19 @@ export function ProjectsPage() {
                       <TableCell>
                         <div className="flex items-center space-x-2">
                           <Progress value={project.progressPercentage} className="w-16 h-2" />
-                          <span className="text-white/70 text-sm">{project.progressPercentage}%</span>
+                          <span className="text-muted-foreground text-sm">{project.progressPercentage}%</span>
                         </div>
                       </TableCell>
-                      <TableCell className="text-white/70">
+                      <TableCell className="text-muted-foreground">
                         ${(project.totalBudget / 1000).toFixed(0)}K
                       </TableCell>
-                      <TableCell className="text-white/70">
+                      <TableCell className="text-muted-foreground">
                         {new Date(project.deadline).toLocaleDateString()}
                       </TableCell>
                       <TableCell>
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" size="icon" className="text-white/70 hover:text-white">
+                            <Button variant="ghost" size="icon" className="text-muted-foreground hover:text-foreground">
                               <MoreHorizontal className="w-4 h-4" />
                             </Button>
                           </DropdownMenuTrigger>
@@ -766,7 +785,7 @@ export function ProjectsPage() {
                             </DropdownMenuItem>
                             <DropdownMenuSeparator />
                             <DropdownMenuItem 
-                              className="text-red-400"
+                              className="text-red-600 dark:text-red-400"
                               onClick={() => handleDeleteProject(project.id)}
                             >
                               <Trash2 className="w-4 h-4 mr-2" />
@@ -784,8 +803,8 @@ export function ProjectsPage() {
           
           {/* Pagination */}
           {totalPages > 1 && (
-            <div className="flex items-center justify-between px-6 py-4 border-t border-white/10">
-              <div className="text-white/60 text-sm">
+            <div className="flex items-center justify-between px-6 py-4 border-t border-white/40 dark:border-white/10">
+              <div className="text-muted-foreground text-sm">
                 Showing {((currentPage - 1) * ITEMS_PER_PAGE) + 1} to {Math.min(currentPage * ITEMS_PER_PAGE, filteredAndSortedProjects.length)} of {filteredAndSortedProjects.length} projects
               </div>
               <div className="flex items-center space-x-2">
@@ -794,12 +813,12 @@ export function ProjectsPage() {
                   size="sm"
                   onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
                   disabled={currentPage === 1}
-                  className="bg-white/5 border-white/10 text-white/70 hover:bg-white/10"
+                  className="bg-white/60 dark:bg-white/5 border-white/40 dark:border-white/10 text-muted-foreground hover:bg-white/80 dark:hover:bg-white/10"
                 >
                   <ChevronLeft className="w-4 h-4" />
                   Previous
                 </Button>
-                <div className="text-white/70 text-sm">
+                <div className="text-muted-foreground text-sm">
                   Page {currentPage} of {totalPages}
                 </div>
                 <Button
@@ -807,7 +826,7 @@ export function ProjectsPage() {
                   size="sm"
                   onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
                   disabled={currentPage === totalPages}
-                  className="bg-white/5 border-white/10 text-white/70 hover:bg-white/10"
+                  className="bg-white/60 dark:bg-white/5 border-white/40 dark:border-white/10 text-muted-foreground hover:bg-white/80 dark:hover:bg-white/10"
                 >
                   Next
                   <ChevronRight className="w-4 h-4" />

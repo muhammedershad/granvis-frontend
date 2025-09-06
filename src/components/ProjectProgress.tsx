@@ -72,14 +72,17 @@ export function ProjectProgress() {
   };
 
   return (
-    <Card className="backdrop-blur-xl bg-black/20 border-white/10 p-6 relative overflow-hidden">
-      {/* Neon glow effect */}
-      <div className="absolute inset-0 bg-gradient-to-br from-purple-500/5 via-transparent to-green-500/5"></div>
+    <Card className="backdrop-blur-xl bg-white/70 dark:bg-black/20 border-white/20 dark:border-white/10 p-6 relative overflow-hidden shadow-xl dark:shadow-2xl shadow-gray-200/50 dark:shadow-black/50">
+      {/* Light theme gradient overlay */}
+      <div className="absolute inset-0 bg-gradient-to-br from-purple-50/80 via-blue-50/60 to-green-50/80 opacity-100 dark:opacity-0 transition-opacity duration-300"></div>
+      
+      {/* Neon glow effect - only in dark mode */}
+      <div className="absolute inset-0 bg-gradient-to-br from-purple-500/5 via-transparent to-green-500/5 opacity-0 dark:opacity-100 transition-opacity duration-300"></div>
       
       <div className="relative">
         <div className="flex items-center justify-between mb-6">
-          <h3 className="text-white/90">Active Projects</h3>
-          <Badge variant="secondary" className="bg-white/10 text-white/70 border-white/20">
+          <h3 className="text-foreground">Active Projects</h3>
+          <Badge variant="secondary" className="bg-gray-100/80 dark:bg-white/10 text-gray-700 dark:text-white/70 border-gray-200 dark:border-border shadow-lg shadow-gray-100/50 dark:shadow-black/20">
             {projects.length} Projects
           </Badge>
         </div>
@@ -88,7 +91,7 @@ export function ProjectProgress() {
           {projects.map((project) => {
             const Icon = project.icon;
             return (
-              <div key={project.id} className="p-5 rounded-lg bg-white/5 border border-white/10 hover:bg-white/10 transition-all duration-300 group">
+              <div key={project.id} className="p-5 rounded-lg bg-white/60 dark:bg-white/5 border border-white/40 dark:border-white/10 shadow-lg shadow-gray-100/50 dark:shadow-black/20 hover:shadow-xl hover:bg-white/80 dark:hover:bg-white/10 dark:hover:shadow-black/30 transition-all duration-300 group">
                 <div className="flex items-center justify-between mb-4">
                   <div className="flex items-center space-x-3">
                     <div className={`w-10 h-10 rounded-lg bg-gradient-to-br ${
@@ -100,25 +103,25 @@ export function ProjectProgress() {
                       <Icon className="w-5 h-5 text-white" />
                     </div>
                     <div>
-                      <h4 className="text-white/90">{project.name}</h4>
-                      <p className="text-sm text-white/60 capitalize">{project.type} Project</p>
+                      <h4 className="text-foreground">{project.name}</h4>
+                      <p className="text-sm text-muted-foreground capitalize">{project.type} Project</p>
                     </div>
                   </div>
                   
-                  <Badge variant="outline" className={getStatusColor(project.status)}>
+                  <Badge variant="outline" className={`${getStatusColor(project.status)} shadow-sm`}>
                     {project.status}
                   </Badge>
                 </div>
 
                 <div className="mb-4">
                   <div className="flex items-center justify-between mb-2">
-                    <span className="text-sm text-white/70">Progress</span>
-                    <span className="text-sm text-white/90">{project.progress}%</span>
+                    <span className="text-sm text-muted-foreground">Progress</span>
+                    <span className="text-sm text-foreground">{project.progress}%</span>
                   </div>
                   <div className="relative">
                     <Progress 
                       value={project.progress} 
-                      className="h-2 bg-white/10"
+                      className="h-2 bg-gray-200/60 dark:bg-white/10"
                     />
                     <div 
                       className={`absolute top-0 left-0 h-2 rounded-full ${getProgressColor(project.type)} transition-all duration-500 shadow-lg`}
@@ -128,11 +131,11 @@ export function ProjectProgress() {
                 </div>
 
                 <div className="flex items-center justify-between text-sm">
-                  <div className="flex items-center space-x-1 text-white/60">
+                  <div className="flex items-center space-x-1 text-muted-foreground">
                     <DollarSign className="w-4 h-4" />
                     <span>{project.budget}</span>
                   </div>
-                  <div className="flex items-center space-x-1 text-white/60">
+                  <div className="flex items-center space-x-1 text-muted-foreground">
                     <Clock className="w-4 h-4" />
                     <span>{project.deadline}</span>
                   </div>
@@ -142,15 +145,15 @@ export function ProjectProgress() {
           })}
         </div>
 
-        <div className="mt-6 p-4 rounded-lg bg-gradient-to-r from-purple-500/10 via-blue-500/10 to-cyan-500/10 border border-purple-500/20">
+        <div className="mt-6 p-4 rounded-lg bg-gradient-to-r from-purple-100/80 to-cyan-100/60 dark:from-purple-500/10 dark:via-blue-500/10 dark:to-cyan-500/10 border border-purple-200/50 dark:border-purple-500/20 shadow-lg shadow-purple-100/50 dark:shadow-purple-500/10">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-white/90">Overall Progress</p>
-              <p className="text-sm text-white/60">All active projects</p>
+              <p className="text-foreground">Overall Progress</p>
+              <p className="text-sm text-muted-foreground">All active projects</p>
             </div>
             <div className="text-right">
-              <p className="text-2xl text-white/90">62%</p>
-              <p className="text-sm text-purple-400">↗ +8% this month</p>
+              <p className="text-2xl text-foreground">62%</p>
+              <p className="text-sm text-purple-600 dark:text-purple-400">↗ +8% this month</p>
             </div>
           </div>
         </div>

@@ -12,7 +12,12 @@ import {
   ChevronRight,
   Palette,
   TreePine,
-  X
+  X,
+  Clock,
+  Megaphone,
+  CreditCard,
+  MessageSquare,
+  Bell
 } from "lucide-react";
 import { Button } from "./ui/button";
 import { cn } from "./ui/utils";
@@ -31,6 +36,18 @@ const navigationItems = [
     page: "dashboard"
   },
   {
+    title: "Enquiries",
+    icon: MessageSquare,
+    page: "enquiries",
+    badge: "New"
+  },
+  {
+    title: "Notifications",
+    icon: Bell,
+    page: "notifications",
+    badge: "5"
+  },
+  {
     title: "Projects",
     icon: Building2,
     page: "projects",
@@ -47,13 +64,31 @@ const navigationItems = [
     page: "clients"
   },
   {
+    title: "CRM",
+    icon: Clock,
+    page: "crm",
+    badge: "New"
+  },
+  {
+    title: "Marketing",
+    icon: Megaphone,
+    page: "marketing",
+    badge: "12"
+  },
+  {
+    title: "Payments",
+    icon: CreditCard,
+    page: "payments",
+    badge: "8"
+  },
+  {
     title: "Calendar",
     icon: Calendar,
     page: "calendar",
     badge: "3"
   },
   {
-    title: "Budget",
+    title: "Finance",
     icon: DollarSign,
     page: "budget"
   }
@@ -137,22 +172,25 @@ export function Sidebar({ className, onNavigate, currentPage = "dashboard" }: Si
         className
       )}>
         {/* Sidebar Background with Glassmorphism */}
-        <div className="absolute inset-0 backdrop-blur-xl bg-black/30 border-r border-white/10">
-          {/* Neon gradient overlay */}
-          <div className="absolute inset-0 bg-gradient-to-b from-purple-500/5 via-blue-500/5 to-cyan-500/5"></div>
+        <div className="absolute inset-0 backdrop-blur-xl bg-white/80 dark:bg-black/30 border-r border-white/30 dark:border-white/10 shadow-xl dark:shadow-2xl shadow-gray-200/50 dark:shadow-black/50">
+          {/* Light theme gradient overlay */}
+          <div className="absolute inset-0 bg-gradient-to-b from-blue-50/80 via-indigo-50/60 to-purple-50/80 opacity-100 dark:opacity-0 transition-opacity duration-300"></div>
+          
+          {/* Neon gradient overlay - only in dark mode */}
+          <div className="absolute inset-0 bg-gradient-to-b from-purple-500/5 via-blue-500/5 to-cyan-500/5 opacity-0 dark:opacity-100 transition-opacity duration-300"></div>
         </div>
 
         {/* Content */}
         <div className="relative flex flex-col h-full z-10">
           {/* Header */}
-          <div className="flex items-center justify-between p-4 border-b border-white/10">
+          <div className="flex items-center justify-between p-4 border-b border-border">
             {(!isCollapsed || isMobile) && (
               <div className="flex items-center space-x-3">
                 <div className="w-8 h-8 bg-gradient-to-br from-purple-500 to-cyan-500 rounded-lg flex items-center justify-center shadow-lg shadow-purple-500/25">
                   <div className="w-4 h-4 bg-white/90 rounded-sm"></div>
                 </div>
                 <div>
-                  <h2 className="text-white/90 text-sm">ArchitecturalPro</h2>
+                  <h2 className="text-foreground text-sm">ArchitecturalPro</h2>
                 </div>
               </div>
             )}
@@ -161,7 +199,7 @@ export function Sidebar({ className, onNavigate, currentPage = "dashboard" }: Si
               variant="ghost"
               size="icon"
               onClick={toggleSidebar}
-              className="text-white/70 hover:text-white hover:bg-white/10 transition-all duration-300 ml-auto"
+              className="text-muted-foreground hover:text-foreground hover:bg-muted transition-all duration-300 ml-auto"
             >
               {isMobile ? (
                 <X className="w-4 h-4" />
@@ -188,13 +226,13 @@ export function Sidebar({ className, onNavigate, currentPage = "dashboard" }: Si
                       className={cn(
                         "w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-all duration-200 group relative overflow-hidden",
                         isActive 
-                          ? "bg-gradient-to-r from-purple-500/20 to-blue-500/20 text-white border border-purple-500/30 shadow-lg shadow-purple-500/10" 
-                          : "text-white/70 hover:text-white hover:bg-white/10"
+                          ? "bg-gradient-to-r from-purple-500/20 to-blue-500/20 text-foreground border border-purple-500/30 shadow-lg shadow-purple-500/10" 
+                          : "text-muted-foreground hover:text-foreground hover:bg-muted"
                       )}
                     >
-                      {/* Active item glow effect */}
+                      {/* Active item glow effect - only in dark mode */}
                       {isActive && (
-                        <div className="absolute inset-0 bg-gradient-to-r from-purple-500/10 to-blue-500/10 blur-sm"></div>
+                        <div className="absolute inset-0 bg-gradient-to-r from-purple-500/10 to-blue-500/10 blur-sm opacity-0 dark:opacity-100"></div>
                       )}
                       
                       <div className="relative z-10 flex items-center gap-3 w-full">
@@ -219,7 +257,7 @@ export function Sidebar({ className, onNavigate, currentPage = "dashboard" }: Si
               {(!isCollapsed || isMobile) && (
                 <div className="pt-6">
                   <div className="px-3 pb-2">
-                    <h3 className="text-xs text-white/50 uppercase tracking-wide">Project Types</h3>
+                    <h3 className="text-xs text-muted-foreground/70 uppercase tracking-wide">Project Types</h3>
                   </div>
                   <div className="space-y-1">
                     {projectTypes.map((item) => {
@@ -228,7 +266,7 @@ export function Sidebar({ className, onNavigate, currentPage = "dashboard" }: Si
                         <button
                           key={item.title}
                           onClick={() => handleNavClick(item.page)}
-                          className="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm text-white/70 hover:text-white hover:bg-white/10 transition-all duration-200"
+                          className="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm text-muted-foreground hover:text-foreground hover:bg-muted transition-all duration-200"
                         >
                           <Icon className="w-4 h-4 flex-shrink-0" />
                           <span className="text-left">{item.title}</span>
@@ -242,7 +280,7 @@ export function Sidebar({ className, onNavigate, currentPage = "dashboard" }: Si
           </div>
 
           {/* Bottom Navigation */}
-          <div className="border-t border-white/10 p-3">
+          <div className="border-t border-border p-3">
             <nav className="space-y-1">
               {bottomItems.map((item) => {
                 const Icon = item.icon;
@@ -250,7 +288,7 @@ export function Sidebar({ className, onNavigate, currentPage = "dashboard" }: Si
                   <button
                     key={item.page}
                     onClick={() => handleNavClick(item.page)}
-                    className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm text-white/70 hover:text-white hover:bg-white/10 transition-all duration-200"
+                    className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm text-muted-foreground hover:text-foreground hover:bg-muted transition-all duration-200"
                   >
                     <Icon className="w-5 h-5 flex-shrink-0" />
                     {(!isCollapsed || isMobile) && <span className="text-left">{item.title}</span>}
@@ -261,15 +299,15 @@ export function Sidebar({ className, onNavigate, currentPage = "dashboard" }: Si
           </div>
 
           {/* User Profile */}
-          <div className="border-t border-white/10 p-3">
+          <div className="border-t border-border p-3">
             <div className="flex items-center gap-3 px-3 py-2">
               <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-purple-500 rounded-full flex items-center justify-center shadow-lg shadow-blue-500/25">
                 <span className="text-xs text-white">JD</span>
               </div>
               {(!isCollapsed || isMobile) && (
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm text-white/90 truncate">John Doe</p>
-                  <p className="text-xs text-white/60 truncate">Lead Architect</p>
+                  <p className="text-sm text-foreground truncate">John Doe</p>
+                  <p className="text-xs text-muted-foreground truncate">Lead Architect</p>
                 </div>
               )}
             </div>

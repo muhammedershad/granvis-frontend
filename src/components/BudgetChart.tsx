@@ -12,16 +12,19 @@ const budgetData = [
 
 export function BudgetChart() {
   return (
-    <Card className="backdrop-blur-xl bg-black/20 border-white/10 p-6 relative overflow-hidden">
-      {/* Neon glow effect */}
-      <div className="absolute inset-0 bg-gradient-to-br from-cyan-500/5 via-transparent to-blue-500/5"></div>
+    <Card className="backdrop-blur-xl bg-white/70 dark:bg-black/20 border-white/20 dark:border-white/10 p-6 relative overflow-hidden shadow-xl dark:shadow-2xl shadow-gray-200/50 dark:shadow-black/50">
+      {/* Light theme gradient overlay */}
+      <div className="absolute inset-0 bg-gradient-to-br from-cyan-50/80 via-blue-50/60 to-indigo-50/80 opacity-100 dark:opacity-0 transition-opacity duration-300"></div>
+      
+      {/* Neon glow effect - only in dark mode */}
+      <div className="absolute inset-0 bg-gradient-to-br from-cyan-500/5 via-transparent to-blue-500/5 opacity-0 dark:opacity-100 transition-opacity duration-300"></div>
       
       <div className="relative">
         <div className="flex items-center justify-between mb-6">
-          <h3 className="text-white/90">Budget & Hours Overview</h3>
+          <h3 className="text-foreground">Budget & Hours Overview</h3>
           <div className="flex space-x-2">
-            <div className="px-3 py-1 bg-cyan-500/20 rounded-full border border-cyan-500/30">
-              <span className="text-sm text-cyan-300">2024</span>
+            <div className="px-3 py-1 bg-cyan-500/20 rounded-full border border-cyan-500/30 shadow-lg shadow-cyan-200/50 dark:shadow-cyan-500/20">
+              <span className="text-sm text-cyan-600 dark:text-cyan-300">2024</span>
             </div>
           </div>
         </div>
@@ -29,20 +32,20 @@ export function BudgetChart() {
         <div className="h-80">
           <ResponsiveContainer width="100%" height="100%">
             <BarChart data={budgetData} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#ffffff20" />
+              <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
               <XAxis 
                 dataKey="month" 
                 axisLine={false}
                 tickLine={false}
-                tick={{ fill: '#ffffff80', fontSize: 12 }}
+                tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 12 }}
               />
               <YAxis 
                 axisLine={false}
                 tickLine={false}
-                tick={{ fill: '#ffffff80', fontSize: 12 }}
+                tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 12 }}
               />
               <Legend 
-                wrapperStyle={{ color: '#fff', fontSize: '14px' }}
+                wrapperStyle={{ color: 'hsl(var(--foreground))', fontSize: '14px' }}
               />
               <Bar 
                 dataKey="budget" 
@@ -63,20 +66,20 @@ export function BudgetChart() {
         </div>
 
         <div className="grid grid-cols-3 gap-4 mt-6">
-          <div className="p-4 rounded-lg bg-gradient-to-r from-purple-500/10 to-purple-500/5 border border-purple-500/20">
-            <p className="text-sm text-white/60">Total Budget</p>
-            <p className="text-xl text-white/90">$543K</p>
-            <p className="text-sm text-purple-400">6 months</p>
+          <div className="p-4 rounded-lg bg-gradient-to-r from-purple-100/80 to-purple-50/60 dark:from-purple-500/10 dark:to-purple-500/5 border border-purple-200/50 dark:border-purple-500/20 shadow-lg shadow-purple-100/50 dark:shadow-purple-500/10">
+            <p className="text-sm text-muted-foreground">Total Budget</p>
+            <p className="text-xl text-foreground">$543K</p>
+            <p className="text-sm text-purple-600 dark:text-purple-400">6 months</p>
           </div>
-          <div className="p-4 rounded-lg bg-gradient-to-r from-cyan-500/10 to-cyan-500/5 border border-cyan-500/20">
-            <p className="text-sm text-white/60">Total Spent</p>
-            <p className="text-xl text-white/90">$500K</p>
-            <p className="text-sm text-cyan-400">92% used</p>
+          <div className="p-4 rounded-lg bg-gradient-to-r from-cyan-100/80 to-cyan-50/60 dark:from-cyan-500/10 dark:to-cyan-500/5 border border-cyan-200/50 dark:border-cyan-500/20 shadow-lg shadow-cyan-100/50 dark:shadow-cyan-500/10">
+            <p className="text-sm text-muted-foreground">Total Spent</p>
+            <p className="text-xl text-foreground">$500K</p>
+            <p className="text-sm text-cyan-600 dark:text-cyan-400">92% used</p>
           </div>
-          <div className="p-4 rounded-lg bg-gradient-to-r from-blue-500/10 to-blue-500/5 border border-blue-500/20">
-            <p className="text-sm text-white/60">Total Hours</p>
-            <p className="text-xl text-white/90">2,140h</p>
-            <p className="text-sm text-blue-400">6 months</p>
+          <div className="p-4 rounded-lg bg-gradient-to-r from-blue-100/80 to-blue-50/60 dark:from-blue-500/10 dark:to-blue-500/5 border border-blue-200/50 dark:border-blue-500/20 shadow-lg shadow-blue-100/50 dark:shadow-blue-500/10">
+            <p className="text-sm text-muted-foreground">Total Hours</p>
+            <p className="text-xl text-foreground">2,140h</p>
+            <p className="text-sm text-blue-600 dark:text-blue-400">6 months</p>
           </div>
         </div>
       </div>

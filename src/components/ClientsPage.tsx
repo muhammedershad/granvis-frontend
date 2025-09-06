@@ -425,12 +425,12 @@ export function ClientsPage() {
       {/* Header */}
       <div className="flex flex-col space-y-4 md:flex-row md:items-center md:justify-between md:space-y-0">
         <div>
-          <h1 className="text-white/90">Client Management</h1>
-          <p className="text-white/60">Manage your clients and their project relationships</p>
+          <h1 className="text-foreground">Client Management</h1>
+          <p className="text-muted-foreground">Manage your clients and their project relationships</p>
         </div>
         
         <div className="flex items-center space-x-2">
-          <div className="flex items-center bg-white/5 rounded-lg p-1 border border-white/10">
+          <div className="flex items-center bg-white/20 dark:bg-white/5 rounded-lg p-1 border border-white/30 dark:border-white/10 shadow-lg shadow-gray-200/50 dark:shadow-black/20">
             <Button
               variant={viewType === "cards" ? "default" : "ghost"}
               size="sm"
@@ -438,8 +438,8 @@ export function ClientsPage() {
               className={cn(
                 "px-3",
                 viewType === "cards" 
-                  ? "bg-gradient-to-r from-purple-500 to-blue-500 text-white" 
-                  : "text-white/70 hover:text-white"
+                  ? "bg-gradient-to-r from-purple-500 to-blue-500 text-white shadow-lg" 
+                  : "text-muted-foreground hover:text-foreground"
               )}
             >
               <Grid3X3 className="w-4 h-4" />
@@ -451,29 +451,29 @@ export function ClientsPage() {
               className={cn(
                 "px-3",
                 viewType === "table" 
-                  ? "bg-gradient-to-r from-purple-500 to-blue-500 text-white" 
-                  : "text-white/70 hover:text-white"
+                  ? "bg-gradient-to-r from-purple-500 to-blue-500 text-white shadow-lg" 
+                  : "text-muted-foreground hover:text-foreground"
               )}
             >
               <List className="w-4 h-4" />
             </Button>
           </div>
           
-          <Button variant="outline" className="bg-white/5 border-white/10 text-white/70 hover:bg-white/10">
+          <Button variant="outline" className="bg-white/60 dark:bg-white/5 border-white/40 dark:border-white/10 text-muted-foreground hover:bg-white/80 dark:hover:bg-white/10 shadow-lg shadow-gray-200/50 dark:shadow-black/20">
             <Download className="w-4 h-4 mr-2" />
             Export
           </Button>
           
           <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
             <DialogTrigger asChild>
-              <Button className="bg-gradient-to-r from-purple-500 to-blue-500 hover:from-purple-600 hover:to-blue-600 border-0">
+              <Button className="bg-gradient-to-r from-purple-500 to-blue-500 hover:from-purple-600 hover:to-blue-600 border-0 shadow-lg shadow-purple-200/50 dark:shadow-purple-500/25">
                 <Plus className="w-4 h-4 mr-2" />
                 Add Client
               </Button>
             </DialogTrigger>
-            <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto bg-black/90 border-white/10">
+            <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto backdrop-blur-xl bg-white/90 dark:bg-black/90 border-white/30 dark:border-white/10 shadow-2xl">
               <DialogHeader>
-                <DialogTitle className="text-white/90">Add New Client</DialogTitle>
+                <DialogTitle className="text-foreground">Add New Client</DialogTitle>
               </DialogHeader>
               <AddClientForm onSubmit={handleAddClient} onCancel={() => setIsAddDialogOpen(false)} />
             </DialogContent>
@@ -483,118 +483,126 @@ export function ClientsPage() {
 
       {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 xl:grid-cols-7 gap-4">
-        <Card className="p-4 bg-black/20 border-white/10 backdrop-blur-xl relative overflow-hidden">
-          <div className="absolute inset-0 bg-gradient-to-br from-blue-500/5 to-purple-500/5"></div>
+        <Card className="p-4 backdrop-blur-xl bg-white/70 dark:bg-black/20 border-white/20 dark:border-white/10 relative overflow-hidden shadow-xl shadow-gray-200/50 dark:shadow-black/50">
+          <div className="absolute inset-0 bg-gradient-to-br from-blue-100/60 to-purple-50/40 opacity-100 dark:opacity-0 transition-opacity duration-300"></div>
+          <div className="absolute inset-0 bg-gradient-to-br from-blue-500/5 to-purple-500/5 opacity-0 dark:opacity-100 transition-opacity duration-300"></div>
           <div className="relative flex items-center space-x-3">
-            <div className="p-3 bg-blue-500/20 rounded-xl border border-blue-500/30">
-              <Users className="w-6 h-6 text-blue-400" />
+            <div className="p-3 bg-blue-500/20 rounded-xl border border-blue-500/30 shadow-lg shadow-blue-200/50 dark:shadow-blue-500/20">
+              <Users className="w-6 h-6 text-blue-600 dark:text-blue-400" />
             </div>
             <div>
-              <p className="text-white/60 text-sm">Total Clients</p>
-              <p className="text-white/90 text-2xl">{stats.total}</p>
+              <p className="text-muted-foreground text-sm">Total Clients</p>
+              <p className="text-foreground text-2xl">{stats.total}</p>
             </div>
           </div>
         </Card>
         
-        <Card className="p-4 bg-black/20 border-white/10 backdrop-blur-xl relative overflow-hidden">
-          <div className="absolute inset-0 bg-gradient-to-br from-green-500/5 to-emerald-500/5"></div>
+        <Card className="p-4 backdrop-blur-xl bg-white/70 dark:bg-black/20 border-white/20 dark:border-white/10 relative overflow-hidden shadow-xl shadow-gray-200/50 dark:shadow-black/50">
+          <div className="absolute inset-0 bg-gradient-to-br from-green-100/60 to-emerald-50/40 opacity-100 dark:opacity-0 transition-opacity duration-300"></div>
+          <div className="absolute inset-0 bg-gradient-to-br from-green-500/5 to-emerald-500/5 opacity-0 dark:opacity-100 transition-opacity duration-300"></div>
           <div className="relative flex items-center space-x-3">
-            <div className="p-3 bg-green-500/20 rounded-xl border border-green-500/30">
-              <CheckCircle className="w-6 h-6 text-green-400" />
+            <div className="p-3 bg-green-500/20 rounded-xl border border-green-500/30 shadow-lg shadow-green-200/50 dark:shadow-green-500/20">
+              <CheckCircle className="w-6 h-6 text-green-600 dark:text-green-400" />
             </div>
             <div>
-              <p className="text-white/60 text-sm">Active Clients</p>
-              <p className="text-white/90 text-2xl">{stats.active}</p>
+              <p className="text-muted-foreground text-sm">Active Clients</p>
+              <p className="text-foreground text-2xl">{stats.active}</p>
             </div>
           </div>
         </Card>
         
-        <Card className="p-4 bg-black/20 border-white/10 backdrop-blur-xl relative overflow-hidden">
-          <div className="absolute inset-0 bg-gradient-to-br from-purple-500/5 to-pink-500/5"></div>
+        <Card className="p-4 backdrop-blur-xl bg-white/70 dark:bg-black/20 border-white/20 dark:border-white/10 relative overflow-hidden shadow-xl shadow-gray-200/50 dark:shadow-black/50">
+          <div className="absolute inset-0 bg-gradient-to-br from-purple-100/60 to-pink-50/40 opacity-100 dark:opacity-0 transition-opacity duration-300"></div>
+          <div className="absolute inset-0 bg-gradient-to-br from-purple-500/5 to-pink-500/5 opacity-0 dark:opacity-100 transition-opacity duration-300"></div>
           <div className="relative flex items-center space-x-3">
-            <div className="p-3 bg-purple-500/20 rounded-xl border border-purple-500/30">
-              <Star className="w-6 h-6 text-purple-400" />
+            <div className="p-3 bg-purple-500/20 rounded-xl border border-purple-500/30 shadow-lg shadow-purple-200/50 dark:shadow-purple-500/20">
+              <Star className="w-6 h-6 text-purple-600 dark:text-purple-400" />
             </div>
             <div>
-              <p className="text-white/60 text-sm">VIP Clients</p>
-              <p className="text-white/90 text-2xl">{stats.vip}</p>
+              <p className="text-muted-foreground text-sm">VIP Clients</p>
+              <p className="text-foreground text-2xl">{stats.vip}</p>
             </div>
           </div>
         </Card>
         
-        <Card className="p-4 bg-black/20 border-white/10 backdrop-blur-xl relative overflow-hidden">
-          <div className="absolute inset-0 bg-gradient-to-br from-yellow-500/5 to-orange-500/5"></div>
+        <Card className="p-4 backdrop-blur-xl bg-white/70 dark:bg-black/20 border-white/20 dark:border-white/10 relative overflow-hidden shadow-xl shadow-gray-200/50 dark:shadow-black/50">
+          <div className="absolute inset-0 bg-gradient-to-br from-yellow-100/60 to-orange-50/40 opacity-100 dark:opacity-0 transition-opacity duration-300"></div>
+          <div className="absolute inset-0 bg-gradient-to-br from-yellow-500/5 to-orange-500/5 opacity-0 dark:opacity-100 transition-opacity duration-300"></div>
           <div className="relative flex items-center space-x-3">
-            <div className="p-3 bg-yellow-500/20 rounded-xl border border-yellow-500/30">
-              <Clock className="w-6 h-6 text-yellow-400" />
+            <div className="p-3 bg-yellow-500/20 rounded-xl border border-yellow-500/30 shadow-lg shadow-yellow-200/50 dark:shadow-yellow-500/20">
+              <Clock className="w-6 h-6 text-yellow-600 dark:text-yellow-400" />
             </div>
             <div>
-              <p className="text-white/60 text-sm">Potential</p>
-              <p className="text-white/90 text-2xl">{stats.potential}</p>
+              <p className="text-muted-foreground text-sm">Potential</p>
+              <p className="text-foreground text-2xl">{stats.potential}</p>
             </div>
           </div>
         </Card>
         
-        <Card className="p-4 bg-black/20 border-white/10 backdrop-blur-xl relative overflow-hidden">
-          <div className="absolute inset-0 bg-gradient-to-br from-cyan-500/5 to-blue-500/5"></div>
+        <Card className="p-4 backdrop-blur-xl bg-white/70 dark:bg-black/20 border-white/20 dark:border-white/10 relative overflow-hidden shadow-xl shadow-gray-200/50 dark:shadow-black/50">
+          <div className="absolute inset-0 bg-gradient-to-br from-cyan-100/60 to-blue-50/40 opacity-100 dark:opacity-0 transition-opacity duration-300"></div>
+          <div className="absolute inset-0 bg-gradient-to-br from-cyan-500/5 to-blue-500/5 opacity-0 dark:opacity-100 transition-opacity duration-300"></div>
           <div className="relative flex items-center space-x-3">
-            <div className="p-3 bg-cyan-500/20 rounded-xl border border-cyan-500/30">
-              <DollarSign className="w-6 h-6 text-cyan-400" />
+            <div className="p-3 bg-cyan-500/20 rounded-xl border border-cyan-500/30 shadow-lg shadow-cyan-200/50 dark:shadow-cyan-500/20">
+              <DollarSign className="w-6 h-6 text-cyan-600 dark:text-cyan-400" />
             </div>
             <div>
-              <p className="text-white/60 text-sm">Total Value</p>
-              <p className="text-white/90 text-xl">${(stats.totalValue / 1000000).toFixed(1)}M</p>
+              <p className="text-muted-foreground text-sm">Total Value</p>
+              <p className="text-foreground text-xl">${(stats.totalValue / 1000000).toFixed(1)}M</p>
             </div>
           </div>
         </Card>
         
-        <Card className="p-4 bg-black/20 border-white/10 backdrop-blur-xl relative overflow-hidden">
-          <div className="absolute inset-0 bg-gradient-to-br from-indigo-500/5 to-purple-500/5"></div>
+        <Card className="p-4 backdrop-blur-xl bg-white/70 dark:bg-black/20 border-white/20 dark:border-white/10 relative overflow-hidden shadow-xl shadow-gray-200/50 dark:shadow-black/50">
+          <div className="absolute inset-0 bg-gradient-to-br from-indigo-100/60 to-purple-50/40 opacity-100 dark:opacity-0 transition-opacity duration-300"></div>
+          <div className="absolute inset-0 bg-gradient-to-br from-indigo-500/5 to-purple-500/5 opacity-0 dark:opacity-100 transition-opacity duration-300"></div>
           <div className="relative flex items-center space-x-3">
-            <div className="p-3 bg-indigo-500/20 rounded-xl border border-indigo-500/30">
-              <TrendingUp className="w-6 h-6 text-indigo-400" />
+            <div className="p-3 bg-indigo-500/20 rounded-xl border border-indigo-500/30 shadow-lg shadow-indigo-200/50 dark:shadow-indigo-500/20">
+              <TrendingUp className="w-6 h-6 text-indigo-600 dark:text-indigo-400" />
             </div>
             <div>
-              <p className="text-white/60 text-sm">Avg Value</p>
-              <p className="text-white/90 text-xl">${(stats.avgValue / 1000).toFixed(0)}K</p>
+              <p className="text-muted-foreground text-sm">Avg Value</p>
+              <p className="text-foreground text-xl">${(stats.avgValue / 1000).toFixed(0)}K</p>
             </div>
           </div>
         </Card>
         
-        <Card className="p-4 bg-black/20 border-white/10 backdrop-blur-xl relative overflow-hidden">
-          <div className="absolute inset-0 bg-gradient-to-br from-pink-500/5 to-red-500/5"></div>
+        <Card className="p-4 backdrop-blur-xl bg-white/70 dark:bg-black/20 border-white/20 dark:border-white/10 relative overflow-hidden shadow-xl shadow-gray-200/50 dark:shadow-black/50">
+          <div className="absolute inset-0 bg-gradient-to-br from-pink-100/60 to-red-50/40 opacity-100 dark:opacity-0 transition-opacity duration-300"></div>
+          <div className="absolute inset-0 bg-gradient-to-br from-pink-500/5 to-red-500/5 opacity-0 dark:opacity-100 transition-opacity duration-300"></div>
           <div className="relative flex items-center space-x-3">
-            <div className="p-3 bg-pink-500/20 rounded-xl border border-pink-500/30">
-              <Briefcase className="w-6 h-6 text-pink-400" />
+            <div className="p-3 bg-pink-500/20 rounded-xl border border-pink-500/30 shadow-lg shadow-pink-200/50 dark:shadow-pink-500/20">
+              <Briefcase className="w-6 h-6 text-pink-600 dark:text-pink-400" />
             </div>
             <div>
-              <p className="text-white/60 text-sm">Total Projects</p>
-              <p className="text-white/90 text-2xl">{stats.totalProjects}</p>
+              <p className="text-muted-foreground text-sm">Total Projects</p>
+              <p className="text-foreground text-2xl">{stats.totalProjects}</p>
             </div>
           </div>
         </Card>
       </div>
 
       {/* Filters */}
-      <Card className="p-6 bg-black/20 border-white/10 backdrop-blur-xl">
-        <div className="space-y-4">
-          <h3 className="text-white/90 text-lg">Search & Filter Clients</h3>
+      <Card className="p-6 backdrop-blur-xl bg-white/70 dark:bg-black/20 border-white/20 dark:border-white/10 shadow-xl shadow-gray-200/50 dark:shadow-black/50">
+        <div className="absolute inset-0 bg-gradient-to-br from-blue-50/60 via-indigo-50/40 to-purple-50/60 opacity-100 dark:opacity-0 transition-opacity duration-300"></div>
+        <div className="relative space-y-4">
+          <h3 className="text-foreground text-lg">Search & Filter Clients</h3>
           
           <div className="grid grid-cols-1 md:grid-cols-6 gap-4">
             <div className="md:col-span-2">
               <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-white/40 w-4 h-4" />
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
                 <Input
                   placeholder="Search clients..."
                   value={filters.search}
                   onChange={(e) => setFilters(prev => ({ ...prev, search: e.target.value }))}
-                  className="pl-10 bg-white/5 border-white/10 text-white placeholder:text-white/40 focus:ring-2 focus:ring-purple-500/50"
+                  className="pl-10 bg-white/60 dark:bg-white/5 border-white/40 dark:border-white/10 text-foreground placeholder:text-muted-foreground focus:ring-2 focus:ring-purple-500/50 shadow-sm"
                 />
               </div>
             </div>
             
             <Select value={filters.status} onValueChange={(value) => setFilters(prev => ({ ...prev, status: value }))}>
-              <SelectTrigger className="bg-white/5 border-white/10 text-white">
+              <SelectTrigger className="bg-white/60 dark:bg-white/5 border-white/40 dark:border-white/10 text-foreground shadow-sm">
                 <SelectValue placeholder="Status" />
               </SelectTrigger>
               <SelectContent>
@@ -606,7 +614,7 @@ export function ClientsPage() {
             </Select>
             
             <Select value={filters.priority} onValueChange={(value) => setFilters(prev => ({ ...prev, priority: value }))}>
-              <SelectTrigger className="bg-white/5 border-white/10 text-white">
+              <SelectTrigger className="bg-white/60 dark:bg-white/5 border-white/40 dark:border-white/10 text-foreground shadow-sm">
                 <SelectValue placeholder="Priority" />
               </SelectTrigger>
               <SelectContent>
@@ -618,7 +626,7 @@ export function ClientsPage() {
             </Select>
             
             <Select value={filters.industry} onValueChange={(value) => setFilters(prev => ({ ...prev, industry: value }))}>
-              <SelectTrigger className="bg-white/5 border-white/10 text-white">
+              <SelectTrigger className="bg-white/60 dark:bg-white/5 border-white/40 dark:border-white/10 text-foreground shadow-sm">
                 <SelectValue placeholder="Industry" />
               </SelectTrigger>
               <SelectContent>
@@ -632,7 +640,7 @@ export function ClientsPage() {
             <Button 
               variant="outline" 
               onClick={() => setFilters({ search: "", companyType: "all", status: "all", priority: "all", industry: "all", source: "all" })}
-              className="bg-white/5 border-white/10 text-white/70 hover:bg-white/10"
+              className="bg-white/60 dark:bg-white/5 border-white/40 dark:border-white/10 text-muted-foreground hover:bg-white/80 dark:hover:bg-white/10 shadow-sm"
             >
               <Filter className="w-4 h-4 mr-2" />
               Clear
@@ -640,7 +648,7 @@ export function ClientsPage() {
           </div>
           
           {filteredAndSortedClients.length !== clients.length && (
-            <div className="text-white/60 text-sm">
+            <div className="text-muted-foreground text-sm">
               Showing {filteredAndSortedClients.length} of {clients.length} clients
             </div>
           )}
@@ -651,27 +659,31 @@ export function ClientsPage() {
       {viewType === "cards" ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
           {paginatedClients.map((client) => (
-            <Card key={client.id} className="bg-black/20 border-white/10 backdrop-blur-xl hover:bg-white/5 transition-all duration-300 group relative overflow-hidden">
-              <div className="absolute inset-0 bg-gradient-to-br from-purple-500/5 to-blue-500/5 opacity-0 group-hover:opacity-100 transition-opacity"></div>
+            <Card key={client.id} className="backdrop-blur-xl bg-white/70 dark:bg-black/20 border-white/20 dark:border-white/10 hover:bg-white/80 dark:hover:bg-white/5 transition-all duration-300 group relative overflow-hidden shadow-xl shadow-gray-200/50 dark:shadow-black/50 hover:shadow-2xl dark:hover:shadow-black/70">
+              {/* Light theme gradient overlay */}
+              <div className="absolute inset-0 bg-gradient-to-br from-purple-50/60 via-blue-50/40 to-cyan-50/60 opacity-100 dark:opacity-0 transition-opacity duration-300"></div>
+              
+              {/* Dark theme gradient overlay */}
+              <div className="absolute inset-0 bg-gradient-to-br from-purple-500/5 to-blue-500/5 opacity-0 dark:opacity-100 group-hover:opacity-100 transition-opacity"></div>
               
               <CardHeader className="relative z-10">
                 <div className="flex items-start justify-between">
                   <div className="flex items-center space-x-3">
-                    <Avatar className="w-12 h-12 border-2 border-white/10">
+                    <Avatar className="w-12 h-12 border-2 border-white/40 dark:border-white/10 shadow-lg shadow-gray-200/50 dark:shadow-black/30">
                       <AvatarImage src={client.avatar} alt={client.name} />
                       <AvatarFallback className="bg-gradient-to-br from-purple-500 to-blue-500 text-white">
                         {client.name.split(' ').map(n => n[0]).join('')}
                       </AvatarFallback>
                     </Avatar>
                     <div>
-                      <CardTitle className="text-white/90 text-base">{client.name}</CardTitle>
-                      <p className="text-white/60 text-sm">{client.companyName}</p>
+                      <CardTitle className="text-foreground text-base">{client.name}</CardTitle>
+                      <p className="text-muted-foreground text-sm">{client.companyName}</p>
                     </div>
                   </div>
                   
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
-                      <Button variant="ghost" size="icon" className="text-white/70 hover:text-white opacity-0 group-hover:opacity-100 transition-opacity">
+                      <Button variant="ghost" size="icon" className="text-muted-foreground hover:text-foreground opacity-0 group-hover:opacity-100 transition-opacity">
                         <MoreHorizontal className="w-4 h-4" />
                       </Button>
                     </DropdownMenuTrigger>
@@ -686,7 +698,7 @@ export function ClientsPage() {
                       </DropdownMenuItem>
                       <DropdownMenuSeparator />
                       <DropdownMenuItem 
-                        className="text-red-400"
+                        className="text-red-600 dark:text-red-400"
                         onClick={() => handleDeleteClient(client.id)}
                       >
                         <Trash2 className="w-4 h-4 mr-2" />
@@ -711,25 +723,25 @@ export function ClientsPage() {
               <CardContent className="relative z-10 space-y-4">
                 <div className="space-y-2">
                   <div className="flex items-center space-x-2 text-sm">
-                    <Building2 className="w-4 h-4 text-white/40" />
-                    <span className="text-white/70">{client.industry}</span>
+                    <Building2 className="w-4 h-4 text-muted-foreground" />
+                    <span className="text-muted-foreground">{client.industry}</span>
                   </div>
                   <div className="flex items-center space-x-2 text-sm">
-                    <Mail className="w-4 h-4 text-white/40" />
-                    <span className="text-white/70 truncate">{client.email}</span>
+                    <Mail className="w-4 h-4 text-muted-foreground" />
+                    <span className="text-muted-foreground truncate">{client.email}</span>
                   </div>
                   <div className="flex items-center space-x-2 text-sm">
-                    <Phone className="w-4 h-4 text-white/40" />
-                    <span className="text-white/70">{client.phone}</span>
+                    <Phone className="w-4 h-4 text-muted-foreground" />
+                    <span className="text-muted-foreground">{client.phone}</span>
                   </div>
                   {client.website && (
                     <div className="flex items-center space-x-2 text-sm">
-                      <Globe className="w-4 h-4 text-white/40" />
+                      <Globe className="w-4 h-4 text-muted-foreground" />
                       <a 
                         href={client.website} 
                         target="_blank" 
                         rel="noopener noreferrer"
-                        className="text-blue-400 hover:text-blue-300 truncate flex items-center space-x-1"
+                        className="text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 truncate flex items-center space-x-1"
                       >
                         <span>Website</span>
                         <ExternalLink className="w-3 h-3" />
@@ -738,14 +750,14 @@ export function ClientsPage() {
                   )}
                 </div>
                 
-                <div className="grid grid-cols-2 gap-4 text-sm pt-4 border-t border-white/10">
+                <div className="grid grid-cols-2 gap-4 text-sm pt-4 border-t border-white/40 dark:border-white/10">
                   <div>
-                    <p className="text-white/60">Project Value</p>
-                    <p className="text-white/90">${(client.totalProjectValue / 1000).toFixed(0)}K</p>
+                    <p className="text-muted-foreground">Project Value</p>
+                    <p className="text-foreground">${(client.totalProjectValue / 1000).toFixed(0)}K</p>
                   </div>
                   <div>
-                    <p className="text-white/60">Projects</p>
-                    <p className="text-white/90">{client.projectsCount}</p>
+                    <p className="text-muted-foreground">Projects</p>
+                    <p className="text-foreground">{client.projectsCount}</p>
                   </div>
                 </div>
               </CardContent>
@@ -753,61 +765,64 @@ export function ClientsPage() {
           ))}
         </div>
       ) : (
-        <Card className="bg-black/20 border-white/10 backdrop-blur-xl">
-          <div className="overflow-x-auto">
+        <Card className="backdrop-blur-xl bg-white/70 dark:bg-black/20 border-white/20 dark:border-white/10 shadow-xl shadow-gray-200/50 dark:shadow-black/50">
+          {/* Light theme gradient overlay */}
+          <div className="absolute inset-0 bg-gradient-to-br from-blue-50/60 via-indigo-50/40 to-purple-50/60 opacity-100 dark:opacity-0 transition-opacity duration-300"></div>
+          
+          <div className="relative overflow-x-auto">
             <Table>
               <TableHeader>
-                <TableRow className="border-white/10">
-                  <TableHead className="text-white/70">
+                <TableRow className="border-white/40 dark:border-white/10">
+                  <TableHead className="text-muted-foreground">
                     <Button 
                       variant="ghost" 
                       onClick={() => handleSort("name")}
-                      className="h-auto p-0 text-white/70 hover:text-white"
+                      className="h-auto p-0 text-muted-foreground hover:text-foreground"
                     >
                       Client {getSortIcon("name")}
                     </Button>
                   </TableHead>
-                  <TableHead className="text-white/70">Company</TableHead>
-                  <TableHead className="text-white/70">Contact</TableHead>
-                  <TableHead className="text-white/70">Status</TableHead>
-                  <TableHead className="text-white/70">Priority</TableHead>
-                  <TableHead className="text-white/70">Projects</TableHead>
-                  <TableHead className="text-white/70">Value</TableHead>
-                  <TableHead className="text-white/70">Actions</TableHead>
+                  <TableHead className="text-muted-foreground">Company</TableHead>
+                  <TableHead className="text-muted-foreground">Contact</TableHead>
+                  <TableHead className="text-muted-foreground">Status</TableHead>
+                  <TableHead className="text-muted-foreground">Priority</TableHead>
+                  <TableHead className="text-muted-foreground">Projects</TableHead>
+                  <TableHead className="text-muted-foreground">Value</TableHead>
+                  <TableHead className="text-muted-foreground">Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {paginatedClients.map((client) => (
-                  <TableRow key={client.id} className="border-white/10 hover:bg-white/5">
+                  <TableRow key={client.id} className="border-white/40 dark:border-white/10 hover:bg-white/60 dark:hover:bg-white/5">
                     <TableCell>
                       <div className="flex items-center space-x-3">
-                        <Avatar className="w-10 h-10 border-2 border-white/10">
+                        <Avatar className="w-10 h-10 border-2 border-white/40 dark:border-white/10 shadow-sm">
                           <AvatarImage src={client.avatar} alt={client.name} />
                           <AvatarFallback className="bg-gradient-to-br from-purple-500 to-blue-500 text-white">
                             {client.name.split(' ').map(n => n[0]).join('')}
                           </AvatarFallback>
                         </Avatar>
                         <div>
-                          <p className="text-white/90">{client.name}</p>
-                          <p className="text-white/50 text-sm">{client.primaryContact.title}</p>
+                          <p className="text-foreground">{client.name}</p>
+                          <p className="text-muted-foreground text-sm">{client.primaryContact.title}</p>
                         </div>
                       </div>
                     </TableCell>
                     <TableCell>
                       <div>
-                        <p className="text-white/80">{client.companyName}</p>
-                        <p className="text-white/50 text-sm">{client.industry}</p>
+                        <p className="text-foreground">{client.companyName}</p>
+                        <p className="text-muted-foreground text-sm">{client.industry}</p>
                       </div>
                     </TableCell>
                     <TableCell>
                       <div className="space-y-1">
                         <div className="flex items-center space-x-2">
-                          <Mail className="w-3 h-3 text-white/40" />
-                          <span className="text-white/70 text-sm">{client.email}</span>
+                          <Mail className="w-3 h-3 text-muted-foreground" />
+                          <span className="text-muted-foreground text-sm">{client.email}</span>
                         </div>
                         <div className="flex items-center space-x-2">
-                          <Phone className="w-3 h-3 text-white/40" />
-                          <span className="text-white/70 text-sm">{client.phone}</span>
+                          <Phone className="w-3 h-3 text-muted-foreground" />
+                          <span className="text-muted-foreground text-sm">{client.phone}</span>
                         </div>
                       </div>
                     </TableCell>
@@ -824,20 +839,20 @@ export function ClientsPage() {
                       </Badge>
                     </TableCell>
                     <TableCell>
-                      <div className="text-white/70">
+                      <div className="text-muted-foreground">
                         <p>{client.projectsCount} total</p>
-                        <p className="text-sm text-white/50">
+                        <p className="text-sm text-muted-foreground">
                           {client.activeProjects} active, {client.completedProjects} done
                         </p>
                       </div>
                     </TableCell>
-                    <TableCell className="text-white/70">
+                    <TableCell className="text-muted-foreground">
                       ${(client.totalProjectValue / 1000).toFixed(0)}K
                     </TableCell>
                     <TableCell>
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
-                          <Button variant="ghost" size="icon" className="text-white/70 hover:text-white">
+                          <Button variant="ghost" size="icon" className="text-muted-foreground hover:text-foreground">
                             <MoreHorizontal className="w-4 h-4" />
                           </Button>
                         </DropdownMenuTrigger>
@@ -852,7 +867,7 @@ export function ClientsPage() {
                           </DropdownMenuItem>
                           <DropdownMenuSeparator />
                           <DropdownMenuItem 
-                            className="text-red-400"
+                            className="text-red-600 dark:text-red-400"
                             onClick={() => handleDeleteClient(client.id)}
                           >
                             <Trash2 className="w-4 h-4 mr-2" />
@@ -869,8 +884,8 @@ export function ClientsPage() {
           
           {/* Pagination */}
           {totalPages > 1 && (
-            <div className="flex items-center justify-between px-6 py-4 border-t border-white/10">
-              <div className="text-white/60 text-sm">
+            <div className="flex items-center justify-between px-6 py-4 border-t border-white/40 dark:border-white/10">
+              <div className="text-muted-foreground text-sm">
                 Showing {((currentPage - 1) * ITEMS_PER_PAGE) + 1} to {Math.min(currentPage * ITEMS_PER_PAGE, filteredAndSortedClients.length)} of {filteredAndSortedClients.length} clients
               </div>
               <div className="flex items-center space-x-2">
@@ -879,12 +894,12 @@ export function ClientsPage() {
                   size="sm"
                   onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
                   disabled={currentPage === 1}
-                  className="bg-white/5 border-white/10 text-white/70 hover:bg-white/10"
+                  className="bg-white/60 dark:bg-white/5 border-white/40 dark:border-white/10 text-muted-foreground hover:bg-white/80 dark:hover:bg-white/10"
                 >
                   <ChevronLeft className="w-4 h-4" />
                   Previous
                 </Button>
-                <div className="text-white/70 text-sm">
+                <div className="text-muted-foreground text-sm">
                   Page {currentPage} of {totalPages}
                 </div>
                 <Button
@@ -892,7 +907,7 @@ export function ClientsPage() {
                   size="sm"
                   onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
                   disabled={currentPage === totalPages}
-                  className="bg-white/5 border-white/10 text-white/70 hover:bg-white/10"
+                  className="bg-white/60 dark:bg-white/5 border-white/40 dark:border-white/10 text-muted-foreground hover:bg-white/80 dark:hover:bg-white/10"
                 >
                   Next
                   <ChevronRight className="w-4 h-4" />
