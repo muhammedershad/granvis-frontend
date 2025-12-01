@@ -80,7 +80,7 @@ function DashboardContent() {
       case "enquiries":
         return <EnquiryPage />;
       case "projects":
-        return <ProjectsPage onProjectSelect={handleProjectSelect} />;
+        return <ProjectsPage />;
       case "project-details":
         return selectedProjectId ? (
           <ProjectDetailsPage 
@@ -88,7 +88,7 @@ function DashboardContent() {
             onBack={handleBackFromProjectDetails}
           />
         ) : (
-          <ProjectsPage onProjectSelect={handleProjectSelect} />
+          <ProjectsPage />
         );
       case "clients":
         return <ClientsPage />;
@@ -319,9 +319,9 @@ export default function Home() {
         return (
           <ThemeProvider>
             <LoginPage
-              onLogin={handleLogin}
-              onForgotPassword={goToForgotPassword}
-              onSignUp={handleSignUp}
+              // onLogin={handleLogin}
+              // onForgotPassword={goToForgotPassword}
+              // onSignUp={handleSignUp}
             />
           </ThemeProvider>
         );

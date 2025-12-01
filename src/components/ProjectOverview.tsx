@@ -1,3 +1,4 @@
+'use client';
 import { PieChart, Pie, Cell, ResponsiveContainer, Legend } from 'recharts';
 import { Card } from "./ui/card";
 

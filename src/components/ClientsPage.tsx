@@ -27,8 +27,6 @@ import {
   ArrowUpDown,
   ArrowUp,
   ArrowDown,
-  ChevronLeft,
-  ChevronRight,
   ExternalLink
 } from "lucide-react";
 import { Button } from "./ui/button";
@@ -43,6 +41,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { AddClientForm } from "./AddClientForm";
 import { Client, ClientFilters, ClientSort, ClientViewType } from "../types/client";
 import { cn } from "./ui/utils";
+// import { Pagination } from "./Pagination";
 
 // Mock client data
 const mockClients: Client[] = [
@@ -278,7 +277,11 @@ const mockClients: Client[] = [
 
 const ITEMS_PER_PAGE = 8;
 
-export function ClientsPage() {
+interface ClientsPageProps {
+  onClientSelect?: (clientId: string) => void;
+}
+
+export function ClientsPage({ onClientSelect }: ClientsPageProps) {
   const [clients, setClients] = useState<Client[]>(mockClients);
   const [currentPage, setCurrentPage] = useState(1);
   const [viewType, setViewType] = useState<ClientViewType>("cards");
@@ -659,7 +662,11 @@ export function ClientsPage() {
       {viewType === "cards" ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
           {paginatedClients.map((client) => (
-            <Card key={client.id} className="backdrop-blur-xl bg-white/70 dark:bg-black/20 border-white/20 dark:border-white/10 hover:bg-white/80 dark:hover:bg-white/5 transition-all duration-300 group relative overflow-hidden shadow-xl shadow-gray-200/50 dark:shadow-black/50 hover:shadow-2xl dark:hover:shadow-black/70">
+            <Card 
+              key={client.id} 
+              className="backdrop-blur-xl bg-white/70 dark:bg-black/20 border-white/20 dark:border-white/10 hover:bg-white/80 dark:hover:bg-white/5 transition-all duration-300 group relative overflow-hidden shadow-xl shadow-gray-200/50 dark:shadow-black/50 hover:shadow-2xl dark:hover:shadow-black/70 cursor-pointer"
+              onClick={() => onClientSelect?.(client.id)}
+            >
               {/* Light theme gradient overlay */}
               <div className="absolute inset-0 bg-gradient-to-br from-purple-50/60 via-blue-50/40 to-cyan-50/60 opacity-100 dark:opacity-0 transition-opacity duration-300"></div>
               
@@ -683,12 +690,20 @@ export function ClientsPage() {
                   
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
-                      <Button variant="ghost" size="icon" className="text-muted-foreground hover:text-foreground opacity-0 group-hover:opacity-100 transition-opacity">
+                      <Button 
+                        variant="ghost" 
+                        size="icon" 
+                        className="text-muted-foreground hover:text-foreground opacity-0 group-hover:opacity-100 transition-opacity"
+                        onClick={(e) => e.stopPropagation()}
+                      >
                         <MoreHorizontal className="w-4 h-4" />
                       </Button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end">
-                      <DropdownMenuItem>
+                      <DropdownMenuItem onClick={(e) => {
+                        e.stopPropagation();
+                        onClientSelect?.(client.id);
+                      }}>
                         <Eye className="w-4 h-4 mr-2" />
                         View Details
                       </DropdownMenuItem>
@@ -793,7 +808,11 @@ export function ClientsPage() {
               </TableHeader>
               <TableBody>
                 {paginatedClients.map((client) => (
-                  <TableRow key={client.id} className="border-white/40 dark:border-white/10 hover:bg-white/60 dark:hover:bg-white/5">
+                  <TableRow 
+                    key={client.id} 
+                    className="border-white/40 dark:border-white/10 hover:bg-white/60 dark:hover:bg-white/5 cursor-pointer"
+                    onClick={() => onClientSelect?.(client.id)}
+                  >
                     <TableCell>
                       <div className="flex items-center space-x-3">
                         <Avatar className="w-10 h-10 border-2 border-white/40 dark:border-white/10 shadow-sm">
@@ -852,12 +871,20 @@ export function ClientsPage() {
                     <TableCell>
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
-                          <Button variant="ghost" size="icon" className="text-muted-foreground hover:text-foreground">
+                          <Button 
+                            variant="ghost" 
+                            size="icon" 
+                            className="text-muted-foreground hover:text-foreground"
+                            onClick={(e) => e.stopPropagation()}
+                          >
                             <MoreHorizontal className="w-4 h-4" />
                           </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
-                          <DropdownMenuItem>
+                          <DropdownMenuItem onClick={(e) => {
+                            e.stopPropagation();
+                            onClientSelect?.(client.id);
+                          }}>
                             <Eye className="w-4 h-4 mr-2" />
                             View Details
                           </DropdownMenuItem>
@@ -884,36 +911,12 @@ export function ClientsPage() {
           
           {/* Pagination */}
           {totalPages > 1 && (
-            <div className="flex items-center justify-between px-6 py-4 border-t border-white/40 dark:border-white/10">
-              <div className="text-muted-foreground text-sm">
-                Showing {((currentPage - 1) * ITEMS_PER_PAGE) + 1} to {Math.min(currentPage * ITEMS_PER_PAGE, filteredAndSortedClients.length)} of {filteredAndSortedClients.length} clients
-              </div>
-              <div className="flex items-center space-x-2">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
-                  disabled={currentPage === 1}
-                  className="bg-white/60 dark:bg-white/5 border-white/40 dark:border-white/10 text-muted-foreground hover:bg-white/80 dark:hover:bg-white/10"
-                >
-                  <ChevronLeft className="w-4 h-4" />
-                  Previous
-                </Button>
-                <div className="text-muted-foreground text-sm">
-                  Page {currentPage} of {totalPages}
-                </div>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
-                  disabled={currentPage === totalPages}
-                  className="bg-white/60 dark:bg-white/5 border-white/40 dark:border-white/10 text-muted-foreground hover:bg-white/80 dark:hover:bg-white/10"
-                >
-                  Next
-                  <ChevronRight className="w-4 h-4" />
-                </Button>
-              </div>
-            </div>
+            <Pagination
+              currentPage={currentPage}
+              totalPages={totalPages}
+              onPageChange={setCurrentPage}
+              className="px-6 py-4 border-t border-white/40 dark:border-white/10"
+            />
           )}
         </Card>
       )}

@@ -1,4 +1,7 @@
+'use client';
+
 import { useState } from "react";
+import { useRouter } from 'next/navigation';
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";
 import { Label } from "./ui/label";
@@ -27,12 +30,13 @@ interface LoginPageProps {
   onSignUp: () => void;
 }
 
-export function LoginPage({ onLogin, onForgotPassword, onSignUp }: LoginPageProps) {
+export function LoginPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [rememberMe, setRememberMe] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const router = useRouter();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -40,8 +44,10 @@ export function LoginPage({ onLogin, onForgotPassword, onSignUp }: LoginPageProp
     
     // Simulate login delay
     setTimeout(() => {
-      onLogin(email, password);
+      // onLogin(email, password);
       setIsLoading(false);
+      // Navigate to dashboard after successful sign in
+      router.push('/dashboard');
     }, 1000);
   };
 
@@ -148,7 +154,7 @@ export function LoginPage({ onLogin, onForgotPassword, onSignUp }: LoginPageProp
                   <Checkbox 
                     id="remember" 
                     checked={rememberMe}
-                    onCheckedChange={setRememberMe}
+                    // onCheckedChange={setRememberMe}
                     className="border-border data-[state=checked]:bg-purple-500 data-[state=checked]:border-purple-500"
                   />
                   <Label htmlFor="remember" className="text-muted-foreground text-sm">Remember me</Label>
@@ -156,7 +162,7 @@ export function LoginPage({ onLogin, onForgotPassword, onSignUp }: LoginPageProp
                 <Button
                   type="button"
                   variant="link"
-                  onClick={onForgotPassword}
+                  // onClick={onForgotPassword}
                   className="text-purple-400 hover:text-purple-300 text-sm p-0 h-auto"
                 >
                   Forgot password?
@@ -223,7 +229,7 @@ export function LoginPage({ onLogin, onForgotPassword, onSignUp }: LoginPageProp
                 <Button
                   type="button"
                   variant="link"
-                  onClick={onSignUp}
+                  // onClick={onSignUp}
                   className="text-purple-400 hover:text-purple-300 p-0 h-auto"
                 >
                   Create one here

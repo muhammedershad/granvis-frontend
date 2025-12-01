@@ -373,7 +373,7 @@ export function EmployeesPage({ onEmployeeSelect }: EmployeesPageProps) {
 
   // Filter and sort employees
   const filteredAndSortedEmployees = useMemo(() => {
-    let filtered = employees.filter(employee => {
+    const filtered = employees.filter(employee => {
       const searchTerm = filters.search.toLowerCase();
       const matchesSearch = !filters.search || 
         employee.firstName.toLowerCase().includes(searchTerm) ||

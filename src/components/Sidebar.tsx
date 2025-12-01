@@ -22,6 +22,7 @@ import {
 import { Button } from "./ui/button";
 import { cn } from "./ui/utils";
 import { useSidebar } from "./SidebarProvider";
+import { useRouter } from "next/navigation";
 
 interface SidebarProps {
   className?: string;
@@ -33,111 +34,132 @@ const navigationItems = [
   {
     title: "Dashboard",
     icon: Home,
-    page: "dashboard"
+    page: "dashboard",
+    link: "/dashboard"
   },
-  {
-    title: "Enquiries",
-    icon: MessageSquare,
-    page: "enquiries",
-    badge: "New"
-  },
+  // {
+  //   title: "Enquiries",
+  //   icon: MessageSquare,
+  //   page: "enquiries",
+  //   badge: "New",
+  //   link: "/enquiries"
+  // },
   {
     title: "Notifications",
     icon: Bell,
     page: "notifications",
-    badge: "5"
+    badge: "5",
+    link: "/notifications"
   },
   {
     title: "Projects",
     icon: Building2,
     page: "projects",
-    badge: "24"
+    badge: "24",
+    link: "/projects"
   },
-  {
-    title: "Team",
-    icon: Users,
-    page: "team"
-  },
+  // {
+  //   title: "Team",
+  //   icon: Users,
+  //   page: "team",
+  //   badge: "7",
+  //   link: "/team"
+  // },
   {
     title: "Clients",
     icon: UserCheck,
-    page: "clients"
+    page: "clients",
+    badge: "3",
+    link: "/clients"
   },
-  {
-    title: "CRM",
-    icon: Clock,
-    page: "crm",
-    badge: "New"
-  },
-  {
-    title: "Marketing",
-    icon: Megaphone,
-    page: "marketing",
-    badge: "12"
-  },
+  // {
+  //   title: "CRM",
+  //   icon: Clock,
+  //   page: "crm",
+  //   badge: "New",
+  //   link: "/crm"
+  // },
+  // {
+  //   title: "Marketing",
+  //   icon: Megaphone,
+  //   page: "marketing",
+  //   badge: "12",
+  //   link: "/marketing"
+  // },
   {
     title: "Payments",
     icon: CreditCard,
     page: "payments",
-    badge: "8"
+    badge: "8",
+    link: "/payments"
   },
-  {
-    title: "Calendar",
-    icon: Calendar,
-    page: "calendar",
-    badge: "3"
-  },
-  {
-    title: "Finance",
-    icon: DollarSign,
-    page: "budget"
-  }
+  // {
+  //   title: "Calendar",
+  //   icon: Calendar,
+  //   page: "calendar",
+  //   badge: "3",
+  //   link: "/calendar"
+  // },
+  // {
+  //   title: "Finance",
+  //   icon: DollarSign,
+  //   page: "budget",
+  //   link: "/finance"
+  // }
 ];
 
 const projectTypes = [
   {
     title: "Architecture",
     icon: Building2,
-    page: "projects"
+    page: "projects",
+    link: "/projects"
   },
   {
     title: "Interior Design",
     icon: Palette,
-    page: "projects"
+    page: "projects",
+    link: "/projects"
   },
   {
     title: "Landscape",
     icon: TreePine,
-    page: "projects"
+    page: "projects",
+    link: "/projects"
   }
 ];
 
-const bottomItems = [
-  {
-    title: "Files",
-    icon: FolderOpen,
-    page: "files"
-  },
-  {
-    title: "Reports",
-    icon: BarChart3,
-    page: "reports"
-  },
-  {
-    title: "Settings",
-    icon: Settings,
-    page: "settings"
-  }
-];
+// const bottomItems = [
+//   {
+//     title: "Files",
+//     icon: FolderOpen,
+//     page: "files",
+//     link: "/files"
+//   },
+//   {
+//     title: "Reports",
+//     icon: BarChart3,
+//     page: "reports",
+//     link: "/reports"
+//   },
+//   {
+//     title: "Settings",
+//     icon: Settings,
+//     page: "settings",
+//     link: "/settings"
+//   }
+// ];
 
 export function Sidebar({ className, onNavigate, currentPage = "dashboard" }: SidebarProps) {
   const { isCollapsed, toggleSidebar, isMobile, isMobileOpen, setIsMobileOpen } = useSidebar();
+  const route = useRouter()
 
-  const handleNavClick = (page: string) => {
+  const handleNavClick = (page: string, link: string) => {
     // Close mobile sidebar when clicking a nav item
     if (isMobile && isMobileOpen) {
       setIsMobileOpen(false);
     }
+    route.push(link)
     onNavigate?.(page);
   };
 
@@ -222,7 +244,7 @@ export function Sidebar({ className, onNavigate, currentPage = "dashboard" }: Si
                   return (
                     <button
                       key={item.page}
-                      onClick={() => handleNavClick(item.page)}
+                      onClick={() => handleNavClick(item.page, item?.link)}
                       className={cn(
                         "w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-all duration-200 group relative overflow-hidden",
                         isActive 
@@ -265,7 +287,7 @@ export function Sidebar({ className, onNavigate, currentPage = "dashboard" }: Si
                       return (
                         <button
                           key={item.title}
-                          onClick={() => handleNavClick(item.page)}
+                          onClick={() => handleNavClick(item.page, item?.link)}
                           className="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm text-muted-foreground hover:text-foreground hover:bg-muted transition-all duration-200"
                         >
                           <Icon className="w-4 h-4 flex-shrink-0" />
@@ -280,14 +302,14 @@ export function Sidebar({ className, onNavigate, currentPage = "dashboard" }: Si
           </div>
 
           {/* Bottom Navigation */}
-          <div className="border-t border-border p-3">
+          {/* <div className="border-t border-border p-3">
             <nav className="space-y-1">
               {bottomItems.map((item) => {
                 const Icon = item.icon;
                 return (
                   <button
                     key={item.page}
-                    onClick={() => handleNavClick(item.page)}
+                    onClick={() => handleNavClick(item.page, item?.link)}
                     className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm text-muted-foreground hover:text-foreground hover:bg-muted transition-all duration-200"
                   >
                     <Icon className="w-5 h-5 flex-shrink-0" />
@@ -296,7 +318,7 @@ export function Sidebar({ className, onNavigate, currentPage = "dashboard" }: Si
                 );
               })}
             </nav>
-          </div>
+          </div> */}
 
           {/* User Profile */}
           <div className="border-t border-border p-3">

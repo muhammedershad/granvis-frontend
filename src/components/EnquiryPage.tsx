@@ -1,3 +1,4 @@
+'use client';
 import { useState } from "react";
 import { Plus, Users, Phone, Mail, Calendar, Target, TrendingUp, Clock, Star, Search, Filter, MoreVertical, Edit, Trash2, Eye, MessageCircle, CheckCircle, XCircle, AlertCircle, UserPlus, Building2 } from "lucide-react";
 import { Button } from "./ui/button";
