@@ -3,21 +3,17 @@ import {
   Clock, 
   MapPin, 
   Calendar, 
-  Users, 
   Timer, 
   PlayCircle,
   PauseCircle,
   StopCircle,
   Coffee,
   CheckCircle,
-  XCircle,
   AlertCircle,
   TrendingUp,
-  FileText,
   Plus,
   Filter,
   Download,
-  Search,
   MoreHorizontal,
   Edit,
   Eye,
@@ -25,15 +21,8 @@ import {
   Navigation,
   Wifi,
   WifiOff,
-  Sun,
-  Moon,
-  Home,
-  Building,
   Plane,
-  Heart,
-  UserX,
   CalendarDays,
-  ClockIcon,
   MapPinIcon
 } from "lucide-react";
 import { Button } from "./ui/button";
@@ -48,7 +37,6 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from ".
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogDescription } from "./ui/dialog";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from "./ui/dropdown-menu";
 import { Progress } from "./ui/progress";
-import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
 import { AttendanceRecord, AttendanceStats, AttendanceActionType } from "../types/attendance";
 import { LeaveRequest, LeaveBalance, LeaveType, LeaveStatus } from "../types/leave";
 import { cn } from "./ui/utils";
@@ -238,9 +226,9 @@ export function CRMPage() {
   const [currentLocation, setCurrentLocation] = useState<{latitude: number, longitude: number, address: string} | null>(null);
   const [isOnBreak, setIsOnBreak] = useState(false);
   const [isClockedIn, setIsClockedIn] = useState(false);
-  const [attendanceRecords, setAttendanceRecords] = useState<AttendanceRecord[]>(mockAttendanceRecords);
-  const [leaveRequests, setLeaveRequests] = useState<LeaveRequest[]>(mockLeaveRequests);
-  const [leaveBalances, setLeaveBalances] = useState<LeaveBalance[]>(mockLeaveBalances);
+  const [attendanceRecords] = useState<AttendanceRecord[]>(mockAttendanceRecords);
+  const [leaveRequests] = useState<LeaveRequest[]>(mockLeaveRequests);
+  const [leaveBalances] = useState<LeaveBalance[]>(mockLeaveBalances);
   const [isLeaveDialogOpen, setIsLeaveDialogOpen] = useState(false);
   const [isLocationLoading, setIsLocationLoading] = useState(false);
 
@@ -288,9 +276,10 @@ export function CRMPage() {
       const address = `Lat: ${latitude.toFixed(4)}, Lng: ${longitude.toFixed(4)}`;
       
       setCurrentLocation({ latitude, longitude, address });
-    } catch (error: any) {
+    } catch (err: unknown) {
       let errorMessage = "Location access failed";
-      
+      const error = err as { code?: number };
+
       if (error.code) {
         switch (error.code) {
           case 1: // PERMISSION_DENIED

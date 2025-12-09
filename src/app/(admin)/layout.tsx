@@ -1,37 +1,33 @@
 'use client';
 import { DashboardHeader } from "@/components/DashboardHeader";
 import { Sidebar } from "@/components/Sidebar";
-import { SidebarProvider, useSidebar } from "@/components/SidebarProvider";
-import { useState } from "react";
+import { useSidebar } from "@/components/SidebarProvider";
+import { getCookie } from "@/lib/cookies";
+import { getAuthDetails } from "@/store/slices/authSlice";
+import { useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
+import { useSelector } from "react-redux";
 
 type PageType = "dashboard" | "employees" | "employee-details" | "projects" | "project-details" | "team" | "clients" | "crm" | "marketing" | "payments" | "calendar" | "budget" | "enquiries" | "notifications";
-type AuthPageType = "login" | "forgot-password" | "verify-email" | "signup";
 
 const Layout = ({ children }: { children: React.ReactNode }) => {
-    const { isCollapsed, isMobile } = useSidebar();
-    const [currentPage, setCurrentPage] = useState<PageType>("dashboard");
-    const [selectedEmployeeId, setSelectedEmployeeId] = useState<string | null>(null);
-    const [selectedProjectId, setSelectedProjectId] = useState<string | null>(null);
+    const router = useRouter();
+  const isAuthenticated = useSelector(
+    getAuthDetails
+  );
+  const accessToken = getCookie('accessToken');
+  const { isCollapsed, isMobile } = useSidebar();
+  const [currentPage, setCurrentPage] = useState<PageType>("dashboard");
 
-    const handleEmployeeSelect = (employeeId: string) => {
-        setSelectedEmployeeId(employeeId);
-        setCurrentPage("employee-details");
-    };
+  useEffect(() => {
+    if (!isAuthenticated || !accessToken) {
+      router.push('/sign-in');
+    }
+  }, [isAuthenticated, accessToken, router]);
 
-    const handleBackFromEmployeeDetails = () => {
-        setCurrentPage("employees");
-        setSelectedEmployeeId(null);
-    };
-
-    const handleProjectSelect = (projectId: string) => {
-        setSelectedProjectId(projectId);
-        setCurrentPage("project-details");
-    };
-
-    const handleBackFromProjectDetails = () => {
-        setCurrentPage("projects");
-        setSelectedProjectId(null);
-    };
+  if (!isAuthenticated || !accessToken) {
+    return null;
+  }
 
     const handleNavigateToNotifications = () => {
         setCurrentPage("notifications");
@@ -70,8 +66,6 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
         }
     };
 
-
-    console.log("Admin layout rendered");
     return (<div className="min-h-screen bg-gradient-to-br from-gray-50 via-blue-50/30 to-indigo-50/50 dark:from-gray-900 dark:via-black dark:to-gray-900 relative overflow-x-hidden">
             {/* Animated background elements - only show in dark theme */}
             <div className="fixed inset-0 overflow-hidden pointer-events-none opacity-0 dark:opacity-100 transition-opacity duration-500">

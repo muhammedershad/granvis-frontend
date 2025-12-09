@@ -7,7 +7,6 @@ import {
   Mail,
   Phone,
   MapPin,
-  Calendar,
   Clock,
   Award,
   Briefcase,
@@ -15,17 +14,13 @@ import {
   Building,
   Star,
   TrendingUp,
-  FileText,
-  Settings,
   MoreHorizontal,
   Camera,
   UserCheck,
-  UserX,
   Crown,
   Shield,
   Target,
   Activity,
-  BookOpen,
   Zap
 } from "lucide-react";
 import { Button } from "./ui/button";
@@ -38,11 +33,7 @@ import { Textarea } from "./ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "./ui/tabs";
 import { Progress } from "./ui/progress";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "./ui/table";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from "./ui/dropdown-menu";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogDescription } from "./ui/dialog";
 import { Employee } from "../types/employee";
-import { Project } from "../types/project";
 import { cn } from "./ui/utils";
 
 interface EmployeeDetailsPageProps {
@@ -101,7 +92,7 @@ const mockEmployeeDetails: Employee & {
   phone: "+1 (555) 123-4567",
   position: "Senior Software Architect",
   department: "Engineering",
-  status: "active",
+  status: "Active",
   avatar: "",
   joinDate: "2021-03-15",
   employeeId: "EMP001",
@@ -182,7 +173,7 @@ const mockEmployeeDetails: Employee & {
       email: "alex.thompson@company.com",
       position: "Software Engineer",
       department: "Engineering",
-      status: "active",
+      status: "Active",
       avatar: "",
       joinDate: "2022-06-01",
       employeeId: "EMP002",
@@ -196,7 +187,7 @@ const mockEmployeeDetails: Employee & {
       email: "maria.rodriguez@company.com",
       position: "Frontend Developer",
       department: "Engineering",
-      status: "active",
+      status: "Active",
       avatar: "",
       joinDate: "2023-02-15",
       employeeId: "EMP003",
@@ -211,7 +202,7 @@ const mockEmployeeDetails: Employee & {
     email: "james.wilson@company.com",
     position: "Engineering Director",
     department: "Engineering",
-    status: "active",
+    status: "Active",
     avatar: "",
     joinDate: "2020-01-10",
     employeeId: "EMP004",

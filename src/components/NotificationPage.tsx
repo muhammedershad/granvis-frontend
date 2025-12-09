@@ -14,30 +14,21 @@ import {
   Building2,
   Settings,
   Trash2,
-  Mail as MarkAsRead,
   Eye,
   ExternalLink,
   Calendar,
   TrendingUp,
   AlertTriangle,
-  MessageSquare,
-  FileText,
   UserPlus,
-  CreditCard,
-  Target,
-  Activity,
   CheckCheck,
-  X
 } from "lucide-react";
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";
-import { Card, CardContent, CardHeader, CardTitle } from "./ui/card";
+import { Card, CardContent } from "./ui/card";
 import { Badge } from "./ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./ui/select";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from "./ui/dropdown-menu";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "./ui/tabs";
-import { Separator } from "./ui/separator";
-import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
 import { Notification, NotificationFilters, NotificationStats } from "../types/notification";
 
 // Mock notification data

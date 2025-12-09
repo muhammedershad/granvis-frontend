@@ -2,58 +2,85 @@
 
 import { useState } from "react";
 import { useRouter } from 'next/navigation';
+import { useDispatch } from 'react-redux';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";
 import { Label } from "./ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "./ui/card";
-import { Checkbox } from "./ui/checkbox";
-import { Separator } from "./ui/separator";
 import { 
   Eye, 
   EyeOff, 
   Mail, 
   Lock, 
   Building2, 
-  Github, 
-  Chrome,
   ArrowRight,
   Shield,
   Zap,
-  Sparkles
+  Sparkles,
+  AlertCircle
 } from "lucide-react";
-import { cn } from "./ui/utils";
 import { ThemeToggle } from "./ThemeToggle";
-
-interface LoginPageProps {
-  onLogin: (email: string, password: string) => void;
-  onForgotPassword: () => void;
-  onSignUp: () => void;
-}
+import { useLoginMutation } from '@/lib/api/apiSlice';
+import { setCredentials } from '@/store/slices/authSlice';
+import { setCookie } from '@/lib/cookies';
+import { loginSchema, type LoginFormData } from '@/lib/validations/auth';
+import { Alert, AlertDescription } from './ui/alert';
 
 export function LoginPage() {
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
-  const [rememberMe, setRememberMe] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
+  const dispatch = useDispatch();
+  const [login, { isLoading }] = useLoginMutation();
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setIsLoading(true);
-    
-    // Simulate login delay
-    setTimeout(() => {
-      // onLogin(email, password);
-      setIsLoading(false);
-      // Navigate to dashboard after successful sign in
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+    setError,
+  } = useForm<LoginFormData>({
+    resolver: zodResolver(loginSchema),
+    defaultValues: {
+      email: '',
+      password: '',
+    },
+  });
+
+  const onSubmit = async (data: LoginFormData) => {
+    try {
+      const response = await login(data).unwrap();
+
+      console.log('Login successful:', response);
+      
+      // Store tokens in cookies
+      setCookie('accessToken', response?.tokens?.accessToken, 1); // 1 day
+      setCookie('refreshToken', response?.tokens?.refreshToken, 7); // 7 days
+      
+      // Store user in Redux
+      dispatch(setCredentials({
+        user: response.user,
+      }));
+      
+      // Navigate to dashboard
       router.push('/dashboard');
-    }, 1000);
-  };
+    } catch (err: unknown) {
+      console.error('Login failed:', err);
 
-  const handleSocialLogin = (provider: string) => {
-    console.log(`Login with ${provider}`);
-    // Handle social login
+      // Handle specific error messages from backend
+      const error = err as { data?: { message?: string } };
+      if (error?.data?.message) {
+        setError('root', {
+          type: 'manual',
+          message: error.data.message,
+        });
+      } else {
+        setError('root', {
+          type: 'manual',
+          message: 'Login failed. Please check your credentials and try again.',
+        });
+      }
+    }
   };
 
   return (
@@ -90,8 +117,8 @@ export function LoginPage() {
             <Building2 className="w-8 h-8 text-white" />
             <div className="absolute inset-0 bg-gradient-to-br from-purple-400/20 to-blue-400/20 rounded-2xl blur-lg"></div>
           </div>
-          <h1 className="text-3xl text-foreground mb-2">Architectural Pro</h1>
-          <p className="text-muted-foreground">Welcome back to your dashboard</p>
+          <h1 className="text-3xl text-foreground mb-2">Griha Architects</h1>
+          <p className="text-muted-foreground">Welcome back to your application</p>
         </div>
 
         {/* Login Card */}
@@ -104,37 +131,55 @@ export function LoginPage() {
           </CardHeader>
 
           <CardContent className="relative z-10 space-y-6">
-            <form onSubmit={handleSubmit} className="space-y-4">
+            <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+              {/* Root Error Alert */}
+              {errors.root && (
+                <Alert variant="destructive">
+                  <AlertCircle className="h-4 w-4" />
+                  <AlertDescription>{errors.root.message}</AlertDescription>
+                </Alert>
+              )}
+
               {/* Email Field */}
               <div className="space-y-2">
-                <Label htmlFor="email" className="text-muted-foreground">Email Address</Label>
+                <Label htmlFor="email" className="text-muted-foreground">
+                  Email Address
+                </Label>
                 <div className="relative">
                   <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
                   <Input
                     id="email"
                     type="email"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
+                    {...register('email')}
                     placeholder="john@architecturalpro.com"
-                    className="pl-10 bg-card/50 border-border text-foreground placeholder:text-muted-foreground focus:ring-2 focus:ring-purple-500/50 focus:border-purple-500/50"
-                    required
+                    className={`pl-10 bg-card/50 border-border text-foreground placeholder:text-muted-foreground focus:ring-2 focus:ring-purple-500/50 focus:border-purple-500/50 ${
+                      errors.email ? 'border-red-500 focus:ring-red-500/50 focus:border-red-500/50' : ''
+                    }`}
                   />
                 </div>
+                {errors.email && (
+                  <p className="text-red-500 text-sm flex items-center gap-1">
+                    <AlertCircle className="w-3 h-3" />
+                    {errors.email.message}
+                  </p>
+                )}
               </div>
 
               {/* Password Field */}
               <div className="space-y-2">
-                <Label htmlFor="password" className="text-muted-foreground">Password</Label>
+                <Label htmlFor="password" className="text-muted-foreground">
+                  Password
+                </Label>
                 <div className="relative">
                   <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
                   <Input
                     id="password"
                     type={showPassword ? "text" : "password"}
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
+                    {...register('password')}
                     placeholder="Enter your password"
-                    className="pl-10 pr-10 bg-card/50 border-border text-foreground placeholder:text-muted-foreground focus:ring-2 focus:ring-purple-500/50 focus:border-purple-500/50"
-                    required
+                    className={`pl-10 pr-10 bg-card/50 border-border text-foreground placeholder:text-muted-foreground focus:ring-2 focus:ring-purple-500/50 focus:border-purple-500/50 ${
+                      errors.password ? 'border-red-500 focus:ring-red-500/50 focus:border-red-500/50' : ''
+                    }`}
                   />
                   <Button
                     type="button"
@@ -146,27 +191,12 @@ export function LoginPage() {
                     {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                   </Button>
                 </div>
-              </div>
-
-              {/* Remember Me & Forgot Password */}
-              <div className="flex items-center justify-between">
-                <div className="flex items-center space-x-2">
-                  <Checkbox 
-                    id="remember" 
-                    checked={rememberMe}
-                    // onCheckedChange={setRememberMe}
-                    className="border-border data-[state=checked]:bg-purple-500 data-[state=checked]:border-purple-500"
-                  />
-                  <Label htmlFor="remember" className="text-muted-foreground text-sm">Remember me</Label>
-                </div>
-                <Button
-                  type="button"
-                  variant="link"
-                  // onClick={onForgotPassword}
-                  className="text-purple-400 hover:text-purple-300 text-sm p-0 h-auto"
-                >
-                  Forgot password?
-                </Button>
+                {errors.password && (
+                  <p className="text-red-500 text-sm flex items-center gap-1">
+                    <AlertCircle className="w-3 h-3" />
+                    {errors.password.message}
+                  </p>
+                )}
               </div>
 
               {/* Login Button */}
@@ -191,51 +221,6 @@ export function LoginPage() {
                 </span>
               </Button>
             </form>
-
-            {/* Divider */}
-            <div className="relative">
-              <Separator className="bg-border" />
-              <div className="absolute inset-0 flex items-center justify-center">
-                <span className="px-4 bg-background text-muted-foreground text-sm">or continue with</span>
-              </div>
-            </div>
-
-            {/* Social Login */}
-            <div className="grid grid-cols-2 gap-3">
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => handleSocialLogin("google")}
-                className="bg-card/50 border-border text-muted-foreground hover:bg-card hover:text-foreground"
-              >
-                <Chrome className="w-4 h-4 mr-2" />
-                Google
-              </Button>
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => handleSocialLogin("github")}
-                className="bg-card/50 border-border text-muted-foreground hover:bg-card hover:text-foreground"
-              >
-                <Github className="w-4 h-4 mr-2" />
-                GitHub
-              </Button>
-            </div>
-
-            {/* Sign Up Link */}
-            <div className="text-center pt-4 border-t border-border">
-              <p className="text-muted-foreground text-sm">
-                Don't have an account?{" "}
-                <Button
-                  type="button"
-                  variant="link"
-                  // onClick={onSignUp}
-                  className="text-purple-400 hover:text-purple-300 p-0 h-auto"
-                >
-                  Create one here
-                </Button>
-              </p>
-            </div>
           </CardContent>
         </Card>
 

@@ -16,7 +16,6 @@ import {
   Calendar,
   DollarSign,
   Users,
-  MapPin,
   Clock,
   TrendingUp,
   AlertCircle,
@@ -39,8 +38,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from ".
 import { Badge } from "./ui/badge";
 import { Progress } from "./ui/progress";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from "./ui/dropdown-menu";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "./ui/dialog";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "./ui/tabs";
+import { Dialog, DialogContent, DialogTrigger } from "./ui/dialog";
 import { AddProjectForm } from "./AddProjectForm";
 import { Project, ProjectFilters, ProjectSort, ProjectViewType } from "../types/project";
 import { cn } from "./ui/utils";
@@ -258,8 +256,6 @@ export function ProjectsPage({ onProjectSelect }: ProjectsPageProps) {
   const types = [...new Set(projects.map(proj => proj.type))];
   const statuses = [...new Set(projects.map(proj => proj.status))];
   const priorities = [...new Set(projects.map(proj => proj.priority))];
-  const clients = [...new Set(projects.map(proj => proj.client))];
-  const projectManagers = [...new Set(projects.map(proj => proj.projectManager))];
 
   // Calculate statistics
   const stats = useMemo(() => {
@@ -275,7 +271,7 @@ export function ProjectsPage({ onProjectSelect }: ProjectsPageProps) {
 
   // Filter and sort projects
   const filteredAndSortedProjects = useMemo(() => {
-    let filtered = projects.filter(project => {
+    const filtered = projects.filter(project => {
       const searchTerm = filters.search.toLowerCase();
       const matchesSearch = !filters.search || 
         project.name.toLowerCase().includes(searchTerm) ||

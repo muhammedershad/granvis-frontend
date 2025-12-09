@@ -8,7 +8,6 @@ import {
   MapPin, 
   Phone, 
   Mail, 
-  Globe, 
   Clock,
   CheckCircle,
   AlertCircle,
@@ -33,11 +32,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "./ui/tabs";
 import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
 import { Separator } from "./ui/separator";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "./ui/table";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "./ui/dialog";
-import { Textarea } from "./ui/textarea";
-import { Input } from "./ui/input";
-import { Label } from "./ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./ui/select";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "./ui/dialog";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "./ui/dropdown-menu";
 
 interface ProjectDetailsPageProps {
@@ -331,7 +326,7 @@ const mockPayments: Payment[] = [
   }
 ];
 
-export function ProjectDetailsPage({ projectId, onBack }: ProjectDetailsPageProps) {
+export function ProjectDetailsPage({ onBack }: ProjectDetailsPageProps) {
   const [selectedTimelineItem, setSelectedTimelineItem] = useState<TimelineItem | null>(null);
   const [activeTab, setActiveTab] = useState("overview");
 

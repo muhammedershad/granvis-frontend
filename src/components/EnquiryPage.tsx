@@ -1,6 +1,6 @@
 'use client';
 import { useState } from "react";
-import { Plus, Users, Phone, Mail, Calendar, Target, TrendingUp, Clock, Star, Search, Filter, MoreVertical, Edit, Trash2, Eye, MessageCircle, CheckCircle, XCircle, AlertCircle, UserPlus, Building2 } from "lucide-react";
+import { Plus, Users, Phone, Mail, Calendar, TrendingUp, Clock, Star, Search, MoreVertical, Edit, Trash2, Eye, MessageCircle, CheckCircle, XCircle, AlertCircle, UserPlus, Building2 } from "lucide-react";
 import { Button } from "./ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "./ui/card";
 import { Input } from "./ui/input";
@@ -8,12 +8,10 @@ import { Label } from "./ui/label";
 import { Textarea } from "./ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./ui/select";
 import { Badge } from "./ui/badge";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "./ui/tabs";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "./ui/dialog";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "./ui/dropdown-menu";
-import { Separator } from "./ui/separator";
+import { Enquiry, EnquiryFormData } from "../types/enquiry";
 import { RadioGroup, RadioGroupItem } from "./ui/radio-group";
-import { Enquiry, EnquiryFormData, FollowUp } from "../types/enquiry";
 
 // Mock data for existing clients (this would come from your client management system)
 const existingClients = [
@@ -85,7 +83,6 @@ const mockEnquiries: Enquiry[] = [
 ];
 
 export function EnquiryPage() {
-  const [activeTab, setActiveTab] = useState("new-enquiry");
   const [enquiries, setEnquiries] = useState<Enquiry[]>(mockEnquiries);
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [selectedEnquiry, setSelectedEnquiry] = useState<Enquiry | null>(null);
@@ -312,7 +309,7 @@ export function EnquiryPage() {
 
                   <div className="space-y-3">
                     <Label htmlFor="source" className="text-foreground">Source</Label>
-                    <Select value={formData.source} onValueChange={(value: any) => setFormData({ ...formData, source: value })}>
+                    <Select value={formData.source} onValueChange={(value: 'website' | 'referral' | 'social-media' | 'advertisement' | 'walk-in' | 'other') => setFormData({ ...formData, source: value })}>
                       <SelectTrigger className="bg-background/50 border-border/50">
                         <SelectValue />
                       </SelectTrigger>
@@ -447,7 +444,7 @@ export function EnquiryPage() {
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="priority">Priority</Label>
-                  <Select value={formData.priority} onValueChange={(value: any) => setFormData({ ...formData, priority: value })}>
+                  <Select value={formData.priority} onValueChange={(value: 'low' | 'medium' | 'high' | 'urgent') => setFormData({ ...formData, priority: value })}>
                     <SelectTrigger>
                       <SelectValue />
                     </SelectTrigger>
@@ -686,7 +683,7 @@ export function EnquiryPage() {
         
         <CardContent className="relative p-0">
           <div className="space-y-4 p-6">
-            {filteredEnquiries.map((enquiry, index) => (
+            {filteredEnquiries.map((enquiry) => (
               <Card key={enquiry.id} className="relative overflow-hidden bg-card/30 hover:bg-card/50 border-border/30 hover:border-border/60 transition-all duration-300 group hover:shadow-lg">
                 <div className="absolute inset-0 bg-gradient-to-r from-blue-500/[0.01] to-purple-500/[0.01] group-hover:from-blue-500/[0.02] group-hover:to-purple-500/[0.02] transition-all duration-300"></div>
                 <CardContent className="relative p-6">

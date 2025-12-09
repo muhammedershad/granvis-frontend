@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Calendar, Clock, Plus, Search, Filter, Edit, Trash2, CheckCircle, AlertCircle, Eye } from "lucide-react";
+import { Calendar, Clock, Plus, Search, CheckCircle, AlertCircle, Eye } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "./ui/card";
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";
@@ -172,7 +172,7 @@ const mockSchedules: PaymentSchedule[] = [
 ];
 
 export function PaymentScheduleManager() {
-  const [schedules, setSchedules] = useState<PaymentSchedule[]>(mockSchedules);
+  const [schedules] = useState<PaymentSchedule[]>(mockSchedules);
   const [selectedSchedule, setSelectedSchedule] = useState<PaymentSchedule | null>(null);
   const [showCreateDialog, setShowCreateDialog] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");

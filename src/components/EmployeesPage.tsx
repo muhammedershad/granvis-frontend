@@ -351,14 +351,9 @@ export function EmployeesPage({ onEmployeeSelect }: EmployeesPageProps) {
   });
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
 
-  // Get unique values for filter options
-  const departments = [...new Set(employees.map(emp => emp.department))];
-  const positions = [...new Set(employees.map(emp => emp.position))];
-  const statuses = [...new Set(employees.map(emp => emp.employmentStatus))];
-  const types = [...new Set(employees.map(emp => emp.employmentType))];
-
   // Calculate statistics
   const stats = useMemo(() => {
+    const departments = [...new Set(employees.map(emp => emp.department))];
     const total = employees.length;
     const active = employees.filter(e => e.employmentStatus === "Active").length;
     const onLeave = employees.filter(e => e.employmentStatus === "On Leave").length;
@@ -369,7 +364,12 @@ export function EmployeesPage({ onEmployeeSelect }: EmployeesPageProps) {
     }).length;
 
     return { total, active, onLeave, newThisMonth, departments: departments.length };
-  }, [employees, departments]);
+  }, [employees]);
+
+  // Get unique values for filter options
+  const departments = [...new Set(employees.map(emp => emp.department))];
+  const positions = [...new Set(employees.map(emp => emp.position))];
+  const statuses = [...new Set(employees.map(emp => emp.employmentStatus))];
 
   // Filter and sort employees
   const filteredAndSortedEmployees = useMemo(() => {

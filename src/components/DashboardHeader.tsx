@@ -1,9 +1,11 @@
-import { Bell, Search, Settings, User, Menu } from "lucide-react";
+import { Search, Settings, User, Menu } from "lucide-react";
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";
 import { useSidebar } from "./SidebarProvider";
 import { ThemeToggle } from "./ThemeToggle";
 import { NotificationDropdown } from "./NotificationDropdown";
+import { getAuthDetails } from "@/store/slices/authSlice";
+import { useSelector } from "react-redux";
 
 interface DashboardHeaderProps {
   title?: string;
@@ -12,6 +14,9 @@ interface DashboardHeaderProps {
 
 export function DashboardHeader({ title = "Dashboard Overview", onNavigateToNotifications }: DashboardHeaderProps) {
   const { isMobile, toggleMobileSidebar } = useSidebar();
+  const { user } = useSelector(getAuthDetails);
+
+  console.log("user:", user);
 
   const getWelcomeMessage = () => {
     switch (title) {
@@ -26,7 +31,7 @@ export function DashboardHeader({ title = "Dashboard Overview", onNavigateToNoti
       case "Budget":
         return "Monitor project finances and expenses";
       default:
-        return "Welcome back, John Doe";
+        return `Welcome back, ${user?.firstName + " " + user?.lastName || "User"}!`;
     }
   };
 

@@ -1,26 +1,17 @@
 import { useState } from "react";
 import { 
   Calendar, 
-  CheckCircle, 
   Circle, 
   Clock, 
   DollarSign, 
-  Filter, 
   Plus, 
-  Search, 
-  Star, 
   TrendingUp, 
   Users,
   Target,
   FileText,
   CreditCard,
   Eye,
-  Phone,
   Mail,
-  MapPin,
-  Award,
-  Briefcase,
-  Coffee,
   Download,
   AlertCircle,
   CheckCircle2,
@@ -28,7 +19,6 @@ import {
   Zap,
   ArrowUpRight,
   ArrowDownRight,
-  TrendingDown
 } from "lucide-react";
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";
@@ -43,6 +33,16 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { PaymentScheduleManager } from "./PaymentScheduleManager";
 import { PaymentReports } from "./PaymentReports";
 import { PaymentStatistics } from "./PaymentStatistics";
+
+// Types
+interface PaymentTarget {
+  id: string;
+  title: string;
+  target: number;
+  current: number;
+  deadline: string;
+  category: "quarterly" | "monthly" | "annual" | "receivables";
+}
 
 // Mock data
 const recentPayments = [
@@ -103,7 +103,7 @@ const recentPayments = [
   }
 ];
 
-const paymentTargets = [
+const paymentTargets: PaymentTarget[] = [
   {
     id: "1",
     title: "Q4 2024 Revenue",
@@ -149,7 +149,6 @@ const quickStats = {
 
 export function PaymentPage() {
   const [activeTab, setActiveTab] = useState("overview");
-  const [selectedPayment, setSelectedPayment] = useState<string | null>(null);
   const [showCreatePayment, setShowCreatePayment] = useState(false);
 
   const getStatusColor = (status: string) => {
@@ -181,7 +180,7 @@ export function PaymentPage() {
     }).format(amount);
   };
 
-  const getTargetProgress = (target: any) => {
+  const getTargetProgress = (target: PaymentTarget) => {
     if (target.category === "receivables") {
       // For receivables, we want current to be below target
       return Math.min(100, (target.current / target.target) * 100);
@@ -189,7 +188,7 @@ export function PaymentPage() {
     return (target.current / target.target) * 100;
   };
 
-  const getTargetStatus = (target: any) => {
+  const getTargetStatus = (target: PaymentTarget) => {
     const progress = getTargetProgress(target);
     if (target.category === "receivables") {
       return progress > 100 ? "warning" : "good";

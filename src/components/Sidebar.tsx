@@ -1,28 +1,25 @@
 import { 
   Home, 
   Building2, 
-  Users, 
   UserCheck, 
-  Calendar, 
-  DollarSign, 
-  FolderOpen, 
-  BarChart3, 
   Settings, 
   ChevronLeft,
   ChevronRight,
   Palette,
   TreePine,
   X,
-  Clock,
-  Megaphone,
   CreditCard,
-  MessageSquare,
   Bell
 } from "lucide-react";
 import { Button } from "./ui/button";
 import { cn } from "./ui/utils";
 import { useSidebar } from "./SidebarProvider";
 import { useRouter } from "next/navigation";
+import { useLogoutMutation } from "@/lib/api/apiSlice";
+import { useDispatch } from "react-redux";
+import { deleteCookie } from "@/lib/cookies";
+import { logout as logoutAction } from '@/store/slices/authSlice';
+
 
 interface SidebarProps {
   className?: string;
@@ -129,32 +126,56 @@ const projectTypes = [
   }
 ];
 
-// const bottomItems = [
-//   {
-//     title: "Files",
-//     icon: FolderOpen,
-//     page: "files",
-//     link: "/files"
-//   },
-//   {
-//     title: "Reports",
-//     icon: BarChart3,
-//     page: "reports",
-//     link: "/reports"
-//   },
-//   {
-//     title: "Settings",
-//     icon: Settings,
-//     page: "settings",
-//     link: "/settings"
-//   }
-// ];
+const bottomItems = [
+  // {
+  //   title: "Files",
+  //   icon: FolderOpen,
+  //   page: "files",
+  //   link: "/files"
+  // },
+  // {
+  //   title: "Reports",
+  //   icon: BarChart3,
+  //   page: "reports",
+  //   link: "/reports"
+  // },
+  {
+    title: "Logout",
+    icon: Settings,
+    page: "logout",
+    link: "/"
+  }
+];
 
 export function Sidebar({ className, onNavigate, currentPage = "dashboard" }: SidebarProps) {
   const { isCollapsed, toggleSidebar, isMobile, isMobileOpen, setIsMobileOpen } = useSidebar();
   const route = useRouter()
+  const [logout] = useLogoutMutation();
+    const dispatch = useDispatch();
+  
+    const handleLogout = async () => {
+      try {
+        // Call backend logout endpoint
+        await logout({}).unwrap();
+      } catch (err) {
+        console.error('Logout API call failed:', err);
+      } finally {
+        // Clear tokens from cookies
+        deleteCookie('accessToken');
+        deleteCookie('refreshToken');
+        
+        // Clear Redux state
+        dispatch(logoutAction());
+        
+        // Redirect to login
+        window.location.href = '/';
+      }
+    };
 
   const handleNavClick = (page: string, link: string) => {
+    if(page === 'logout') {
+      handleLogout()
+    }
     // Close mobile sidebar when clicking a nav item
     if (isMobile && isMobileOpen) {
       setIsMobileOpen(false);
@@ -302,7 +323,7 @@ export function Sidebar({ className, onNavigate, currentPage = "dashboard" }: Si
           </div>
 
           {/* Bottom Navigation */}
-          {/* <div className="border-t border-border p-3">
+          <div className="border-t border-border p-3">
             <nav className="space-y-1">
               {bottomItems.map((item) => {
                 const Icon = item.icon;
@@ -318,7 +339,7 @@ export function Sidebar({ className, onNavigate, currentPage = "dashboard" }: Si
                 );
               })}
             </nav>
-          </div> */}
+          </div>
 
           {/* User Profile */}
           <div className="border-t border-border p-3">

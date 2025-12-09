@@ -5,6 +5,7 @@ import { Label } from "./ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./ui/select";
 import { Textarea } from "./ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle } from "./ui/card";
+import { Separator } from "./ui/separator";
 import { Client } from "../types/client";
 
 interface AddClientFormProps {
@@ -14,16 +15,18 @@ interface AddClientFormProps {
 
 export function AddClientForm({ onSubmit, onCancel }: AddClientFormProps) {
   const [formData, setFormData] = useState({
-    // Basic Information
-    name: "",
+    // Personal Information
+    firstName: "",
+    lastName: "",
     email: "",
     phone: "",
-    website: "",
+    alternatePhone: "",
+    dateOfBirth: "",
+    gender: "" as const,
     
-    // Company Information
-    companyName: "",
-    companyType: "Small Business" as const,
-    industry: "",
+    // Professional Information
+    occupation: "",
+    employer: "",
     
     // Address
     street: "",
@@ -32,22 +35,24 @@ export function AddClientForm({ onSubmit, onCancel }: AddClientFormProps) {
     zipCode: "",
     country: "USA",
     
-    // Primary Contact
-    primaryContactName: "",
-    primaryContactTitle: "",
-    primaryContactEmail: "",
-    primaryContactPhone: "",
+    // Family/Additional Contacts
+    spouseName: "",
+    spousePhone: "",
+    spouseEmail: "",
+    emergencyContactName: "",
+    emergencyContactRelationship: "",
+    emergencyContactPhone: "",
     
-    // Secondary Contact
-    secondaryContactName: "",
-    secondaryContactTitle: "",
-    secondaryContactEmail: "",
-    secondaryContactPhone: "",
-    
-    // Business Information
+    // Client Information
     status: "Potential" as const,
     source: "Website" as const,
     priority: "Medium" as const,
+    
+    // Preferences
+    preferredContactMethod: "" as const,
+    preferredContactTime: "",
+    architecturalStyle: "",
+    budgetRange: "",
     
     // Notes and Tags
     notes: "",
@@ -69,13 +74,16 @@ export function AddClientForm({ onSubmit, onCancel }: AddClientFormProps) {
     e.preventDefault();
     
     const client: Omit<Client, "id" | "createdAt" | "updatedAt"> = {
-      name: formData.name,
+      firstName: formData.firstName,
+      lastName: formData.lastName,
+      fullName: `${formData.firstName} ${formData.lastName}`,
+      name: `${formData.firstName} ${formData.lastName}`,
       email: formData.email,
       phone: formData.phone,
-      website: formData.website || undefined,
-      companyName: formData.companyName,
-      companyType: formData.companyType,
-      industry: formData.industry,
+      website: undefined,
+      companyName: formData.employer || `${formData.firstName} ${formData.lastName}`,
+      companyType: 'Individual',
+      industry: formData.occupation || 'Other',
       address: {
         street: formData.street,
         city: formData.city,
@@ -84,17 +92,11 @@ export function AddClientForm({ onSubmit, onCancel }: AddClientFormProps) {
         country: formData.country
       },
       primaryContact: {
-        name: formData.primaryContactName || formData.name,
-        title: formData.primaryContactTitle,
-        email: formData.primaryContactEmail || formData.email,
-        phone: formData.primaryContactPhone || formData.phone
+        name: `${formData.firstName} ${formData.lastName}`,
+        title: formData.occupation || 'Client',
+        email: formData.email,
+        phone: formData.phone
       },
-      secondaryContact: formData.secondaryContactName ? {
-        name: formData.secondaryContactName,
-        title: formData.secondaryContactTitle,
-        email: formData.secondaryContactEmail,
-        phone: formData.secondaryContactPhone
-      } : undefined,
       status: formData.status,
       source: formData.source,
       priority: formData.priority,
@@ -113,24 +115,38 @@ export function AddClientForm({ onSubmit, onCancel }: AddClientFormProps) {
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
-      {/* Basic Information */}
+      {/* Personal Information */}
       <Card className="bg-white/5 border-white/10">
         <CardHeader>
-          <CardTitle className="text-white/90">Basic Information</CardTitle>
+          <CardTitle className="text-white/90">Personal Information</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="name" className="text-white/70">Contact Name *</Label>
+              <Label htmlFor="firstName" className="text-white/70">First Name *</Label>
               <Input
-                id="name"
-                value={formData.name}
-                onChange={handleInputChange("name")}
+                id="firstName"
+                value={formData.firstName}
+                onChange={handleInputChange("firstName")}
                 required
-                placeholder="John Smith"
+                placeholder="John"
                 className="bg-white/5 border-white/10 text-white"
               />
             </div>
+            <div className="space-y-2">
+              <Label htmlFor="lastName" className="text-white/70">Last Name *</Label>
+              <Input
+                id="lastName"
+                value={formData.lastName}
+                onChange={handleInputChange("lastName")}
+                required
+                placeholder="Smith"
+                className="bg-white/5 border-white/10 text-white"
+              />
+            </div>
+          </div>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label htmlFor="email" className="text-white/70">Email Address *</Label>
               <Input
@@ -139,13 +155,10 @@ export function AddClientForm({ onSubmit, onCancel }: AddClientFormProps) {
                 value={formData.email}
                 onChange={handleInputChange("email")}
                 required
-                placeholder="john@company.com"
+                placeholder="john.smith@email.com"
                 className="bg-white/5 border-white/10 text-white"
               />
             </div>
-          </div>
-          
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label htmlFor="phone" className="text-white/70">Phone Number *</Label>
               <Input
@@ -157,115 +170,74 @@ export function AddClientForm({ onSubmit, onCancel }: AddClientFormProps) {
                 className="bg-white/5 border-white/10 text-white"
               />
             </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="website" className="text-white/70">Website</Label>
+              <Label htmlFor="alternatePhone" className="text-white/70">Alternate Phone</Label>
               <Input
-                id="website"
-                type="url"
-                value={formData.website}
-                onChange={handleInputChange("website")}
-                placeholder="https://company.com"
+                id="alternatePhone"
+                value={formData.alternatePhone}
+                onChange={handleInputChange("alternatePhone")}
+                placeholder="+1 (555) 987-6543"
                 className="bg-white/5 border-white/10 text-white"
               />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="dateOfBirth" className="text-white/70">Date of Birth</Label>
+              <Input
+                id="dateOfBirth"
+                type="date"
+                value={formData.dateOfBirth}
+                onChange={handleInputChange("dateOfBirth")}
+                className="bg-white/5 border-white/10 text-white"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="gender" className="text-white/70">Gender</Label>
+              <Select value={formData.gender} onValueChange={handleSelectChange("gender")}>
+                <SelectTrigger className="bg-white/5 border-white/10 text-white">
+                  <SelectValue placeholder="Select gender" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="Male">Male</SelectItem>
+                  <SelectItem value="Female">Female</SelectItem>
+                  <SelectItem value="Other">Other</SelectItem>
+                  <SelectItem value="Prefer not to say">Prefer not to say</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
           </div>
         </CardContent>
       </Card>
 
-      {/* Company Information */}
+      {/* Professional Information */}
       <Card className="bg-white/5 border-white/10">
         <CardHeader>
-          <CardTitle className="text-white/90">Company Information</CardTitle>
+          <CardTitle className="text-white/90">Professional Information (Optional)</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="companyName" className="text-white/70">Company Name *</Label>
+              <Label htmlFor="occupation" className="text-white/70">Occupation</Label>
               <Input
-                id="companyName"
-                value={formData.companyName}
-                onChange={handleInputChange("companyName")}
-                required
-                placeholder="ABC Company Inc."
+                id="occupation"
+                value={formData.occupation}
+                onChange={handleInputChange("occupation")}
+                placeholder="Software Engineer"
                 className="bg-white/5 border-white/10 text-white"
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="industry" className="text-white/70">Industry *</Label>
+              <Label htmlFor="employer" className="text-white/70">Employer</Label>
               <Input
-                id="industry"
-                value={formData.industry}
-                onChange={handleInputChange("industry")}
-                required
-                placeholder="Real Estate"
+                id="employer"
+                value={formData.employer}
+                onChange={handleInputChange("employer")}
+                placeholder="Company Name"
                 className="bg-white/5 border-white/10 text-white"
               />
             </div>
-          </div>
-          
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="companyType" className="text-white/70">Company Type</Label>
-              <Select value={formData.companyType} onValueChange={handleSelectChange("companyType")}>
-                <SelectTrigger className="bg-white/5 border-white/10 text-white">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="Individual">Individual</SelectItem>
-                  <SelectItem value="Small Business">Small Business</SelectItem>
-                  <SelectItem value="Corporation">Corporation</SelectItem>
-                  <SelectItem value="Non-Profit">Non-Profit</SelectItem>
-                  <SelectItem value="Government">Government</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            
-            <div className="space-y-2">
-              <Label htmlFor="status" className="text-white/70">Status</Label>
-              <Select value={formData.status} onValueChange={handleSelectChange("status")}>
-                <SelectTrigger className="bg-white/5 border-white/10 text-white">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="Potential">Potential</SelectItem>
-                  <SelectItem value="Active">Active</SelectItem>
-                  <SelectItem value="Inactive">Inactive</SelectItem>
-                  <SelectItem value="Former">Former</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            
-            <div className="space-y-2">
-              <Label htmlFor="priority" className="text-white/70">Priority</Label>
-              <Select value={formData.priority} onValueChange={handleSelectChange("priority")}>
-                <SelectTrigger className="bg-white/5 border-white/10 text-white">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="Low">Low</SelectItem>
-                  <SelectItem value="Medium">Medium</SelectItem>
-                  <SelectItem value="High">High</SelectItem>
-                  <SelectItem value="VIP">VIP</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-          
-          <div className="space-y-2">
-            <Label htmlFor="source" className="text-white/70">Lead Source</Label>
-            <Select value={formData.source} onValueChange={handleSelectChange("source")}>
-              <SelectTrigger className="bg-white/5 border-white/10 text-white">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="Website">Website</SelectItem>
-                <SelectItem value="Referral">Referral</SelectItem>
-                <SelectItem value="Social Media">Social Media</SelectItem>
-                <SelectItem value="Advertisement">Advertisement</SelectItem>
-                <SelectItem value="Cold Call">Cold Call</SelectItem>
-                <SelectItem value="Other">Other</SelectItem>
-              </SelectContent>
-            </Select>
           </div>
         </CardContent>
       </Card>
@@ -331,109 +303,189 @@ export function AddClientForm({ onSubmit, onCancel }: AddClientFormProps) {
         </CardContent>
       </Card>
 
-      {/* Contact Details */}
+      {/* Family & Emergency Contacts */}
       <Card className="bg-white/5 border-white/10">
         <CardHeader>
-          <CardTitle className="text-white/90">Primary Contact (Optional if same as above)</CardTitle>
+          <CardTitle className="text-white/90">Family & Emergency Contacts (Optional)</CardTitle>
         </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="primaryContactName" className="text-white/70">Contact Name</Label>
-              <Input
-                id="primaryContactName"
-                value={formData.primaryContactName}
-                onChange={handleInputChange("primaryContactName")}
-                placeholder="Leave empty to use main contact"
-                className="bg-white/5 border-white/10 text-white"
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="primaryContactTitle" className="text-white/70">Job Title</Label>
-              <Input
-                id="primaryContactTitle"
-                value={formData.primaryContactTitle}
-                onChange={handleInputChange("primaryContactTitle")}
-                placeholder="CEO, Manager, etc."
-                className="bg-white/5 border-white/10 text-white"
-              />
+        <CardContent className="space-y-6">
+          <div>
+            <h4 className="text-white/80 text-sm mb-3">Spouse/Partner Information</h4>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="spouseName" className="text-white/70">Name</Label>
+                <Input
+                  id="spouseName"
+                  value={formData.spouseName}
+                  onChange={handleInputChange("spouseName")}
+                  placeholder="Jane Smith"
+                  className="bg-white/5 border-white/10 text-white"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="spousePhone" className="text-white/70">Phone</Label>
+                <Input
+                  id="spousePhone"
+                  value={formData.spousePhone}
+                  onChange={handleInputChange("spousePhone")}
+                  placeholder="+1 (555) 123-4568"
+                  className="bg-white/5 border-white/10 text-white"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="spouseEmail" className="text-white/70">Email</Label>
+                <Input
+                  id="spouseEmail"
+                  type="email"
+                  value={formData.spouseEmail}
+                  onChange={handleInputChange("spouseEmail")}
+                  placeholder="jane.smith@email.com"
+                  className="bg-white/5 border-white/10 text-white"
+                />
+              </div>
             </div>
           </div>
-          
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="primaryContactEmail" className="text-white/70">Email</Label>
-              <Input
-                id="primaryContactEmail"
-                type="email"
-                value={formData.primaryContactEmail}
-                onChange={handleInputChange("primaryContactEmail")}
-                placeholder="Leave empty to use main email"
-                className="bg-white/5 border-white/10 text-white"
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="primaryContactPhone" className="text-white/70">Phone</Label>
-              <Input
-                id="primaryContactPhone"
-                value={formData.primaryContactPhone}
-                onChange={handleInputChange("primaryContactPhone")}
-                placeholder="Leave empty to use main phone"
-                className="bg-white/5 border-white/10 text-white"
-              />
+
+          <Separator className="bg-white/10" />
+
+          <div>
+            <h4 className="text-white/80 text-sm mb-3">Emergency Contact</h4>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="emergencyContactName" className="text-white/70">Name</Label>
+                <Input
+                  id="emergencyContactName"
+                  value={formData.emergencyContactName}
+                  onChange={handleInputChange("emergencyContactName")}
+                  placeholder="Emergency contact name"
+                  className="bg-white/5 border-white/10 text-white"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="emergencyContactRelationship" className="text-white/70">Relationship</Label>
+                <Input
+                  id="emergencyContactRelationship"
+                  value={formData.emergencyContactRelationship}
+                  onChange={handleInputChange("emergencyContactRelationship")}
+                  placeholder="Brother, Sister, Friend"
+                  className="bg-white/5 border-white/10 text-white"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="emergencyContactPhone" className="text-white/70">Phone</Label>
+                <Input
+                  id="emergencyContactPhone"
+                  value={formData.emergencyContactPhone}
+                  onChange={handleInputChange("emergencyContactPhone")}
+                  placeholder="+1 (555) 123-4569"
+                  className="bg-white/5 border-white/10 text-white"
+                />
+              </div>
             </div>
           </div>
         </CardContent>
       </Card>
 
-      {/* Secondary Contact */}
+      {/* Client Status & Preferences */}
       <Card className="bg-white/5 border-white/10">
         <CardHeader>
-          <CardTitle className="text-white/90">Secondary Contact (Optional)</CardTitle>
+          <CardTitle className="text-white/90">Client Status & Preferences</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="status" className="text-white/70">Status</Label>
+              <Select value={formData.status} onValueChange={handleSelectChange("status")}>
+                <SelectTrigger className="bg-white/5 border-white/10 text-white">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="Potential">Potential</SelectItem>
+                  <SelectItem value="Active">Active</SelectItem>
+                  <SelectItem value="Inactive">Inactive</SelectItem>
+                  <SelectItem value="Former">Former</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            
+            <div className="space-y-2">
+              <Label htmlFor="priority" className="text-white/70">Priority</Label>
+              <Select value={formData.priority} onValueChange={handleSelectChange("priority")}>
+                <SelectTrigger className="bg-white/5 border-white/10 text-white">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="Low">Low</SelectItem>
+                  <SelectItem value="Medium">Medium</SelectItem>
+                  <SelectItem value="High">High</SelectItem>
+                  <SelectItem value="VIP">VIP</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            
+            <div className="space-y-2">
+              <Label htmlFor="source" className="text-white/70">Lead Source</Label>
+              <Select value={formData.source} onValueChange={handleSelectChange("source")}>
+                <SelectTrigger className="bg-white/5 border-white/10 text-white">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="Website">Website</SelectItem>
+                  <SelectItem value="Referral">Referral</SelectItem>
+                  <SelectItem value="Social Media">Social Media</SelectItem>
+                  <SelectItem value="Advertisement">Advertisement</SelectItem>
+                  <SelectItem value="Walk-in">Walk-in</SelectItem>
+                  <SelectItem value="Other">Other</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="secondaryContactName" className="text-white/70">Contact Name</Label>
-              <Input
-                id="secondaryContactName"
-                value={formData.secondaryContactName}
-                onChange={handleInputChange("secondaryContactName")}
-                placeholder="Secondary contact name"
-                className="bg-white/5 border-white/10 text-white"
-              />
+              <Label htmlFor="preferredContactMethod" className="text-white/70">Preferred Contact Method</Label>
+              <Select value={formData.preferredContactMethod} onValueChange={handleSelectChange("preferredContactMethod")}>
+                <SelectTrigger className="bg-white/5 border-white/10 text-white">
+                  <SelectValue placeholder="Select method" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="Phone">Phone</SelectItem>
+                  <SelectItem value="Email">Email</SelectItem>
+                  <SelectItem value="Text">Text</SelectItem>
+                  <SelectItem value="WhatsApp">WhatsApp</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
             <div className="space-y-2">
-              <Label htmlFor="secondaryContactTitle" className="text-white/70">Job Title</Label>
+              <Label htmlFor="preferredContactTime" className="text-white/70">Preferred Contact Time</Label>
               <Input
-                id="secondaryContactTitle"
-                value={formData.secondaryContactTitle}
-                onChange={handleInputChange("secondaryContactTitle")}
-                placeholder="Assistant, Manager, etc."
+                id="preferredContactTime"
+                value={formData.preferredContactTime}
+                onChange={handleInputChange("preferredContactTime")}
+                placeholder="9 AM - 5 PM, Weekdays"
                 className="bg-white/5 border-white/10 text-white"
               />
             </div>
           </div>
-          
+
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="secondaryContactEmail" className="text-white/70">Email</Label>
+              <Label htmlFor="architecturalStyle" className="text-white/70">Preferred Architectural Styles</Label>
               <Input
-                id="secondaryContactEmail"
-                type="email"
-                value={formData.secondaryContactEmail}
-                onChange={handleInputChange("secondaryContactEmail")}
-                placeholder="secondary@company.com"
+                id="architecturalStyle"
+                value={formData.architecturalStyle}
+                onChange={handleInputChange("architecturalStyle")}
+                placeholder="Modern, Contemporary, Traditional (comma-separated)"
                 className="bg-white/5 border-white/10 text-white"
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="secondaryContactPhone" className="text-white/70">Phone</Label>
+              <Label htmlFor="budgetRange" className="text-white/70">Budget Range</Label>
               <Input
-                id="secondaryContactPhone"
-                value={formData.secondaryContactPhone}
-                onChange={handleInputChange("secondaryContactPhone")}
-                placeholder="+1 (555) 123-4568"
+                id="budgetRange"
+                value={formData.budgetRange}
+                onChange={handleInputChange("budgetRange")}
+                placeholder="$500,000 - $1,000,000"
                 className="bg-white/5 border-white/10 text-white"
               />
             </div>
@@ -453,7 +505,7 @@ export function AddClientForm({ onSubmit, onCancel }: AddClientFormProps) {
               id="tags"
               value={formData.tags}
               onChange={handleInputChange("tags")}
-              placeholder="Luxury, High-Value, Repeat Client (comma-separated)"
+              placeholder="VIP, Luxury, Eco-Friendly (comma-separated)"
               className="bg-white/5 border-white/10 text-white"
             />
           </div>

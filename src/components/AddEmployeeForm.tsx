@@ -4,7 +4,6 @@ import { Input } from "./ui/input";
 import { Label } from "./ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./ui/select";
 import { Textarea } from "./ui/textarea";
-import { Separator } from "./ui/separator";
 import { Card, CardContent, CardHeader, CardTitle } from "./ui/card";
 import { Employee } from "../types/employee";
 
@@ -64,6 +63,7 @@ export function AddEmployeeForm({ onSubmit, onCancel }: AddEmployeeFormProps) {
     const employee: Omit<Employee, "id" | "createdAt" | "updatedAt"> = {
       firstName: formData.firstName,
       lastName: formData.lastName,
+      name: `${formData.firstName} ${formData.lastName}`,
       email: formData.email,
       phone: formData.phone,
       employeeId: formData.employeeId,
@@ -72,7 +72,9 @@ export function AddEmployeeForm({ onSubmit, onCancel }: AddEmployeeFormProps) {
       team: formData.team,
       manager: formData.manager,
       hireDate: formData.hireDate,
+      joinDate: formData.hireDate,
       employmentStatus: formData.employmentStatus,
+      status: formData.employmentStatus,
       employmentType: formData.employmentType,
       salary: parseFloat(formData.salary) || 0,
       dateOfBirth: formData.dateOfBirth,

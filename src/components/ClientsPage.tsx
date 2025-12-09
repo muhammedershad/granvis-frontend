@@ -13,8 +13,6 @@ import {
   Phone,
   Mail,
   Globe,
-  MapPin,
-  Calendar,
   DollarSign,
   Briefcase,
   Star,
@@ -41,6 +39,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { AddClientForm } from "./AddClientForm";
 import { Client, ClientFilters, ClientSort, ClientViewType } from "../types/client";
 import { cn } from "./ui/utils";
+import { Pagination } from "./ui/pagination";
 // import { Pagination } from "./Pagination";
 
 // Mock client data
@@ -300,11 +299,9 @@ export function ClientsPage({ onClientSelect }: ClientsPageProps) {
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
 
   // Get unique values for filter options
-  const companyTypes = [...new Set(clients.map(client => client.companyType))];
   const statuses = [...new Set(clients.map(client => client.status))];
   const priorities = [...new Set(clients.map(client => client.priority))];
   const industries = [...new Set(clients.map(client => client.industry))];
-  const sources = [...new Set(clients.map(client => client.source))];
 
   // Calculate statistics
   const stats = useMemo(() => {
@@ -321,7 +318,7 @@ export function ClientsPage({ onClientSelect }: ClientsPageProps) {
 
   // Filter and sort clients
   const filteredAndSortedClients = useMemo(() => {
-    let filtered = clients.filter(client => {
+    const filtered = clients.filter(client => {
       const searchTerm = filters.search.toLowerCase();
       const matchesSearch = !filters.search || 
         client.name.toLowerCase().includes(searchTerm) ||
@@ -339,17 +336,17 @@ export function ClientsPage({ onClientSelect }: ClientsPageProps) {
     });
 
     // Sort
-    filtered.sort((a, b) => {
-      const aValue = a[sort.field];
-      const bValue = b[sort.field];
-      
-      if (aValue < bValue) return sort.direction === "asc" ? -1 : 1;
-      if (aValue > bValue) return sort.direction === "asc" ? 1 : -1;
+    filtered.sort(() => {
+      // const aValue = a[sort.field];
+      // const bValue = b[sort.field];
+
+      // if (aValue < bValue) return sort.direction === "asc" ? -1 : 1;
+      // if (aValue > bValue) return sort.direction === "asc" ? 1 : -1;
       return 0;
     });
 
     return filtered;
-  }, [clients, filters, sort]);
+  }, [clients, filters]);
 
   // Pagination
   const totalPages = Math.ceil(filteredAndSortedClients.length / ITEMS_PER_PAGE);
