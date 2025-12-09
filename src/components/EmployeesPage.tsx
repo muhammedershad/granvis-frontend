@@ -46,6 +46,7 @@ import { cn } from "./ui/utils";
 const mockEmployees: Employee[] = [
   {
     id: "1",
+    name: "John Doe",
     firstName: "John",
     lastName: "Doe",
     email: "john.doe@architecturalpro.com",
@@ -56,6 +57,8 @@ const mockEmployees: Employee[] = [
     team: "Residential Projects",
     manager: "Jane Smith",
     hireDate: "2022-03-15",
+    joinDate: "2022-03-15",
+    status: "Active",
     employmentStatus: "Active",
     employmentType: "Full-time",
     salary: 95000,
@@ -81,6 +84,7 @@ const mockEmployees: Employee[] = [
   },
   {
     id: "2",
+    name: "Sarah Johnson",
     firstName: "Sarah",
     lastName: "Johnson",
     email: "sarah.johnson@architecturalpro.com",
@@ -91,6 +95,8 @@ const mockEmployees: Employee[] = [
     team: "Commercial Projects",
     manager: "Mike Wilson",
     hireDate: "2023-01-10",
+    joinDate: "2023-01-10",
+    status: "Active",
     employmentStatus: "Active",
     employmentType: "Full-time",
     salary: 72000,
@@ -116,6 +122,7 @@ const mockEmployees: Employee[] = [
   },
   {
     id: "3",
+    name: "Michael Chen",
     firstName: "Michael",
     lastName: "Chen",
     email: "michael.chen@architecturalpro.com",
@@ -126,6 +133,8 @@ const mockEmployees: Employee[] = [
     team: "Urban Planning",
     manager: "Lisa Brown",
     hireDate: "2021-08-20",
+    joinDate: "2021-08-20",
+    status: "Active",
     employmentStatus: "Active",
     employmentType: "Full-time",
     salary: 88000,
@@ -151,6 +160,7 @@ const mockEmployees: Employee[] = [
   },
   {
     id: "4",
+    name: "Emily Rodriguez",
     firstName: "Emily",
     lastName: "Rodriguez",
     email: "emily.rodriguez@architecturalpro.com",
@@ -161,6 +171,8 @@ const mockEmployees: Employee[] = [
     team: "Large Scale Projects",
     manager: "David Lee",
     hireDate: "2023-06-01",
+    joinDate: "2023-06-01",
+    status: "Active",
     employmentStatus: "Active",
     employmentType: "Full-time",
     salary: 85000,
@@ -186,6 +198,7 @@ const mockEmployees: Employee[] = [
   },
   {
     id: "5",
+    name: "James Wilson",
     firstName: "James",
     lastName: "Wilson",
     email: "james.wilson@architecturalpro.com",
@@ -196,6 +209,8 @@ const mockEmployees: Employee[] = [
     team: "Structural Analysis",
     manager: "Angela Davis",
     hireDate: "2022-09-12",
+    joinDate: "2022-09-12",
+    status: "Active",
     employmentStatus: "Active",
     employmentType: "Full-time",
     salary: 92000,
@@ -221,6 +236,7 @@ const mockEmployees: Employee[] = [
   },
   {
     id: "6",
+    name: "Lisa Thompson",
     firstName: "Lisa",
     lastName: "Thompson",
     email: "lisa.thompson@architecturalpro.com",
@@ -231,6 +247,8 @@ const mockEmployees: Employee[] = [
     team: "Residential Projects",
     manager: "John Doe",
     hireDate: "2024-01-08",
+    joinDate: "2024-01-08",
+    status: "Active",
     employmentStatus: "Active",
     employmentType: "Full-time",
     salary: 68000,
@@ -256,6 +274,7 @@ const mockEmployees: Employee[] = [
   },
   {
     id: "7",
+    name: "David Martinez",
     firstName: "David",
     lastName: "Martinez",
     email: "david.martinez@architecturalpro.com",
@@ -266,6 +285,8 @@ const mockEmployees: Employee[] = [
     team: "Technical Support",
     manager: "John Doe",
     hireDate: "2023-11-20",
+    joinDate: "2023-11-20",
+    status: "On Leave",
     employmentStatus: "On Leave",
     employmentType: "Full-time",
     salary: 55000,
@@ -291,6 +312,7 @@ const mockEmployees: Employee[] = [
   },
   {
     id: "8",
+    name: "Amanda Lee",
     firstName: "Amanda",
     lastName: "Lee",
     email: "amanda.lee@architecturalpro.com",
@@ -301,6 +323,8 @@ const mockEmployees: Employee[] = [
     team: "Luxury Projects",
     manager: "Sarah Johnson",
     hireDate: "2023-04-03",
+    joinDate: "2023-04-03",
+    status: "Active",
     employmentStatus: "Active",
     employmentType: "Part-time",
     salary: 45000,
@@ -393,7 +417,8 @@ export function EmployeesPage({ onEmployeeSelect }: EmployeesPageProps) {
     filtered.sort((a, b) => {
       const aValue = a[sort.field];
       const bValue = b[sort.field];
-      
+
+      if (aValue === undefined || bValue === undefined) return 0;
       if (aValue < bValue) return sort.direction === "asc" ? -1 : 1;
       if (aValue > bValue) return sort.direction === "asc" ? 1 : -1;
       return 0;

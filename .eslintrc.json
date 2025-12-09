@@ -1,0 +1,76 @@
+{
+  "env": {
+    "browser": true,
+    "es2021": true
+  },
+  "extends": [
+    "next/core-web-vitals",
+    "plugin:react/recommended",
+    "plugin:@typescript-eslint/recommended",
+    "plugin:import/recommended",
+    "plugin:prettier/recommended"
+  ],
+  "overrides": [],
+  "parserOptions": {
+    "ecmaVersion": "latest",
+    "sourceType": "module",
+    "ecmaFeatures": {
+      "jsx": true
+    }
+  },
+  "plugins": ["react", "@typescript-eslint", "react-hooks", "prettier"],
+  "settings": {
+    "react": {
+      "version": "detect" // Automatically detect React version
+    }
+  },
+  "rules": {
+    "@typescript-eslint/explicit-function-return-type": "off",
+    "@typescript-eslint/no-explicit-any": "off",
+    "@typescript-eslint/space-before-function-paren": "off",
+    "@typescript-eslint/consistent-type-definitions": "off",
+    "import/no-unresolved": "off",
+    "eslint-plugin-import/named": "off",
+    "padded-blocks": "off",
+    "no-multiple-empty-lines": [
+      "error",
+      {
+        "max": 5
+      }
+    ],
+    "eol-last": "off",
+    "no-use-before-define": "off",
+    "@typescript-eslint/no-use-before-define": "off",
+    "@typescript-eslint/no-var-requires": 0,
+    "react/jsx-filename-extension": [
+      "warn",
+      {
+        "extensions": [".tsx"]
+      }
+    ],
+    "import/extensions": "off",
+    "no-shadow": "error",
+    "@typescript-eslint/no-shadow": "off",
+    "max-len": [
+      "warn",
+      {
+        "code": 500,
+        "ignoreComments": true,
+        "ignoreUrls": true
+      }
+    ],
+    "react-hooks/rules-of-hooks": "error",
+    "react-hooks/exhaustive-deps": "off",
+    "import/prefer-default-export": "off",
+    "react/prop-types": "off",
+    "react/jsx-key": 2,
+    "react/react-in-jsx-scope": "off",
+    "max-lines-per-function": ["error", 500],
+    "prettier/prettier": [
+      "error",
+      {
+        "endOfLine": "auto"
+      }
+    ]
+  }
+}
