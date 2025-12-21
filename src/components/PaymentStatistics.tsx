@@ -1,11 +1,10 @@
 import { useState } from "react";
-import { TrendingUp, TrendingDown, DollarSign, Clock, Users, Target, Calendar, CheckCircle, AlertCircle, BarChart3 } from "lucide-react";
+import { TrendingUp, TrendingDown, DollarSign, Clock, Users, Target, CheckCircle, AlertCircle, BarChart3 } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "./ui/card";
-import { Badge } from "./ui/badge";
 import { Progress } from "./ui/progress";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "./ui/tabs";
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, LineChart, Line, PieChart, Pie, Cell, AreaChart, Area, RadialBarChart, RadialBar } from 'recharts';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, LineChart, Line, RadialBarChart, RadialBar } from 'recharts';
 
 // Mock statistics data
 const kpiData = {

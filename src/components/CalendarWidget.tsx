@@ -59,7 +59,7 @@ export function CalendarWidget() {
       
       <div className="relative">
         <div className="flex items-center justify-between mb-6">
-          <h3 className="text-foreground">Today's Schedule</h3>
+          <h3 className="text-foreground">Today&apos;s Schedule</h3>
           <div className="flex items-center space-x-2 text-sm text-muted-foreground">
             <Calendar className="w-4 h-4" />
             <span>{todayDate.toLocaleDateString('en-US', { 

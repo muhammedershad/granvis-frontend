@@ -277,7 +277,7 @@ export function VerifyEmailPage({
                 </Button>
                 
                 <p className="text-white/50 text-xs text-center">
-                  Didn't receive the email? Check your spam folder.
+                  Didn&apos;t receive the email? Check your spam folder.
                 </p>
               </div>
             )}

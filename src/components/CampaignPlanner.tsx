@@ -2,10 +2,6 @@ import { useState } from "react";
 import { Calendar, Clock, Target, Users, DollarSign, Plus, X } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "./ui/card";
 import { Button } from "./ui/button";
-import { Input } from "./ui/input";
-import { Label } from "./ui/label";
-import { Textarea } from "./ui/textarea";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./ui/select";
 import { Badge } from "./ui/badge";
 import { Progress } from "./ui/progress";
 
@@ -84,9 +80,9 @@ const mockCampaigns: Campaign[] = [
 ];
 
 export function CampaignPlanner() {
-  const [campaigns, setCampaigns] = useState<Campaign[]>(mockCampaigns);
+  const [campaigns] = useState<Campaign[]>(mockCampaigns);
   const [selectedCampaign, setSelectedCampaign] = useState<Campaign | null>(null);
-  const [isCreating, setIsCreating] = useState(false);
+  const [, setIsCreating] = useState(false);
 
   const getStatusColor = (status: string) => {
     switch (status) {

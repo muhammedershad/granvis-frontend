@@ -1,11 +1,15 @@
 export interface Client {
   id: string;
-  
+
   // Basic Information
-  name: string;
+  firstName?: string;
+  lastName?: string;
+  fullName?: string;
   email: string;
   phone: string;
   website?: string;
+  name: string;
+  avatar?: string;
   
   // Company Information
   companyName: string;

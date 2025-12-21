@@ -1,3 +1,4 @@
+'use client';
 import { useState } from "react";
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";
@@ -9,7 +10,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "./ui/tabs";
 import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
 import { Badge } from "./ui/badge";
 import { Separator } from "./ui/separator";
-import { Search, Users, Building2, Calendar, DollarSign, MapPin, Tag, FileText, Plus, Check, Phone, Mail, Globe, User } from "lucide-react";
+import { Search, Users, Building2, Calendar, DollarSign, MapPin, Tag, FileText, Plus, Check, Phone} from "lucide-react";
 import { Project } from "../types/project";
 import { Client } from "../types/client";
 
@@ -272,12 +273,12 @@ export function AddProjectForm({ onSubmit, onCancel }: AddProjectFormProps) {
     switch (formData.type) {
       case "Villa":
         return ["Luxury Residential", "Family Home", "Vacation Villa", "Sustainable Housing"];
-      case "Commercial":
-        return ["Office Building", "Retail Complex", "Mixed-use Development", "Industrial Facility"];
-      case "Interior":
-        return ["Residential Interior", "Commercial Interior", "Hospitality Design", "Office Design"];
-      case "Landscape":
-        return ["Residential Landscape", "Commercial Landscape", "Urban Planning", "Educational Campus"];
+      // case "Commercial":
+      //   return ["Office Building", "Retail Complex", "Mixed-use Development", "Industrial Facility"];
+      // case "Interior":
+      //   return ["Residential Interior", "Commercial Interior", "Hospitality Design", "Office Design"];
+      // case "Landscape":
+      //   return ["Residential Landscape", "Commercial Landscape", "Urban Planning", "Educational Campus"];
       default:
         return [];
     }

@@ -56,7 +56,15 @@ const DialogContent = React.forwardRef<
       ref={ref}
       data-slot="dialog-content"
       className={cn(
-        "bg-background data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 fixed top-[50%] left-[50%] z-50 grid w-full max-w-[calc(100%-2rem)] translate-x-[-50%] translate-y-[-50%] gap-4 rounded-lg border p-6 shadow-lg duration-200 sm:max-w-lg",
+        "bg-background data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 fixed z-50 grid w-full gap-4 border shadow-lg duration-200",
+        // Mobile: nearly fullscreen with small padding
+        "max-w-[calc(100%-1rem)] max-h-[calc(100%-1rem)] top-2 left-1/2 translate-x-[-50%] rounded-lg p-4",
+        // Tablet and up: wider modals with better spacing
+        "sm:max-w-[calc(100%-2rem)] sm:max-h-[calc(100%-2rem)] sm:top-4 sm:p-6",
+        // Desktop: much wider modals, still centered
+        "md:max-w-4xl md:max-h-[calc(100%-4rem)] md:top-1/2 md:translate-y-[-50%]",
+        // Large screens: even more spacious
+        "lg:max-w-5xl xl:max-w-6xl",
         className,
       )}
       {...props}

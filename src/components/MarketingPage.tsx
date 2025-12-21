@@ -1,11 +1,7 @@
 import { useState } from "react";
 import { 
   Calendar, 
-  CheckCircle, 
-  Circle, 
-  Clock, 
   DollarSign, 
-  Filter, 
   Plus, 
   Search, 
   Star, 
@@ -15,10 +11,8 @@ import {
   FileText,
   Heart,
   CreditCard,
-  Eye,
   Phone,
   Mail,
-  MapPin,
   Award,
   Briefcase,
   Coffee
@@ -26,7 +20,7 @@ import {
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "./ui/tabs";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "./ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "./ui/card";
 import { Badge } from "./ui/badge";
 import { Progress } from "./ui/progress";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./ui/select";
@@ -245,8 +239,6 @@ const expenses = [
 
 export function MarketingPage() {
   const [activeTab, setActiveTab] = useState("overview");
-  const [selectedTask, setSelectedTask] = useState<string | null>(null);
-  const [selectedLead, setSelectedLead] = useState<string | null>(null);
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -422,14 +414,14 @@ export function MarketingPage() {
                 <div className="flex items-center gap-3">
                   <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
                   <div className="flex-1">
-                    <p className="text-sm text-foreground">Campaign "Brand Awareness" updated</p>
+                    <p className="text-sm text-foreground">Campaign &quot;Brand Awareness&quot; updated</p>
                     <p className="text-xs text-muted-foreground">4 hours ago</p>
                   </div>
                 </div>
                 <div className="flex items-center gap-3">
                   <div className="w-2 h-2 bg-purple-500 rounded-full"></div>
                   <div className="flex-1">
-                    <p className="text-sm text-foreground">Task "SEO Optimization" completed</p>
+                    <p className="text-sm text-foreground">Task &quot;SEO Optimization&quot; completed</p>
                     <p className="text-xs text-muted-foreground">1 day ago</p>
                   </div>
                 </div>

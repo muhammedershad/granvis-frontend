@@ -1,3 +1,4 @@
+'use client';
 import { useState, useMemo } from "react";
 import { 
   Search, 
@@ -15,7 +16,6 @@ import {
   Calendar,
   DollarSign,
   Users,
-  MapPin,
   Clock,
   TrendingUp,
   AlertCircle,
@@ -38,11 +38,11 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from ".
 import { Badge } from "./ui/badge";
 import { Progress } from "./ui/progress";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from "./ui/dropdown-menu";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "./ui/dialog";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "./ui/tabs";
+import { Dialog, DialogContent, DialogTrigger } from "./ui/dialog";
 import { AddProjectForm } from "./AddProjectForm";
 import { Project, ProjectFilters, ProjectSort, ProjectViewType } from "../types/project";
 import { cn } from "./ui/utils";
+import { ImageWithFallback } from "./figma/ImageWithFallback";
 
 // Mock project data
 const mockProjects: Project[] = [
@@ -77,7 +77,7 @@ const mockProjects: Project[] = [
     },
     tags: ["Luxury", "Sustainable", "Contemporary"],
     documents: [],
-    images: [],
+    images: ["https://images.unsplash.com/photo-1622015663381-d2e05ae91b72?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxtb2Rlcm4lMjBsdXh1cnklMjB2aWxsYSUyMGFyY2hpdGVjdHVyZXxlbnwxfHx8fDE3NTgwNDI4OTd8MA&ixlib=rb-4.1.0&q=80&w=1080"],
     createdAt: "2024-01-10",
     updatedAt: "2024-01-20",
     createdBy: "John Doe"
@@ -113,7 +113,7 @@ const mockProjects: Project[] = [
     },
     tags: ["Commercial", "High-rise", "Mixed-use"],
     documents: [],
-    images: [],
+    images: ["https://images.unsplash.com/photo-1742156524915-f72d6332f38f?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxjb21tZXJjaWFsJTIwb2ZmaWNlJTIwYnVpbGRpbmclMjBtb2Rlcm58ZW58MXx8fHwxNzU3OTk2NDAwfDA&ixlib=rb-4.1.0&q=80&w=1080"],
     createdAt: "2024-02-20",
     updatedAt: "2024-02-25",
     createdBy: "Emily Rodriguez"
@@ -149,7 +149,7 @@ const mockProjects: Project[] = [
     },
     tags: ["Hospitality", "Luxury", "Coastal"],
     documents: [],
-    images: [],
+    images: ["https://images.unsplash.com/photo-1728488448472-16a259c6ba7c?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxsdXh1cnklMjBob3RlbCUyMGludGVyaW9yJTIwZGVzaWduJTIwYm91dGlxdWV8ZW58MXx8fHwxNzU4MDQyOTA0fDA&ixlib=rb-4.1.0&q=80&w=1080"],
     createdAt: "2023-05-15",
     updatedAt: "2023-12-20",
     createdBy: "Sarah Johnson"
@@ -185,7 +185,7 @@ const mockProjects: Project[] = [
     },
     tags: ["Educational", "Landscape", "Sustainable"],
     documents: [],
-    images: [],
+    images: ["https://images.unsplash.com/photo-1679147704390-63bb246ba3b0?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHx1bml2ZXJzaXR5JTIwY2FtcHVzJTIwbGFuZHNjYXBlJTIwYXJjaGl0ZWN0dXJlfGVufDF8fHx8MTc1ODA0MjkwOHww&ixlib=rb-4.1.0&q=80&w=1080"],
     createdAt: "2024-03-15",
     updatedAt: "2024-03-20",
     createdBy: "Michael Chen"
@@ -221,7 +221,7 @@ const mockProjects: Project[] = [
     },
     tags: ["Sustainable", "Residential", "Community"],
     documents: [],
-    images: [],
+    images: ["https://images.unsplash.com/photo-1710507375069-0ff4e9ccb7ca?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxlY28lMjBmcmllbmRseSUyMHN1c3RhaW5hYmxlJTIwdG93bmhvdXNlc3xlbnwxfHx8fDE3NTgwNDI5MTJ8MA&ixlib=rb-4.1.0&q=80&w=1080"],
     createdAt: "2024-01-20",
     updatedAt: "2024-01-25",
     createdBy: "Lisa Thompson"
@@ -256,8 +256,6 @@ export function ProjectsPage({ onProjectSelect }: ProjectsPageProps) {
   const types = [...new Set(projects.map(proj => proj.type))];
   const statuses = [...new Set(projects.map(proj => proj.status))];
   const priorities = [...new Set(projects.map(proj => proj.priority))];
-  const clients = [...new Set(projects.map(proj => proj.client))];
-  const projectManagers = [...new Set(projects.map(proj => proj.projectManager))];
 
   // Calculate statistics
   const stats = useMemo(() => {
@@ -273,7 +271,7 @@ export function ProjectsPage({ onProjectSelect }: ProjectsPageProps) {
 
   // Filter and sort projects
   const filteredAndSortedProjects = useMemo(() => {
-    let filtered = projects.filter(project => {
+    const filtered = projects.filter(project => {
       const searchTerm = filters.search.toLowerCase();
       const matchesSearch = !filters.search || 
         project.name.toLowerCase().includes(searchTerm) ||
@@ -607,43 +605,65 @@ export function ProjectsPage({ onProjectSelect }: ProjectsPageProps) {
                 className="backdrop-blur-xl bg-white/70 dark:bg-black/20 border-white/20 dark:border-white/10 hover:bg-white/80 dark:hover:bg-white/5 transition-all duration-300 group relative overflow-hidden shadow-xl shadow-gray-200/50 dark:shadow-black/50 hover:shadow-2xl dark:hover:shadow-black/70 cursor-pointer"
                 onClick={() => onProjectSelect?.(project.id)}
               >
+                {/* Project Image */}
+                {project.images && project.images.length > 0 && (
+                  <div className="relative h-48 w-full overflow-hidden">
+                    <ImageWithFallback
+                      src={project.images[0]}
+                      alt={project.name}
+                      width={400}
+                      height={192}
+                      className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+                    />
+                    {/* Image overlay with project type icon */}
+                    <div className="absolute top-3 left-3 p-2 bg-white/90 dark:bg-black/60 rounded-lg backdrop-blur-sm border border-white/40 dark:border-white/10 shadow-lg">
+                      <TypeIcon className="w-4 h-4 text-muted-foreground" />
+                    </div>
+                    {/* Status badge on image */}
+                    <div className="absolute top-3 right-3">
+                      <Badge className={cn("shadow-lg backdrop-blur-sm border", getStatusColor(project.status))}>
+                        {getStatusIcon(project.status)}
+                        <span className="ml-1">{project.status}</span>
+                      </Badge>
+                    </div>
+                  </div>
+                )}
+
                 {/* Light theme gradient overlay */}
                 <div className="absolute inset-0 bg-gradient-to-br from-purple-50/60 via-blue-50/40 to-cyan-50/60 opacity-100 dark:opacity-0 transition-opacity duration-300"></div>
                 
                 {/* Dark theme gradient overlay */}
                 <div className="absolute inset-0 bg-gradient-to-br from-purple-500/5 to-blue-500/5 opacity-0 dark:opacity-100 group-hover:opacity-100 transition-opacity"></div>
                 
-                <CardHeader className="relative z-10">
+                <CardHeader className="relative z-10 pb-3">
                   <div className="flex items-start justify-between">
-                    <div className="flex items-center space-x-3">
-                      <div className="p-2 bg-white/60 dark:bg-white/10 rounded-lg shadow-lg shadow-gray-200/50 dark:shadow-black/20">
-                        <TypeIcon className="w-5 h-5 text-muted-foreground" />
-                      </div>
-                      <div>
-                        <CardTitle className="text-foreground text-base">{project.name}</CardTitle>
-                        <p className="text-muted-foreground text-sm">{project.client}</p>
-                      </div>
+                    <div className="flex-1">
+                      <CardTitle className="text-foreground text-base mb-1">{project.name}</CardTitle>
+                      <p className="text-muted-foreground text-sm">{project.client}</p>
                     </div>
                     
                     <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
+                      <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
                         <Button variant="ghost" size="icon" className="text-muted-foreground hover:text-foreground opacity-0 group-hover:opacity-100 transition-opacity">
                           <MoreHorizontal className="w-4 h-4" />
                         </Button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
-                        <DropdownMenuItem>
+                        <DropdownMenuItem onClick={(e) => e.stopPropagation()}>
                           <Eye className="w-4 h-4 mr-2" />
                           View Details
                         </DropdownMenuItem>
-                        <DropdownMenuItem>
+                        <DropdownMenuItem onClick={(e) => e.stopPropagation()}>
                           <Edit className="w-4 h-4 mr-2" />
-                          Edit Project
+                          Edit
                         </DropdownMenuItem>
                         <DropdownMenuSeparator />
                         <DropdownMenuItem 
                           className="text-red-600 dark:text-red-400"
-                          onClick={() => handleDeleteProject(project.id)}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleDeleteProject(project.id);
+                          }}
                         >
                           <Trash2 className="w-4 h-4 mr-2" />
                           Delete
@@ -651,48 +671,43 @@ export function ProjectsPage({ onProjectSelect }: ProjectsPageProps) {
                       </DropdownMenuContent>
                     </DropdownMenu>
                   </div>
-                  
-                  <div className="flex items-center space-x-2 mt-3">
-                    <Badge className={cn("flex items-center space-x-1", getStatusColor(project.status))}>
-                      {getStatusIcon(project.status)}
-                      <span>{project.status}</span>
-                    </Badge>
-                    <Badge className={getPriorityColor(project.priority)}>
-                      {project.priority}
-                    </Badge>
-                  </div>
                 </CardHeader>
-                
+
                 <CardContent className="relative z-10 space-y-4">
                   <p className="text-muted-foreground text-sm line-clamp-2">{project.description}</p>
                   
-                  <div className="space-y-3">
-                    <div className="flex items-center justify-between text-sm">
-                      <span className="text-muted-foreground">Progress</span>
-                      <span className="text-foreground">{project.progressPercentage}%</span>
+                  {/* Progress */}
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm text-muted-foreground">Progress</span>
+                      <span className="text-sm text-foreground">{project.progressPercentage}%</span>
                     </div>
                     <Progress 
                       value={project.progressPercentage} 
-                      className="h-2 bg-gray-200/60 dark:bg-white/10"
+                      className="h-2 bg-white/50 dark:bg-white/10"
                     />
                   </div>
-                  
-                  <div className="grid grid-cols-2 gap-4 text-sm">
-                    <div className="flex items-center space-x-2">
-                      <DollarSign className="w-4 h-4 text-muted-foreground" />
-                      <span className="text-muted-foreground">${(project.totalBudget / 1000).toFixed(0)}K</span>
+
+                  {/* Project details */}
+                  <div className="grid grid-cols-2 gap-3 text-sm">
+                    <div className="flex items-center gap-2">
+                      <DollarSign className="w-3 h-3 text-muted-foreground" />
+                      <span className="text-foreground">${(project.totalBudget / 1000000).toFixed(1)}M</span>
                     </div>
-                    <div className="flex items-center space-x-2">
-                      <Calendar className="w-4 h-4 text-muted-foreground" />
-                      <span className="text-muted-foreground">{new Date(project.deadline).toLocaleDateString()}</span>
+                    <div className="flex items-center gap-2">
+                      <Calendar className="w-3 h-3 text-muted-foreground" />
+                      <span className="text-foreground">{new Date(project.deadline).toLocaleDateString()}</span>
                     </div>
-                    <div className="flex items-center space-x-2">
-                      <Users className="w-4 h-4 text-muted-foreground" />
-                      <span className="text-muted-foreground">{project.teamMembers.length + 1}</span>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <MapPin className="w-4 h-4 text-muted-foreground" />
-                      <span className="text-muted-foreground">{project.location.city}</span>
+                  </div>
+
+                  {/* Priority and tags */}
+                  <div className="flex items-center justify-between">
+                    <Badge variant="outline" className={getPriorityColor(project.priority)}>
+                      {project.priority}
+                    </Badge>
+                    <div className="flex items-center gap-1">
+                      <Users className="w-3 h-3 text-muted-foreground" />
+                      <span className="text-sm text-muted-foreground">{project.teamMembers.length + 1}</span>
                     </div>
                   </div>
                 </CardContent>
@@ -701,92 +716,109 @@ export function ProjectsPage({ onProjectSelect }: ProjectsPageProps) {
           })}
         </div>
       ) : (
+        // Table View
         <Card className="backdrop-blur-xl bg-white/70 dark:bg-black/20 border-white/20 dark:border-white/10 shadow-xl shadow-gray-200/50 dark:shadow-black/50">
-          {/* Light theme gradient overlay */}
           <div className="absolute inset-0 bg-gradient-to-br from-blue-50/60 via-indigo-50/40 to-purple-50/60 opacity-100 dark:opacity-0 transition-opacity duration-300"></div>
-          
-          <div className="relative overflow-x-auto">
+          <CardContent className="relative p-0">
             <Table>
               <TableHeader>
-                <TableRow className="border-white/40 dark:border-white/10">
-                  <TableHead className="text-muted-foreground">
-                    <Button 
-                      variant="ghost" 
+                <TableRow className="border-white/20 dark:border-white/10 hover:bg-white/50 dark:hover:bg-white/5">
+                  <TableHead className="text-foreground w-[200px]">
+                    <Button
+                      variant="ghost"
+                      size="sm"
                       onClick={() => handleSort("name")}
-                      className="h-auto p-0 text-muted-foreground hover:text-foreground"
+                      className="h-auto p-0 text-left justify-start text-foreground"
                     >
-                      Project {getSortIcon("name")}
+                      Project Name
+                      {getSortIcon("name")}
                     </Button>
                   </TableHead>
-                  <TableHead className="text-muted-foreground">Type</TableHead>
-                  <TableHead className="text-muted-foreground">Client</TableHead>
-                  <TableHead className="text-muted-foreground">Status</TableHead>
-                  <TableHead className="text-muted-foreground">Progress</TableHead>
-                  <TableHead className="text-muted-foreground">Budget</TableHead>
-                  <TableHead className="text-muted-foreground">Deadline</TableHead>
-                  <TableHead className="text-muted-foreground">Actions</TableHead>
+                  <TableHead className="text-foreground">Client</TableHead>
+                  <TableHead className="text-foreground">Type</TableHead>
+                  <TableHead className="text-foreground">Status</TableHead>
+                  <TableHead className="text-foreground">Priority</TableHead>
+                  <TableHead className="text-foreground">Progress</TableHead>
+                  <TableHead className="text-foreground">Budget</TableHead>
+                  <TableHead className="text-foreground">Deadline</TableHead>
+                  <TableHead className="text-foreground w-[50px]">Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {paginatedProjects.map((project) => {
                   const TypeIcon = getTypeIcon(project.type);
                   return (
-                    <TableRow key={project.id} className="border-white/40 dark:border-white/10 hover:bg-white/60 dark:hover:bg-white/5">
+                    <TableRow 
+                      key={project.id} 
+                      className="border-white/20 dark:border-white/10 hover:bg-white/50 dark:hover:bg-white/5 cursor-pointer"
+                      onClick={() => onProjectSelect?.(project.id)}
+                    >
                       <TableCell>
-                        <div className="flex items-center space-x-3">
-                          <div className="p-2 bg-white/60 dark:bg-white/10 rounded-lg shadow-sm">
+                        <div className="flex items-center gap-3">
+                          {project.images && project.images.length > 0 && (
+                            <div className="w-10 h-10 rounded-lg overflow-hidden border border-white/20 dark:border-white/10">
+                              <ImageWithFallback
+                                src={project.images[0]}
+                                alt={project.name}
+                                width={40}
+                                height={40}
+                                className="w-full h-full object-cover"
+                              />
+                            </div>
+                          )}
+                          <div className="flex items-center gap-2">
                             <TypeIcon className="w-4 h-4 text-muted-foreground" />
-                          </div>
-                          <div>
-                            <p className="text-foreground">{project.name}</p>
-                            <p className="text-muted-foreground text-sm">{project.category}</p>
+                            <div>
+                              <p className="text-foreground">{project.name}</p>
+                              <p className="text-sm text-muted-foreground">{project.category}</p>
+                            </div>
                           </div>
                         </div>
                       </TableCell>
+                      <TableCell className="text-foreground">{project.client}</TableCell>
+                      <TableCell className="text-foreground">{project.type}</TableCell>
                       <TableCell>
-                        <Badge variant="outline" className="text-muted-foreground border-border">
-                          {project.type}
-                        </Badge>
-                      </TableCell>
-                      <TableCell className="text-muted-foreground">{project.client}</TableCell>
-                      <TableCell>
-                        <Badge className={cn("flex items-center space-x-1 w-fit", getStatusColor(project.status))}>
+                        <Badge className={getStatusColor(project.status)}>
                           {getStatusIcon(project.status)}
-                          <span>{project.status}</span>
+                          <span className="ml-1">{project.status}</span>
                         </Badge>
                       </TableCell>
                       <TableCell>
-                        <div className="flex items-center space-x-2">
+                        <Badge variant="outline" className={getPriorityColor(project.priority)}>
+                          {project.priority}
+                        </Badge>
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex items-center gap-2">
                           <Progress value={project.progressPercentage} className="w-16 h-2" />
-                          <span className="text-muted-foreground text-sm">{project.progressPercentage}%</span>
+                          <span className="text-sm text-foreground">{project.progressPercentage}%</span>
                         </div>
                       </TableCell>
-                      <TableCell className="text-muted-foreground">
-                        ${(project.totalBudget / 1000).toFixed(0)}K
-                      </TableCell>
-                      <TableCell className="text-muted-foreground">
-                        {new Date(project.deadline).toLocaleDateString()}
-                      </TableCell>
+                      <TableCell className="text-foreground">${(project.totalBudget / 1000000).toFixed(1)}M</TableCell>
+                      <TableCell className="text-foreground">{new Date(project.deadline).toLocaleDateString()}</TableCell>
                       <TableCell>
                         <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
+                          <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
                             <Button variant="ghost" size="icon" className="text-muted-foreground hover:text-foreground">
                               <MoreHorizontal className="w-4 h-4" />
                             </Button>
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align="end">
-                            <DropdownMenuItem>
+                            <DropdownMenuItem onClick={(e) => e.stopPropagation()}>
                               <Eye className="w-4 h-4 mr-2" />
                               View Details
                             </DropdownMenuItem>
-                            <DropdownMenuItem>
+                            <DropdownMenuItem onClick={(e) => e.stopPropagation()}>
                               <Edit className="w-4 h-4 mr-2" />
-                              Edit Project
+                              Edit
                             </DropdownMenuItem>
                             <DropdownMenuSeparator />
                             <DropdownMenuItem 
                               className="text-red-600 dark:text-red-400"
-                              onClick={() => handleDeleteProject(project.id)}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleDeleteProject(project.id);
+                              }}
                             >
                               <Trash2 className="w-4 h-4 mr-2" />
                               Delete
@@ -799,42 +831,48 @@ export function ProjectsPage({ onProjectSelect }: ProjectsPageProps) {
                 })}
               </TableBody>
             </Table>
-          </div>
-          
-          {/* Pagination */}
-          {totalPages > 1 && (
-            <div className="flex items-center justify-between px-6 py-4 border-t border-white/40 dark:border-white/10">
-              <div className="text-muted-foreground text-sm">
-                Showing {((currentPage - 1) * ITEMS_PER_PAGE) + 1} to {Math.min(currentPage * ITEMS_PER_PAGE, filteredAndSortedProjects.length)} of {filteredAndSortedProjects.length} projects
-              </div>
-              <div className="flex items-center space-x-2">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
-                  disabled={currentPage === 1}
-                  className="bg-white/60 dark:bg-white/5 border-white/40 dark:border-white/10 text-muted-foreground hover:bg-white/80 dark:hover:bg-white/10"
-                >
-                  <ChevronLeft className="w-4 h-4" />
-                  Previous
-                </Button>
-                <div className="text-muted-foreground text-sm">
-                  Page {currentPage} of {totalPages}
-                </div>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
-                  disabled={currentPage === totalPages}
-                  className="bg-white/60 dark:bg-white/5 border-white/40 dark:border-white/10 text-muted-foreground hover:bg-white/80 dark:hover:bg-white/10"
-                >
-                  Next
-                  <ChevronRight className="w-4 h-4" />
-                </Button>
-              </div>
-            </div>
-          )}
+          </CardContent>
         </Card>
+      )}
+
+      {/* Pagination */}
+      {totalPages > 1 && (
+        <div className="flex items-center justify-center space-x-2">
+          <Button
+            variant="outline"
+            size="icon"
+            onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+            disabled={currentPage === 1}
+            className="bg-white/60 dark:bg-white/5 border-white/40 dark:border-white/10"
+          >
+            <ChevronLeft className="w-4 h-4" />
+          </Button>
+          
+          {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+            <Button
+              key={page}
+              variant={currentPage === page ? "default" : "outline"}
+              size="icon"
+              onClick={() => setCurrentPage(page)}
+              className={cn(
+                "bg-white/60 dark:bg-white/5 border-white/40 dark:border-white/10",
+                currentPage === page && "bg-gradient-to-r from-purple-500 to-blue-500 text-white border-0"
+              )}
+            >
+              {page}
+            </Button>
+          ))}
+          
+          <Button
+            variant="outline"
+            size="icon"
+            onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+            disabled={currentPage === totalPages}
+            className="bg-white/60 dark:bg-white/5 border-white/40 dark:border-white/10"
+          >
+            <ChevronRight className="w-4 h-4" />
+          </Button>
+        </div>
       )}
     </div>
   );

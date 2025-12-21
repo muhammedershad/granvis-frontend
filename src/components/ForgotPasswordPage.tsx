@@ -3,10 +3,9 @@ import { Button } from "./ui/button";
 import { Input } from "./ui/input";
 import { Label } from "./ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "./ui/card";
-import { 
-  Mail, 
-  ArrowLeft, 
-  ArrowRight,
+import {
+  Mail,
+  ArrowLeft,
   Building2,
   Check,
   Clock,
@@ -84,7 +83,7 @@ export function ForgotPasswordPage({ onBackToLogin, onResetPassword }: ForgotPas
               <>
                 <CardTitle className="text-card-foreground text-xl">Forgot Password?</CardTitle>
                 <p className="text-muted-foreground text-sm">
-                  No worries! Enter your email address and we'll send you a reset link.
+                  No worries! Enter your email address and we&apos;ll send you a reset link.
                 </p>
               </>
             ) : (
@@ -94,7 +93,7 @@ export function ForgotPasswordPage({ onBackToLogin, onResetPassword }: ForgotPas
                 </div>
                 <CardTitle className="text-card-foreground text-xl">Check Your Email</CardTitle>
                 <p className="text-muted-foreground text-sm">
-                  We've sent a password reset link to{" "}
+                  We&apos;ve sent a password reset link to{" "}
                   <span className="text-purple-400">{email}</span>
                 </p>
               </>
@@ -152,7 +151,7 @@ export function ForgotPasswordPage({ onBackToLogin, onResetPassword }: ForgotPas
                     <span className="text-sm">Link expires in 15 minutes</span>
                   </div>
                   <p className="text-muted-foreground text-sm">
-                    Didn't receive the email? Check your spam folder or click below to resend.
+                    Didn&apos;t receive the email? Check your spam folder or click below to resend.
                   </p>
                 </div>
 

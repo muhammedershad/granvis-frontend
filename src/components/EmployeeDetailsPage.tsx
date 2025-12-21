@@ -7,7 +7,6 @@ import {
   Mail,
   Phone,
   MapPin,
-  Calendar,
   Clock,
   Award,
   Briefcase,
@@ -15,17 +14,13 @@ import {
   Building,
   Star,
   TrendingUp,
-  FileText,
-  Settings,
   MoreHorizontal,
   Camera,
   UserCheck,
-  UserX,
   Crown,
   Shield,
   Target,
   Activity,
-  BookOpen,
   Zap
 } from "lucide-react";
 import { Button } from "./ui/button";
@@ -38,11 +33,7 @@ import { Textarea } from "./ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "./ui/tabs";
 import { Progress } from "./ui/progress";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "./ui/table";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from "./ui/dropdown-menu";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogDescription } from "./ui/dialog";
 import { Employee } from "../types/employee";
-import { Project } from "../types/project";
 import { cn } from "./ui/utils";
 
 interface EmployeeDetailsPageProps {
@@ -85,27 +76,40 @@ const mockEmployeeDetails: Employee & {
   performance: PerformanceMetric[];
   workHistory: WorkHistoryEntry[];
   directReports: Employee[];
-  manager: Employee | null;
-  skills: string[];
-  certifications: string[];
+  managerDetails: Employee | null;
   bio: string;
-  emergencyContact: {
-    name: string;
-    relationship: string;
-    phone: string;
-  };
+  location: string;
 } = {
   id: "1",
   name: "Sarah Chen",
+  firstName: "Sarah",
+  lastName: "Chen",
   email: "sarah.chen@company.com",
   phone: "+1 (555) 123-4567",
   position: "Senior Software Architect",
   department: "Engineering",
-  status: "active",
+  status: "Active",
   avatar: "",
   joinDate: "2021-03-15",
   employeeId: "EMP001",
   salary: 120000,
+  team: "Platform Architecture",
+  manager: "James Wilson",
+  hireDate: "2021-03-15",
+  employmentStatus: "Active",
+  employmentType: "Full-time",
+  dateOfBirth: "1990-05-15",
+  address: {
+    street: "123 Main St",
+    city: "San Francisco",
+    state: "CA",
+    zipCode: "94102",
+    country: "USA"
+  },
+  experience: 8,
+  education: "Master's in Computer Science",
+  createdAt: "2021-03-15",
+  updatedAt: "2024-01-15",
   location: "San Francisco, CA",
   bio: "Experienced software architect with 8+ years in full-stack development. Passionate about building scalable systems and mentoring junior developers. Leads the platform architecture team and drives technical decisions for our core products.",
   skills: ["React", "Node.js", "Python", "AWS", "Docker", "Kubernetes", "GraphQL", "PostgreSQL"],
@@ -182,13 +186,28 @@ const mockEmployeeDetails: Employee & {
       email: "alex.thompson@company.com",
       position: "Software Engineer",
       department: "Engineering",
-      status: "active",
+      status: "Active",
       avatar: "",
       joinDate: "2022-06-01",
       employeeId: "EMP002",
       phone: "",
       salary: 0,
-      location: ""
+      firstName: "Alex",
+      lastName: "Thompson",
+      employmentStatus: "Active",
+      employmentType: "Full-time",
+      dateOfBirth: "",
+      address: { street: "", city: "", state: "", zipCode: "", country: "" },
+      emergencyContact: { name: "", relationship: "", phone: "" },
+      skills: [],
+      experience: 0,
+      education: "",
+      certifications: [],
+      team: "",
+      manager: "",
+      hireDate: "2022-06-01",
+      createdAt: "2022-06-01",
+      updatedAt: "2022-06-01"
     },
     {
       id: "3",
@@ -196,28 +215,58 @@ const mockEmployeeDetails: Employee & {
       email: "maria.rodriguez@company.com",
       position: "Frontend Developer",
       department: "Engineering",
-      status: "active",
+      status: "Active",
       avatar: "",
       joinDate: "2023-02-15",
       employeeId: "EMP003",
       phone: "",
       salary: 0,
-      location: ""
+      firstName: "Maria",
+      lastName: "Rodriguez",
+      employmentStatus: "Active",
+      employmentType: "Full-time",
+      dateOfBirth: "",
+      address: { street: "", city: "", state: "", zipCode: "", country: "" },
+      emergencyContact: { name: "", relationship: "", phone: "" },
+      skills: [],
+      experience: 0,
+      education: "",
+      certifications: [],
+      team: "",
+      manager: "",
+      hireDate: "2023-02-15",
+      createdAt: "2023-02-15",
+      updatedAt: "2023-02-15"
     }
   ],
-  manager: {
+  managerDetails: {
     id: "4",
     name: "James Wilson",
     email: "james.wilson@company.com",
     position: "Engineering Director",
     department: "Engineering",
-    status: "active",
+    status: "Active",
     avatar: "",
     joinDate: "2020-01-10",
     employeeId: "EMP004",
     phone: "",
     salary: 0,
-    location: ""
+    firstName: "James",
+    lastName: "Wilson",
+    employmentStatus: "Active",
+    employmentType: "Full-time",
+    dateOfBirth: "",
+    address: { street: "", city: "", state: "", zipCode: "", country: "" },
+    emergencyContact: { name: "", relationship: "", phone: "" },
+    skills: [],
+    experience: 0,
+    education: "",
+    certifications: [],
+    team: "",
+    manager: "",
+    hireDate: "2020-01-10",
+    createdAt: "2020-01-10",
+    updatedAt: "2020-01-10"
   }
 };
 
@@ -600,7 +649,7 @@ export function EmployeeDetailsPage({ employeeId, onBack }: EmployeeDetailsPageP
         <TabsContent value="team" className="space-y-6">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             {/* Manager */}
-            {employee.manager && (
+            {employee.managerDetails && (
               <Card className="bg-black/20 border-white/10 backdrop-blur-xl">
                 <CardHeader>
                   <CardTitle className="text-white/90 flex items-center space-x-2">
@@ -611,15 +660,15 @@ export function EmployeeDetailsPage({ employeeId, onBack }: EmployeeDetailsPageP
                 <CardContent>
                   <div className="flex items-center space-x-3">
                     <Avatar className="w-12 h-12">
-                      <AvatarImage src={employee.manager.avatar} />
+                      <AvatarImage src={employee.managerDetails.avatar} />
                       <AvatarFallback className="bg-gradient-to-br from-yellow-500 to-orange-500 text-white">
-                        {employee.manager.name.split(' ').map(n => n[0]).join('')}
+                        {employee.managerDetails.name.split(' ').map((n: string) => n[0]).join('')}
                       </AvatarFallback>
                     </Avatar>
                     <div>
-                      <p className="text-white/90">{employee.manager.name}</p>
-                      <p className="text-white/60 text-sm">{employee.manager.position}</p>
-                      <p className="text-white/60 text-sm">{employee.manager.email}</p>
+                      <p className="text-white/90">{employee.managerDetails.name}</p>
+                      <p className="text-white/60 text-sm">{employee.managerDetails.position}</p>
+                      <p className="text-white/60 text-sm">{employee.managerDetails.email}</p>
                     </div>
                   </div>
                 </CardContent>

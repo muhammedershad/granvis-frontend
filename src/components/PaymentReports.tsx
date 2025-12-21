@@ -1,13 +1,12 @@
 import { useState } from "react";
-import { Calendar, Download, FileText, Filter, Search, TrendingUp, DollarSign, Users, Target, Clock, CheckCircle } from "lucide-react";
+import {  Download, FileText, Filter, TrendingUp, DollarSign, Clock, CheckCircle, Target } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "./ui/card";
 import { Button } from "./ui/button";
-import { Input } from "./ui/input";
 import { Badge } from "./ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./ui/select";
 import { Label } from "./ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "./ui/tabs";
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, LineChart, Line, PieChart, Pie, Cell, AreaChart, Area } from 'recharts';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, Line, PieChart, Pie, Cell, AreaChart, Area } from 'recharts';
 
 // Mock report data
 const monthlyRevenueData = [
