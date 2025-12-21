@@ -1,35 +1,43 @@
 'use client';
 
 import { useEffect } from 'react';
-import { LoginPage } from '@/components/LoginPage';
 import { getCookie } from '@/lib/cookies';
 import { useRouter } from 'next/navigation';
 import { useSelector } from 'react-redux';
 import { getAuthDetails } from '@/store/slices/authSlice';
+import { Loader2 } from 'lucide-react';
 
 export default function Home() {
   const router = useRouter();
 
   // select actual auth state (avoid selecting entire store)
   const auth = useSelector(getAuthDetails);
-  const isAuthenticated = Boolean(auth?.isAuthenticated); // or check auth.user too
+  const isAuthenticated = Boolean(auth?.isAuthenticated);
 
   // read cookie if you still need to verify cookie presence
   const accessTokenCookie = getCookie('accessToken');
 
   useEffect(() => {
-    // run redirect only after render (no setState in render)
-    if (isAuthenticated && accessTokenCookie) {
-      router.push('/dashboard');
-    }
+    // Give a small delay to ensure Redux state is fully rehydrated
+    const timer = setTimeout(() => {
+      // Redirect based on authentication status
+      if (isAuthenticated && accessTokenCookie) {
+        router.push('/dashboard');
+      } else {
+        router.push('/sign-in');
+      }
+    }, 100);
+
+    return () => clearTimeout(timer);
   }, [isAuthenticated, accessTokenCookie, router]);
 
-  // Keep rendering the login page while effect decides navigation.
-  // Optionally show a small loading placeholder if redirecting to avoid flicker.
-  if (isAuthenticated && accessTokenCookie) {
-    // return null briefly; the effect will navigate
-    return null;
-  }
-
-  return <LoginPage />;
+  // Show loading screen while checking authentication
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-background via-background to-background dark:from-gray-900 dark:via-black dark:to-gray-900 flex items-center justify-center">
+      <div className="text-center space-y-4">
+        <Loader2 className="w-12 h-12 text-purple-500 dark:text-purple-400 mx-auto animate-spin" />
+        <p className="text-muted-foreground">Loading...</p>
+      </div>
+    </div>
+  );
 }

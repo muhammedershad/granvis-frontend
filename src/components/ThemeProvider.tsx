@@ -57,9 +57,13 @@ export function ThemeProvider({ children }: ThemeProviderProps) {
     setThemeState(newTheme);
   };
 
-  // Prevent flash of wrong theme by not rendering until mounted
+  // Prevent flash of wrong theme by rendering with default theme until mounted
   if (!mounted) {
-    return null;
+    return (
+      <ThemeContext.Provider value={{ theme: 'dark', toggleTheme, setTheme }}>
+        {children}
+      </ThemeContext.Provider>
+    );
   }
 
   return (

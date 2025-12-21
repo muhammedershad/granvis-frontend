@@ -52,16 +52,19 @@ export function LoginPage() {
       const response = await login(data).unwrap();
 
       console.log('Login successful:', response);
-      
+
       // Store tokens in cookies
       setCookie('accessToken', response?.tokens?.accessToken, 1); // 1 day
       setCookie('refreshToken', response?.tokens?.refreshToken, 7); // 7 days
-      
+
       // Store user in Redux
       dispatch(setCredentials({
         user: response.user,
       }));
-      
+
+      // Small delay to ensure Redux persist saves the state before navigation
+      await new Promise(resolve => setTimeout(resolve, 150));
+
       // Navigate to dashboard
       router.push('/dashboard');
     } catch (err: unknown) {

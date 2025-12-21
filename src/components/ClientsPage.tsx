@@ -1,9 +1,11 @@
-import { useState, useMemo } from "react";
-import { 
-  Search, 
-  Plus, 
-  Filter, 
-  Download, 
+import { useState, useMemo, useEffect } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { useDebounce } from "@/hooks/useDebounce";
+import {
+  Search,
+  Plus,
+  Filter,
+  Download,
   MoreHorizontal,
   Edit,
   Eye,
@@ -25,7 +27,8 @@ import {
   ArrowUpDown,
   ArrowUp,
   ArrowDown,
-  ExternalLink
+  ExternalLink,
+  Loader2
 } from "lucide-react";
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";
@@ -36,9 +39,11 @@ import { Badge } from "./ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from "./ui/dropdown-menu";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "./ui/dialog";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "./ui/alert-dialog";
 import { AddClientForm } from "./AddClientForm";
 import { Client, ClientFilters, ClientSort, ClientViewType } from "../types/client";
 import { cn } from "./ui/utils";
+import { toast } from "sonner";
 import {
   Pagination,
   PaginationContent,
@@ -47,238 +52,8 @@ import {
   PaginationNext,
   PaginationPrevious,
 } from "./ui/pagination";
-
-// Mock client data
-const mockClients: Client[] = [
-  {
-    id: "1",
-    name: "John Williams",
-    email: "john.williams@luxuryhomes.com",
-    phone: "+1 (555) 123-4567",
-    website: "https://luxuryhomes.com",
-    companyName: "Luxury Homes LLC",
-    companyType: "Small Business",
-    industry: "Real Estate",
-    address: {
-      street: "123 Beverly Hills Drive",
-      city: "Beverly Hills",
-      state: "CA",
-      zipCode: "90210",
-      country: "USA"
-    },
-    primaryContact: {
-      name: "John Williams",
-      title: "CEO",
-      email: "john.williams@luxuryhomes.com",
-      phone: "+1 (555) 123-4567"
-    },
-    status: "Active",
-    source: "Website",
-    priority: "High",
-    totalProjectValue: 850000,
-    projectsCount: 1,
-    notes: "High-value client interested in luxury residential projects. Excellent communication and prompt payments.",
-    tags: ["Luxury", "Residential", "High-Value"],
-    projectIds: ["1"],
-    activeProjects: 1,
-    completedProjects: 0,
-    createdAt: "2024-01-10",
-    updatedAt: "2024-01-20",
-    createdBy: "John Doe",
-    lastContactDate: "2024-01-15"
-  },
-  {
-    id: "2",
-    name: "Sarah Chen",
-    email: "s.chen@metrodev.com",
-    phone: "+1 (555) 234-5678",
-    website: "https://metrodev.com",
-    companyName: "Metro Development Corp",
-    companyType: "Corporation",
-    industry: "Real Estate Development",
-    address: {
-      street: "456 Manhattan Plaza",
-      city: "New York",
-      state: "NY",
-      zipCode: "10001",
-      country: "USA"
-    },
-    primaryContact: {
-      name: "Sarah Chen",
-      title: "Project Director",
-      email: "s.chen@metrodev.com",
-      phone: "+1 (555) 234-5678"
-    },
-    secondaryContact: {
-      name: "Michael Park",
-      title: "Development Manager",
-      email: "m.park@metrodev.com",
-      phone: "+1 (555) 234-5679"
-    },
-    status: "Active",
-    source: "Referral",
-    priority: "VIP",
-    totalProjectValue: 15000000,
-    projectsCount: 1,
-    notes: "Major commercial development company. Long-term partnership potential with multiple upcoming projects.",
-    tags: ["Commercial", "High-Volume", "Corporate"],
-    projectIds: ["2"],
-    activeProjects: 1,
-    completedProjects: 0,
-    createdAt: "2024-02-20",
-    updatedAt: "2024-02-25",
-    createdBy: "Emily Rodriguez",
-    lastContactDate: "2024-02-22"
-  },
-  {
-    id: "3",
-    name: "Amanda Foster",
-    email: "amanda@luxuryhotels.com",
-    phone: "+1 (555) 345-6789",
-    website: "https://luxuryhospitality.com",
-    companyName: "Luxury Hospitality Group",
-    companyType: "Corporation",
-    industry: "Hospitality",
-    address: {
-      street: "789 Ocean Drive",
-      city: "Miami",
-      state: "FL",
-      zipCode: "33139",
-      country: "USA"
-    },
-    primaryContact: {
-      name: "Amanda Foster",
-      title: "VP of Development",
-      email: "amanda@luxuryhotels.com",
-      phone: "+1 (555) 345-6789"
-    },
-    status: "Active",
-    source: "Advertisement",
-    priority: "Medium",
-    totalProjectValue: 2500000,
-    projectsCount: 1,
-    notes: "Completed boutique hotel project successfully. Interested in future hospitality projects.",
-    tags: ["Hospitality", "Interior", "Repeat Client"],
-    projectIds: ["3"],
-    activeProjects: 0,
-    completedProjects: 1,
-    createdAt: "2023-05-15",
-    updatedAt: "2023-12-20",
-    createdBy: "Sarah Johnson",
-    lastContactDate: "2023-12-18"
-  },
-  {
-    id: "4",
-    name: "Dr. Robert Martinez",
-    email: "r.martinez@stateuniv.edu",
-    phone: "+1 (555) 456-7890",
-    website: "https://stateuniv.edu",
-    companyName: "State University",
-    companyType: "Government",
-    industry: "Education",
-    address: {
-      street: "1000 University Avenue",
-      city: "Austin",
-      state: "TX",
-      zipCode: "78712",
-      country: "USA"
-    },
-    primaryContact: {
-      name: "Dr. Robert Martinez",
-      title: "Facilities Director",
-      email: "r.martinez@stateuniv.edu",
-      phone: "+1 (555) 456-7890"
-    },
-    status: "Active",
-    source: "Referral",
-    priority: "Low",
-    totalProjectValue: 5500000,
-    projectsCount: 1,
-    notes: "Government contract for campus landscape development. Requires detailed compliance documentation.",
-    tags: ["Government", "Education", "Landscape"],
-    projectIds: ["4"],
-    activeProjects: 1,
-    completedProjects: 0,
-    createdAt: "2024-03-15",
-    updatedAt: "2024-03-20",
-    createdBy: "Michael Chen",
-    lastContactDate: "2024-03-18"
-  },
-  {
-    id: "5",
-    name: "Jennifer Thompson",
-    email: "j.thompson@greenliving.com",
-    phone: "+1 (555) 567-8901",
-    website: "https://greenlivingcommunities.com",
-    companyName: "Green Living Communities",
-    companyType: "Small Business",
-    industry: "Sustainable Development",
-    address: {
-      street: "555 Green Valley Road",
-      city: "Portland",
-      state: "OR",
-      zipCode: "97201",
-      country: "USA"
-    },
-    primaryContact: {
-      name: "Jennifer Thompson",
-      title: "Founder & CEO",
-      email: "j.thompson@greenliving.com",
-      phone: "+1 (555) 567-8901"
-    },
-    status: "Active",
-    source: "Social Media",
-    priority: "Medium",
-    totalProjectValue: 3200000,
-    projectsCount: 1,
-    notes: "Passionate about sustainable development. Focus on eco-friendly materials and energy-efficient designs.",
-    tags: ["Sustainable", "Eco-Friendly", "Residential"],
-    projectIds: ["5"],
-    activeProjects: 1,
-    completedProjects: 0,
-    createdAt: "2024-01-20",
-    updatedAt: "2024-01-25",
-    createdBy: "Lisa Thompson",
-    lastContactDate: "2024-01-23"
-  },
-  {
-    id: "6",
-    name: "David Kim",
-    email: "david.kim@techstartup.com",
-    phone: "+1 (555) 678-9012",
-    website: "https://techstartup.com",
-    companyName: "Innovation Tech Hub",
-    companyType: "Small Business",
-    industry: "Technology",
-    address: {
-      street: "123 Silicon Valley Blvd",
-      city: "San Francisco",
-      state: "CA",
-      zipCode: "94105",
-      country: "USA"
-    },
-    primaryContact: {
-      name: "David Kim",
-      title: "CTO",
-      email: "david.kim@techstartup.com",
-      phone: "+1 (555) 678-9012"
-    },
-    status: "Potential",
-    source: "Cold Call",
-    priority: "Medium",
-    totalProjectValue: 0,
-    projectsCount: 0,
-    notes: "Interested in modern office space design. Currently evaluating multiple architectural firms.",
-    tags: ["Technology", "Office", "Modern"],
-    projectIds: [],
-    activeProjects: 0,
-    completedProjects: 0,
-    createdAt: "2024-02-01",
-    updatedAt: "2024-02-05",
-    createdBy: "John Doe",
-    lastContactDate: "2024-02-03"
-  }
-];
+import { useGetClientsQuery, useDeleteClientMutation, useGetClientStatisticsQuery } from "@/lib/api/clientsApi";
+import { formatIndianCurrency } from "@/lib/utils/currency";
 
 const ITEMS_PER_PAGE = 8;
 
@@ -287,7 +62,9 @@ interface ClientsPageProps {
 }
 
 export function ClientsPage({ onClientSelect }: ClientsPageProps) {
-  const [clients, setClients] = useState<Client[]>(mockClients);
+  const router = useRouter();
+  const searchParams = useSearchParams();
+
   const [currentPage, setCurrentPage] = useState(1);
   const [viewType, setViewType] = useState<ClientViewType>("cards");
   const [filters, setFilters] = useState<ClientFilters>({
@@ -303,63 +80,119 @@ export function ClientsPage({ onClientSelect }: ClientsPageProps) {
     direction: "asc"
   });
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [clientToDelete, setClientToDelete] = useState<string | null>(null);
 
-  // Get unique values for filter options
-  const statuses = [...new Set(clients.map(client => client.status))];
-  const priorities = [...new Set(clients.map(client => client.priority))];
-  const industries = [...new Set(clients.map(client => client.industry))];
+  // Debounce search term to reduce API calls while typing
+  const debouncedSearchTerm = useDebounce(filters.search, 500);
 
-  // Calculate statistics
+  // Initialize filters from URL params on mount
+  useEffect(() => {
+    const urlFilters: ClientFilters = {
+      search: searchParams.get('search') || "",
+      status: searchParams.get('status') || "all",
+      priority: searchParams.get('priority') || "all",
+      industry: searchParams.get('industry') || "all",
+      companyType: searchParams.get('companyType') || "all",
+      source: searchParams.get('source') || "all"
+    };
+    setFilters(urlFilters);
+
+    const page = searchParams.get('page');
+    if (page) {
+      setCurrentPage(parseInt(page, 10));
+    }
+  }, [searchParams]);
+
+  // Reset to page 1 when search term changes
+  useEffect(() => {
+    if (debouncedSearchTerm !== filters.search) {
+      // Search is still being typed, don't reset page yet
+      return;
+    }
+    if (currentPage !== 1 && filters.search) {
+      setCurrentPage(1);
+    }
+  }, [debouncedSearchTerm, currentPage, filters.search]);
+
+  // Build API filter params (exclude "all" values) and include pagination
+  const apiFilters = useMemo(() => {
+    const params: Record<string, string | number> = {};
+    // Use debounced search term for API calls
+    if (debouncedSearchTerm) params.search = debouncedSearchTerm;
+    if (filters.status !== "all") params.status = filters.status;
+    if (filters.priority !== "all") params.priority = filters.priority;
+    if (filters.industry !== "all") params.industry = filters.industry;
+    if (filters.companyType !== "all") params.companyType = filters.companyType;
+    if (filters.source !== "all") params.source = filters.source;
+    params.page = currentPage;
+    params.limit = ITEMS_PER_PAGE;
+    return params;
+  }, [debouncedSearchTerm, filters.status, filters.priority, filters.industry, filters.companyType, filters.source, currentPage]);
+
+  // Fetch clients with filters and pagination
+  const { data: clientsResponse, isLoading, error } = useGetClientsQuery(apiFilters);
+
+  // Extract clients from paginated response - wrapped in useMemo to prevent unnecessary re-renders
+  const clients = useMemo(() => clientsResponse?.data || [], [clientsResponse?.data]);
+  const totalClients = clientsResponse?.total || 0;
+  const totalPages = clientsResponse?.totalPages || 1;
+
+  // Fetch statistics
+  const { data: apiStats } = useGetClientStatisticsQuery();
+
+  // Delete client mutation
+  const [deleteClient] = useDeleteClientMutation();
+
+  // Get unique values for filter options from fetched clients
+  const statuses = useMemo(() => [...new Set(clients.map(client => client.status))], [clients]);
+  const priorities = useMemo(() => [...new Set(clients.map(client => client.priority))], [clients]);
+  const industries = useMemo(() => [...new Set(clients.map(client => client.industry))], [clients]);
+
+  // Always use API statistics (not affected by pagination)
   const stats = useMemo(() => {
-    const total = clients.length;
-    const active = clients.filter(c => c.status === "Active").length;
-    const potential = clients.filter(c => c.status === "Potential").length;
-    const vip = clients.filter(c => c.priority === "VIP").length;
-    const totalValue = clients.reduce((sum, c) => sum + c.totalProjectValue, 0);
-    const avgValue = total > 0 ? Math.round(totalValue / total) : 0;
-    const totalProjects = clients.reduce((sum, c) => sum + c.projectsCount, 0);
+    if (apiStats) {
+      return {
+        total: apiStats.totalClients,
+        active: apiStats.activeClients,
+        potential: apiStats.potentialClients,
+        vip: apiStats.vipClients,
+        totalValue: apiStats.totalValue,
+        avgValue: apiStats.avgValue,
+        totalProjects: apiStats.totalProjects
+      };
+    }
 
-    return { total, active, potential, vip, totalValue, avgValue, totalProjects };
-  }, [clients]);
+    // Fallback to default values
+    return {
+      total: 0,
+      active: 0,
+      potential: 0,
+      vip: 0,
+      totalValue: 0,
+      avgValue: 0,
+      totalProjects: 0
+    };
+  }, [apiStats]);
 
-  // Filter and sort clients
-  const filteredAndSortedClients = useMemo(() => {
-    const filtered = clients.filter(client => {
-      const searchTerm = filters.search.toLowerCase();
-      const matchesSearch = !filters.search || 
-        client.name.toLowerCase().includes(searchTerm) ||
-        client.companyName.toLowerCase().includes(searchTerm) ||
-        client.email.toLowerCase().includes(searchTerm) ||
-        client.industry.toLowerCase().includes(searchTerm);
+  // Update URL with current filters
+  const updateURLParams = (newFilters: ClientFilters, page: number = 1) => {
+    const params = new URLSearchParams();
 
-      const matchesCompanyType = filters.companyType === "all" || client.companyType === filters.companyType;
-      const matchesStatus = filters.status === "all" || client.status === filters.status;
-      const matchesPriority = filters.priority === "all" || client.priority === filters.priority;
-      const matchesIndustry = filters.industry === "all" || client.industry === filters.industry;
-      const matchesSource = filters.source === "all" || client.source === filters.source;
+    if (newFilters.search) params.set('search', newFilters.search);
+    if (newFilters.status !== 'all') params.set('status', newFilters.status);
+    if (newFilters.priority !== 'all') params.set('priority', newFilters.priority);
+    if (newFilters.industry !== 'all') params.set('industry', newFilters.industry);
+    if (newFilters.companyType !== 'all') params.set('companyType', newFilters.companyType);
+    if (newFilters.source !== 'all') params.set('source', newFilters.source);
+    if (page > 1) params.set('page', page.toString());
 
-      return matchesSearch && matchesCompanyType && matchesStatus && matchesPriority && matchesIndustry && matchesSource;
-    });
+    const queryString = params.toString();
+    router.push(queryString ? `/clients?${queryString}` : '/clients');
+  };
 
-    // Sort
-    filtered.sort(() => {
-      // const aValue = a[sort.field];
-      // const bValue = b[sort.field];
-
-      // if (aValue < bValue) return sort.direction === "asc" ? -1 : 1;
-      // if (aValue > bValue) return sort.direction === "asc" ? 1 : -1;
-      return 0;
-    });
-
-    return filtered;
-  }, [clients, filters]);
-
-  // Pagination
-  const totalPages = Math.ceil(filteredAndSortedClients.length / ITEMS_PER_PAGE);
-  const paginatedClients = filteredAndSortedClients.slice(
-    (currentPage - 1) * ITEMS_PER_PAGE,
-    currentPage * ITEMS_PER_PAGE
-  );
+  // API handles filtering and pagination, so we use clients directly
+  const paginatedClients = clients;
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -411,20 +244,109 @@ export function ClientsPage({ onClientSelect }: ClientsPageProps) {
     return sort.direction === "asc" ? <ArrowUp className="w-4 h-4" /> : <ArrowDown className="w-4 h-4" />;
   };
 
-  const handleAddClient = (newClient: Omit<Client, "id" | "createdAt" | "updatedAt">) => {
-    const client: Client = {
-      ...newClient,
-      id: Date.now().toString(),
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString()
-    };
-    setClients(prev => [...prev, client]);
+  const handleAddClientSuccess = () => {
+    // Close the dialog after successful creation
     setIsAddDialogOpen(false);
   };
 
-  const handleDeleteClient = (clientId: string) => {
-    setClients(prev => prev.filter(client => client.id !== clientId));
+  const handleDeleteClick = (clientId: string) => {
+    setClientToDelete(clientId);
+    setDeleteDialogOpen(true);
   };
+
+  const handleDeleteConfirm = async () => {
+    if (!clientToDelete) return;
+
+    try {
+      await deleteClient(clientToDelete).unwrap();
+
+      // Show success toast
+      toast.success("Client deleted successfully!", {
+        description: "The client has been archived and can be restored later if needed.",
+      });
+
+      // Close dialog and reset state
+      setDeleteDialogOpen(false);
+      setClientToDelete(null);
+    } catch (error) {
+      console.error('Failed to delete client:', error);
+
+      // Show error toast
+      toast.error("Failed to delete client", {
+        description: "An error occurred while deleting the client. Please try again.",
+      });
+    }
+  };
+
+  const handleDeleteCancel = () => {
+    setDeleteDialogOpen(false);
+    setClientToDelete(null);
+  };
+
+  const handleFilterChange = (key: keyof ClientFilters, value: string) => {
+    const newFilters = { ...filters, [key]: value };
+    setFilters(newFilters);
+    setCurrentPage(1); // Reset to first page when filters change
+    updateURLParams(newFilters, 1);
+  };
+
+  const handleClearFilters = () => {
+    const clearedFilters: ClientFilters = {
+      search: "",
+      companyType: "all",
+      status: "all",
+      priority: "all",
+      industry: "all",
+      source: "all"
+    };
+    setFilters(clearedFilters);
+    setCurrentPage(1);
+    updateURLParams(clearedFilters, 1);
+  };
+
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
+    updateURLParams(filters, page);
+  };
+
+  // Loading state
+  if (isLoading) {
+    return (
+      <div className="space-y-6">
+        <div className="flex items-center justify-center min-h-[400px]">
+          <div className="text-center space-y-4">
+            <Loader2 className="w-12 h-12 text-purple-500 dark:text-purple-400 mx-auto animate-spin" />
+            <p className="text-muted-foreground">Loading clients...</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Error state
+  if (error) {
+    return (
+      <div className="space-y-6">
+        <div className="flex items-center justify-center min-h-[400px]">
+          <Card className="p-8 backdrop-blur-xl bg-white/70 dark:bg-black/20 border-red-500/30">
+            <div className="text-center space-y-4">
+              <AlertCircle className="w-12 h-12 text-red-500 mx-auto" />
+              <h3 className="text-lg font-semibold text-foreground">Error Loading Clients</h3>
+              <p className="text-muted-foreground">
+                {(error as { data?: { message?: string } })?.data?.message || 'Failed to load clients. Please try again later.'}
+              </p>
+              <Button
+                onClick={() => window.location.reload()}
+                className="bg-gradient-to-r from-purple-500 to-blue-500"
+              >
+                Retry
+              </Button>
+            </div>
+          </Card>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -481,7 +403,7 @@ export function ClientsPage({ onClientSelect }: ClientsPageProps) {
               <DialogHeader>
                 <DialogTitle className="text-foreground">Add New Client</DialogTitle>
               </DialogHeader>
-              <AddClientForm onSubmit={handleAddClient} onCancel={() => setIsAddDialogOpen(false)} />
+              <AddClientForm onSuccess={handleAddClientSuccess} onCancel={() => setIsAddDialogOpen(false)} />
             </DialogContent>
           </Dialog>
         </div>
@@ -554,7 +476,7 @@ export function ClientsPage({ onClientSelect }: ClientsPageProps) {
             </div>
             <div>
               <p className="text-muted-foreground text-sm">Total Value</p>
-              <p className="text-foreground text-xl">${(stats.totalValue / 1000000).toFixed(1)}M</p>
+              <p className="text-foreground text-xl">{formatIndianCurrency(stats.totalValue)}</p>
             </div>
           </div>
         </Card>
@@ -568,7 +490,7 @@ export function ClientsPage({ onClientSelect }: ClientsPageProps) {
             </div>
             <div>
               <p className="text-muted-foreground text-sm">Avg Value</p>
-              <p className="text-foreground text-xl">${(stats.avgValue / 1000).toFixed(0)}K</p>
+              <p className="text-foreground text-xl">{formatIndianCurrency(stats.avgValue)}</p>
             </div>
           </div>
         </Card>
@@ -601,13 +523,17 @@ export function ClientsPage({ onClientSelect }: ClientsPageProps) {
                 <Input
                   placeholder="Search clients..."
                   value={filters.search}
-                  onChange={(e) => setFilters(prev => ({ ...prev, search: e.target.value }))}
-                  className="pl-10 bg-white/60 dark:bg-white/5 border-white/40 dark:border-white/10 text-foreground placeholder:text-muted-foreground focus:ring-2 focus:ring-purple-500/50 shadow-sm"
+                  onChange={(e) => handleFilterChange('search', e.target.value)}
+                  className="pl-10 pr-10 bg-white/60 dark:bg-white/5 border-white/40 dark:border-white/10 text-foreground placeholder:text-muted-foreground focus:ring-2 focus:ring-purple-500/50 shadow-sm"
                 />
+                {/* Show loading spinner when search is being debounced */}
+                {filters.search && filters.search !== debouncedSearchTerm && (
+                  <Loader2 className="absolute right-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4 animate-spin" />
+                )}
               </div>
             </div>
-            
-            <Select value={filters.status} onValueChange={(value) => setFilters(prev => ({ ...prev, status: value }))}>
+
+            <Select value={filters.status} onValueChange={(value) => handleFilterChange('status', value)}>
               <SelectTrigger className="bg-white/60 dark:bg-white/5 border-white/40 dark:border-white/10 text-foreground shadow-sm">
                 <SelectValue placeholder="Status" />
               </SelectTrigger>
@@ -618,8 +544,8 @@ export function ClientsPage({ onClientSelect }: ClientsPageProps) {
                 ))}
               </SelectContent>
             </Select>
-            
-            <Select value={filters.priority} onValueChange={(value) => setFilters(prev => ({ ...prev, priority: value }))}>
+
+            <Select value={filters.priority} onValueChange={(value) => handleFilterChange('priority', value)}>
               <SelectTrigger className="bg-white/60 dark:bg-white/5 border-white/40 dark:border-white/10 text-foreground shadow-sm">
                 <SelectValue placeholder="Priority" />
               </SelectTrigger>
@@ -630,8 +556,8 @@ export function ClientsPage({ onClientSelect }: ClientsPageProps) {
                 ))}
               </SelectContent>
             </Select>
-            
-            <Select value={filters.industry} onValueChange={(value) => setFilters(prev => ({ ...prev, industry: value }))}>
+
+            <Select value={filters.industry} onValueChange={(value) => handleFilterChange('industry', value)}>
               <SelectTrigger className="bg-white/60 dark:bg-white/5 border-white/40 dark:border-white/10 text-foreground shadow-sm">
                 <SelectValue placeholder="Industry" />
               </SelectTrigger>
@@ -642,24 +568,30 @@ export function ClientsPage({ onClientSelect }: ClientsPageProps) {
                 ))}
               </SelectContent>
             </Select>
-            
-            <Button 
-              variant="outline" 
-              onClick={() => setFilters({ search: "", companyType: "all", status: "all", priority: "all", industry: "all", source: "all" })}
+
+            <Button
+              variant="outline"
+              onClick={handleClearFilters}
               className="bg-white/60 dark:bg-white/5 border-white/40 dark:border-white/10 text-muted-foreground hover:bg-white/80 dark:hover:bg-white/10 shadow-sm"
             >
               <Filter className="w-4 h-4 mr-2" />
               Clear
             </Button>
           </div>
-          
-          {filteredAndSortedClients.length !== clients.length && (
-            <div className="text-muted-foreground text-sm">
-              Showing {filteredAndSortedClients.length} of {clients.length} clients
-            </div>
-          )}
         </div>
       </Card>
+
+      {/* Pagination Info */}
+      {totalClients > 0 && (
+        <div className="flex justify-between items-center px-2">
+          <p className="text-sm text-muted-foreground">
+            Showing {((currentPage - 1) * ITEMS_PER_PAGE) + 1} to {Math.min(currentPage * ITEMS_PER_PAGE, totalClients)} of {totalClients} clients
+          </p>
+          <p className="text-sm text-muted-foreground">
+            Page {currentPage} of {totalPages}
+          </p>
+        </div>
+      )}
 
       {/* Clients Display */}
       {viewType === "cards" ? (
@@ -715,9 +647,9 @@ export function ClientsPage({ onClientSelect }: ClientsPageProps) {
                         Edit Client
                       </DropdownMenuItem>
                       <DropdownMenuSeparator />
-                      <DropdownMenuItem 
+                      <DropdownMenuItem
                         className="text-red-600 dark:text-red-400"
-                        onClick={() => handleDeleteClient(client.id)}
+                        onClick={() => handleDeleteClick(client.id)}
                       >
                         <Trash2 className="w-4 h-4 mr-2" />
                         Delete
@@ -771,7 +703,7 @@ export function ClientsPage({ onClientSelect }: ClientsPageProps) {
                 <div className="grid grid-cols-2 gap-4 text-sm pt-4 border-t border-white/40 dark:border-white/10">
                   <div>
                     <p className="text-muted-foreground">Project Value</p>
-                    <p className="text-foreground">${(client.totalProjectValue / 1000).toFixed(0)}K</p>
+                    <p className="text-foreground">{formatIndianCurrency(client.totalProjectValue)}</p>
                   </div>
                   <div>
                     <p className="text-muted-foreground">Projects</p>
@@ -782,7 +714,131 @@ export function ClientsPage({ onClientSelect }: ClientsPageProps) {
             </Card>
           ))}
         </div>
-      ) : (
+      ) : null}
+
+      {/* Pagination for Cards View */}
+      {viewType === "cards" && totalPages > 1 && (
+        <Card className="backdrop-blur-xl bg-white/70 dark:bg-black/20 border-white/20 dark:border-white/10 shadow-xl shadow-gray-200/50 dark:shadow-black/50">
+          {/* Light theme gradient overlay */}
+          <div className="absolute inset-0 bg-gradient-to-br from-blue-50/60 via-indigo-50/40 to-purple-50/60 opacity-100 dark:opacity-0 transition-opacity duration-300"></div>
+
+          <div className="relative px-6 py-4">
+            <Pagination>
+              <PaginationContent>
+                <PaginationItem>
+                  <PaginationPrevious
+                    href="#"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      if (currentPage > 1) handlePageChange(currentPage - 1);
+                    }}
+                    aria-disabled={currentPage === 1}
+                    className={currentPage === 1 ? "pointer-events-none opacity-50" : ""}
+                  />
+                </PaginationItem>
+
+                {/* Show page numbers with smart truncation */}
+                {(() => {
+                  const pages = [];
+                  const showPages = 5; // Number of page buttons to show
+                  let startPage = Math.max(1, currentPage - Math.floor(showPages / 2));
+                  const endPage = Math.min(totalPages, startPage + showPages - 1);
+
+                  // Adjust if we're near the end
+                  if (endPage - startPage < showPages - 1) {
+                    startPage = Math.max(1, endPage - showPages + 1);
+                  }
+
+                  // First page
+                  if (startPage > 1) {
+                    pages.push(
+                      <PaginationItem key={1}>
+                        <PaginationLink
+                          href="#"
+                          onClick={(e) => {
+                            e.preventDefault();
+                            handlePageChange(1);
+                          }}
+                          isActive={currentPage === 1}
+                        >
+                          1
+                        </PaginationLink>
+                      </PaginationItem>
+                    );
+                    if (startPage > 2) {
+                      pages.push(
+                        <PaginationItem key="ellipsis-start">
+                          <span className="px-3 py-2 text-muted-foreground">...</span>
+                        </PaginationItem>
+                      );
+                    }
+                  }
+
+                  // Page numbers
+                  for (let i = startPage; i <= endPage; i++) {
+                    pages.push(
+                      <PaginationItem key={i}>
+                        <PaginationLink
+                          href="#"
+                          onClick={(e) => {
+                            e.preventDefault();
+                            handlePageChange(i);
+                          }}
+                          isActive={currentPage === i}
+                        >
+                          {i}
+                        </PaginationLink>
+                      </PaginationItem>
+                    );
+                  }
+
+                  // Last page
+                  if (endPage < totalPages) {
+                    if (endPage < totalPages - 1) {
+                      pages.push(
+                        <PaginationItem key="ellipsis-end">
+                          <span className="px-3 py-2 text-muted-foreground">...</span>
+                        </PaginationItem>
+                      );
+                    }
+                    pages.push(
+                      <PaginationItem key={totalPages}>
+                        <PaginationLink
+                          href="#"
+                          onClick={(e) => {
+                            e.preventDefault();
+                            handlePageChange(totalPages);
+                          }}
+                          isActive={currentPage === totalPages}
+                        >
+                          {totalPages}
+                        </PaginationLink>
+                      </PaginationItem>
+                    );
+                  }
+
+                  return pages;
+                })()}
+
+                <PaginationItem>
+                  <PaginationNext
+                    href="#"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      if (currentPage < totalPages) handlePageChange(currentPage + 1);
+                    }}
+                    aria-disabled={currentPage === totalPages}
+                    className={currentPage === totalPages ? "pointer-events-none opacity-50" : ""}
+                  />
+                </PaginationItem>
+              </PaginationContent>
+            </Pagination>
+          </div>
+        </Card>
+      )}
+
+      {/* Table View */}
+      {viewType === "table" && (
         <Card className="backdrop-blur-xl bg-white/70 dark:bg-black/20 border-white/20 dark:border-white/10 shadow-xl shadow-gray-200/50 dark:shadow-black/50">
           {/* Light theme gradient overlay */}
           <div className="absolute inset-0 bg-gradient-to-br from-blue-50/60 via-indigo-50/40 to-purple-50/60 opacity-100 dark:opacity-0 transition-opacity duration-300"></div>
@@ -869,7 +925,7 @@ export function ClientsPage({ onClientSelect }: ClientsPageProps) {
                       </div>
                     </TableCell>
                     <TableCell className="text-muted-foreground">
-                      ${(client.totalProjectValue / 1000).toFixed(0)}K
+                      {formatIndianCurrency(client.totalProjectValue)}
                     </TableCell>
                     <TableCell>
                       <DropdownMenu>
@@ -896,9 +952,9 @@ export function ClientsPage({ onClientSelect }: ClientsPageProps) {
                             Edit Client
                           </DropdownMenuItem>
                           <DropdownMenuSeparator />
-                          <DropdownMenuItem 
+                          <DropdownMenuItem
                             className="text-red-600 dark:text-red-400"
-                            onClick={() => handleDeleteClient(client.id)}
+                            onClick={() => handleDeleteClick(client.id)}
                           >
                             <Trash2 className="w-4 h-4 mr-2" />
                             Delete
@@ -922,7 +978,7 @@ export function ClientsPage({ onClientSelect }: ClientsPageProps) {
                       href="#"
                       onClick={(e) => {
                         e.preventDefault();
-                        if (currentPage > 1) setCurrentPage(currentPage - 1);
+                        if (currentPage > 1) handlePageChange(currentPage - 1);
                       }}
                       aria-disabled={currentPage === 1}
                       className={currentPage === 1 ? "pointer-events-none opacity-50" : ""}
@@ -935,7 +991,7 @@ export function ClientsPage({ onClientSelect }: ClientsPageProps) {
                         href="#"
                         onClick={(e) => {
                           e.preventDefault();
-                          setCurrentPage(page);
+                          handlePageChange(page);
                         }}
                         isActive={currentPage === page}
                       >
@@ -949,7 +1005,7 @@ export function ClientsPage({ onClientSelect }: ClientsPageProps) {
                       href="#"
                       onClick={(e) => {
                         e.preventDefault();
-                        if (currentPage < totalPages) setCurrentPage(currentPage + 1);
+                        if (currentPage < totalPages) handlePageChange(currentPage + 1);
                       }}
                       aria-disabled={currentPage === totalPages}
                       className={currentPage === totalPages ? "pointer-events-none opacity-50" : ""}
@@ -961,6 +1017,27 @@ export function ClientsPage({ onClientSelect }: ClientsPageProps) {
           )}
         </Card>
       )}
+
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This action will delete the client. The client data will be archived and can be restored later if needed.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={handleDeleteCancel}>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDeleteConfirm}
+              className="bg-red-600 hover:bg-red-700 text-white"
+            >
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

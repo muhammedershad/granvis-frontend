@@ -4,7 +4,7 @@ import { baseQueryWithReauth } from './baseQuery';
 export const apiSlice = createApi({
   reducerPath: 'api',
   baseQuery: baseQueryWithReauth,
-  tagTypes: ['User', 'Post', 'Profile', 'Notification'],
+  tagTypes: ['User', 'Post', 'Profile', 'Notification', 'Client'],
   // Configure caching behavior
   keepUnusedDataFor: 60, // Keep unused data for 60 seconds
   refetchOnMountOrArgChange: 30, // Refetch if data is older than 30 seconds

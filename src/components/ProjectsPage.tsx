@@ -611,6 +611,8 @@ export function ProjectsPage({ onProjectSelect }: ProjectsPageProps) {
                     <ImageWithFallback
                       src={project.images[0]}
                       alt={project.name}
+                      width={400}
+                      height={192}
                       className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
                     />
                     {/* Image overlay with project type icon */}
@@ -758,6 +760,8 @@ export function ProjectsPage({ onProjectSelect }: ProjectsPageProps) {
                               <ImageWithFallback
                                 src={project.images[0]}
                                 alt={project.name}
+                                width={40}
+                                height={40}
                                 className="w-full h-full object-cover"
                               />
                             </div>

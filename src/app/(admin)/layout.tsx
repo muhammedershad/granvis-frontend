@@ -7,26 +7,41 @@ import { getAuthDetails } from "@/store/slices/authSlice";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { useSelector } from "react-redux";
+import { Loader2 } from "lucide-react";
 
 type PageType = "dashboard" | "employees" | "employee-details" | "projects" | "project-details" | "team" | "clients" | "crm" | "marketing" | "payments" | "calendar" | "budget" | "enquiries" | "notifications";
 
 const Layout = ({ children }: { children: React.ReactNode }) => {
     const router = useRouter();
-  const isAuthenticated = useSelector(
-    getAuthDetails
-  );
+  const authState = useSelector(getAuthDetails);
+  const isAuthenticated = authState?.isAuthenticated;
   const accessToken = getCookie('accessToken');
   const { isCollapsed, isMobile } = useSidebar();
   const [currentPage, setCurrentPage] = useState<PageType>("dashboard");
+  const [isChecking, setIsChecking] = useState(true);
 
   useEffect(() => {
-    if (!isAuthenticated || !accessToken) {
-      router.push('/sign-in');
-    }
+    // Give a small delay to ensure Redux state is fully rehydrated
+    const timer = setTimeout(() => {
+      setIsChecking(false);
+      if (!isAuthenticated || !accessToken) {
+        router.push('/sign-in');
+      }
+    }, 100);
+
+    return () => clearTimeout(timer);
   }, [isAuthenticated, accessToken, router]);
 
-  if (!isAuthenticated || !accessToken) {
-    return null;
+  // Show loading screen while checking authentication
+  if (isChecking || !isAuthenticated || !accessToken) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-gray-50 via-blue-50/30 to-indigo-50/50 dark:from-gray-900 dark:via-black dark:to-gray-900 flex items-center justify-center">
+        <div className="text-center space-y-4">
+          <Loader2 className="w-12 h-12 text-purple-500 dark:text-purple-400 mx-auto animate-spin" />
+          <p className="text-muted-foreground">Loading your dashboard...</p>
+        </div>
+      </div>
+    );
   }
 
     const handleNavigateToNotifications = () => {
