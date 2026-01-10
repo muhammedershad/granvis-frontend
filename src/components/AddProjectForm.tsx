@@ -214,7 +214,6 @@ export function AddProjectForm({ onSubmit, onCancel }: AddProjectFormProps) {
   const [showAddClientDialog, setShowAddClientDialog] = useState(false);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [imageFile, setImageFile] = useState<File | null>(null);
-  const [uploadedImageUrl, setUploadedImageUrl] = useState<string | null>(null);
   const [uploadProgress, setUploadProgress] = useState<number>(0);
   const [isUploading, setIsUploading] = useState(false);
   const [completedTabs, setCompletedTabs] = useState<string[]>([]);
@@ -319,7 +318,6 @@ export function AddProjectForm({ onSubmit, onCancel }: AddProjectFormProps) {
   const handleRemoveImage = () => {
     setImagePreview(null);
     setImageFile(null);
-    setUploadedImageUrl(null);
   };
 
   const getPriorityColor = (priority: string) => {
@@ -427,7 +425,6 @@ export function AddProjectForm({ onSubmit, onCancel }: AddProjectFormProps) {
 
         // Step 3: Use the CloudFront URL for the project
         imageUrls = [presignedData.cloudFrontUrl];
-        setUploadedImageUrl(presignedData.cloudFrontUrl);
       } catch (error) {
         console.error('Failed to upload image:', error);
         const errorMessage = error instanceof Error ? error.message : 'Failed to upload image. Please try again.';

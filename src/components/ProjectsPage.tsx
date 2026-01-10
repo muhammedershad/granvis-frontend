@@ -186,7 +186,7 @@ export function ProjectsPage({ onProjectSelect }: ProjectsPageProps) {
   const [createProject] = useCreateProjectMutation();
   const [deleteProject] = useDeleteProjectMutation();
 
-  const projects = data?.data || [];
+  const projects = useMemo(() => data?.data || [], [data?.data]);
   const pagination = data?.pagination;
   const totalPages = pagination?.totalPages || 1;
 
@@ -695,7 +695,7 @@ export function ProjectsPage({ onProjectSelect }: ProjectsPageProps) {
                     </div>
                     <div className="flex items-center gap-2">
                       <Calendar className="w-3 h-3 text-muted-foreground" />
-                      <span className="text-foreground">{new Date(project.deadline).toLocaleDateString()}</span>
+                      <span className="text-foreground">{project.deadline ? new Date(project.deadline).toLocaleDateString() : 'N/A'}</span>
                     </div>
                   </div>
 
@@ -794,7 +794,7 @@ export function ProjectsPage({ onProjectSelect }: ProjectsPageProps) {
                         </div>
                       </TableCell>
                       <TableCell className="text-foreground">${(project.totalBudget / 1000000).toFixed(1)}M</TableCell>
-                      <TableCell className="text-foreground">{new Date(project.deadline).toLocaleDateString()}</TableCell>
+                      <TableCell className="text-foreground">{project.deadline ? new Date(project.deadline).toLocaleDateString() : 'N/A'}</TableCell>
                       <TableCell>
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>

@@ -47,7 +47,7 @@ export default function Home() {
     }, 100);
 
     return () => clearTimeout(timer);
-  }, [isAuthenticated, accessTokenCookie, router]);
+  }, [isAuthenticated, accessTokenCookie, router, auth.user]);
 
   // Show loading screen while checking authentication
   return (
