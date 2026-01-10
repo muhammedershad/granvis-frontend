@@ -4,21 +4,28 @@ import { Sidebar } from "@/components/Sidebar";
 import { useSidebar } from "@/components/SidebarProvider";
 import { getCookie } from "@/lib/cookies";
 import { getAuthDetails } from "@/store/slices/authSlice";
-import { useRouter } from "next/navigation";
+import { useRouter, usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import { useSelector } from "react-redux";
 import { Loader2 } from "lucide-react";
 
-type PageType = "dashboard" | "employees" | "employee-details" | "projects" | "project-details" | "team" | "clients" | "crm" | "marketing" | "payments" | "calendar" | "budget" | "enquiries" | "notifications";
+type PageType = "dashboard" | "payments" | "calendar" | "budget" | "notifications";
 
 const Layout = ({ children }: { children: React.ReactNode }) => {
     const router = useRouter();
+    const pathname = usePathname();
   const authState = useSelector(getAuthDetails);
   const isAuthenticated = authState?.isAuthenticated;
   const accessToken = getCookie('accessToken');
   const { isCollapsed, isMobile } = useSidebar();
   const [currentPage, setCurrentPage] = useState<PageType>("dashboard");
   const [isChecking, setIsChecking] = useState(true);
+
+  // Update current page based on pathname
+  useEffect(() => {
+    const path = pathname?.split('/').pop() || 'dashboard';
+    setCurrentPage(path as PageType);
+  }, [pathname]);
 
   useEffect(() => {
     // Give a small delay to ensure Redux state is fully rehydrated
@@ -46,27 +53,11 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
 
     const handleNavigateToNotifications = () => {
         setCurrentPage("notifications");
+        router.push('/accountant/notifications');
     };
 
     const getPageTitle = () => {
         switch (currentPage) {
-            case "employees":
-            case "team":
-                return "Employee Management";
-            case "employee-details":
-                return "Employee Details";
-            case "enquiries":
-                return "Enquiry Management";
-            case "projects":
-                return "Project Management";
-            case "project-details":
-                return "Project Details";
-            case "clients":
-                return "Client Management";
-            case "crm":
-                return "Office CRM - Attendance & Leave";
-            case "marketing":
-                return "Marketing Management";
             case "payments":
                 return "Payment Management";
             case "notifications":
@@ -77,7 +68,7 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
                 return "Finance & Budgeting";
             case "dashboard":
             default:
-                return "Dashboard Overview";
+                return "Accountant Dashboard";
         }
     };
 

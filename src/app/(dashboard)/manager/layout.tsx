@@ -4,7 +4,7 @@ import { Sidebar } from "@/components/Sidebar";
 import { useSidebar } from "@/components/SidebarProvider";
 import { getCookie } from "@/lib/cookies";
 import { getAuthDetails } from "@/store/slices/authSlice";
-import { useRouter } from "next/navigation";
+import { useRouter, usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import { useSelector } from "react-redux";
 import { Loader2 } from "lucide-react";
@@ -13,12 +13,19 @@ type PageType = "dashboard" | "employees" | "employee-details" | "projects" | "p
 
 const Layout = ({ children }: { children: React.ReactNode }) => {
     const router = useRouter();
+    const pathname = usePathname();
   const authState = useSelector(getAuthDetails);
   const isAuthenticated = authState?.isAuthenticated;
   const accessToken = getCookie('accessToken');
   const { isCollapsed, isMobile } = useSidebar();
   const [currentPage, setCurrentPage] = useState<PageType>("dashboard");
   const [isChecking, setIsChecking] = useState(true);
+
+  // Update current page based on pathname
+  useEffect(() => {
+    const path = pathname?.split('/').pop() || 'dashboard';
+    setCurrentPage(path as PageType);
+  }, [pathname]);
 
   useEffect(() => {
     // Give a small delay to ensure Redux state is fully rehydrated
@@ -46,15 +53,16 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
 
     const handleNavigateToNotifications = () => {
         setCurrentPage("notifications");
+        router.push('/manager/notifications');
     };
 
     const getPageTitle = () => {
         switch (currentPage) {
             case "employees":
             case "team":
-                return "Employee Management";
+                return "Team Management";
             case "employee-details":
-                return "Employee Details";
+                return "Team Member Details";
             case "enquiries":
                 return "Enquiry Management";
             case "projects":
@@ -77,7 +85,7 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
                 return "Finance & Budgeting";
             case "dashboard":
             default:
-                return "Dashboard Overview";
+                return "Manager Dashboard";
         }
     };
 

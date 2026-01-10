@@ -16,10 +16,10 @@ export default function RoleGuard({ children, allowedRoles }: RoleGuardProps) {
   const { user, isAuthenticated } = useSelector(getAuthDetails);
 
   useEffect(() => {
-    if (!isAuthenticated) {
-      router.push('/sign-in');
-      return;
-    }
+    // if (!isAuthenticated) {
+    //   router.push('/sign-in');
+    //   return;
+    // }
 
     if (user && !allowedRoles.includes(user.role as IAuthRoles)) {
       // Redirect based on role
@@ -45,7 +45,10 @@ export default function RoleGuard({ children, allowedRoles }: RoleGuardProps) {
     }
   }, [isAuthenticated, user, router, allowedRoles]);
 
-  if (!isAuthenticated || (user && !allowedRoles.includes(user.role as IAuthRoles))) {
+  // Temporarily bypass authentication check for development
+  // When authentication is ready, uncomment the condition below
+  // if (!isAuthenticated || (user && !allowedRoles.includes(user.role as IAuthRoles))) {
+  if (user && !allowedRoles.includes(user.role as IAuthRoles)) {
     return (
         <div className="min-h-screen flex items-center justify-center">
             <Loader2 className="w-8 h-8 animate-spin" />

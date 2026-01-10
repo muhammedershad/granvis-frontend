@@ -29,13 +29,12 @@ interface SidebarProps {
 }
 
 // Define items with generic access or specific roles
+// Links will be dynamically generated based on user role
 const bgNavigationItems = [
   {
     title: "Dashboard",
     icon: Home,
     page: "dashboard",
-    link: "/dashboard", // This will be redirected by middleware/RoleGuard effectively, but specific links better?
-    // Actually, let's keep it generic and let page.tsx internal redirect handle it or use smart links
     roles: [IAuthRoles.SUPER_ADMIN, IAuthRoles.ADMIN, IAuthRoles.MANAGER, IAuthRoles.ACCOUNTANT, IAuthRoles.EMPLOYEE]
   },
   {
@@ -43,7 +42,6 @@ const bgNavigationItems = [
     icon: Bell,
     page: "notifications",
     badge: "5",
-    link: "/notifications",
     roles: [IAuthRoles.SUPER_ADMIN, IAuthRoles.ADMIN, IAuthRoles.MANAGER]
   },
   {
@@ -51,7 +49,6 @@ const bgNavigationItems = [
     icon: Building2,
     page: "projects",
     badge: "24",
-    link: "/projects",
     roles: [IAuthRoles.SUPER_ADMIN, IAuthRoles.ADMIN, IAuthRoles.MANAGER, IAuthRoles.EMPLOYEE]
   },
   {
@@ -59,7 +56,6 @@ const bgNavigationItems = [
     icon: UserCheck,
     page: "clients",
     badge: "3",
-    link: "/clients",
     roles: [IAuthRoles.SUPER_ADMIN, IAuthRoles.ADMIN, IAuthRoles.MANAGER]
   },
   {
@@ -67,36 +63,49 @@ const bgNavigationItems = [
     icon: CreditCard,
     page: "payments",
     badge: "8",
-    link: "/payments",
     roles: [IAuthRoles.SUPER_ADMIN, IAuthRoles.ADMIN, IAuthRoles.ACCOUNTANT]
   },
   {
-    title: "Employees", // Adding Employees for Admin
-    icon: UserCheck, // Reuse or new icon
+    title: "Employees",
+    icon: UserCheck,
     page: "employees",
-    link: "/employees",
     roles: [IAuthRoles.SUPER_ADMIN, IAuthRoles.ADMIN]
   }
 ];
+
+// Helper function to get role-based route prefix
+const getRolePrefix = (role: IAuthRoles): string => {
+  switch (role) {
+    case IAuthRoles.SUPER_ADMIN:
+      return '/super-admin';
+    case IAuthRoles.ADMIN:
+      return '/admin';
+    case IAuthRoles.MANAGER:
+      return '/manager';
+    case IAuthRoles.ACCOUNTANT:
+      return '/accountant';
+    case IAuthRoles.EMPLOYEE:
+      return '/employee';
+    default:
+      return '';
+  }
+};
 
 const projectTypes = [
   {
     title: "Architecture",
     icon: Building2,
-    page: "projects",
-    link: "/projects"
+    page: "projects"
   },
   {
     title: "Interior Design",
     icon: Palette,
-    page: "projects",
-    link: "/projects"
+    page: "projects"
   },
   {
     title: "Landscape",
     icon: TreePine,
-    page: "projects",
-    link: "/projects"
+    page: "projects"
   }
 ];
 
@@ -127,16 +136,27 @@ export function Sidebar({ className, onNavigate, currentPage = "dashboard" }: Si
   const [logout] = useLogoutMutation();
   const dispatch = useDispatch();
   const { user } = useSelector(getAuthDetails);
-  
+
   const userRole = user?.role as IAuthRoles;
 
-  const navigationItems = bgNavigationItems.filter(item => 
-    !item.roles || item.roles.includes(userRole)
-  );
+  // Get the role-based route prefix
+  const rolePrefix = userRole ? getRolePrefix(userRole) : '';
 
-  // Link for Dashboard needs to be role-aware? 
-  // currently link is "/dashboard", page.tsx redirects.
-  // Ideally filtering is enough.
+  // Filter navigation items based on user role and add dynamic links
+  const navigationItems = userRole
+    ? bgNavigationItems
+        .filter(item => !item.roles || item.roles.includes(userRole))
+        .map(item => ({
+          ...item,
+          link: `${rolePrefix}/${item.page}`
+        }))
+    : [];
+
+  // Generate dynamic links for project types
+  const projectTypesWithLinks = projectTypes.map(item => ({
+    ...item,
+    link: `${rolePrefix}/${item.page}`
+  }));
   
     const handleLogout = async () => {
       try {
@@ -282,18 +302,18 @@ export function Sidebar({ className, onNavigate, currentPage = "dashboard" }: Si
               </div>
 
               {/* Project Types Section */}
-              {(!isCollapsed || isMobile) && (
+              {(!isCollapsed || isMobile) && userRole && (
                 <div className="pt-6">
                   <div className="px-3 pb-2">
                     <h3 className="text-xs text-muted-foreground/70 uppercase tracking-wide">Project Types</h3>
                   </div>
                   <div className="space-y-1">
-                    {projectTypes.map((item) => {
+                    {projectTypesWithLinks.map((item) => {
                       const Icon = item.icon;
                       return (
                         <button
                           key={item.title}
-                          onClick={() => handleNavClick(item.page, item?.link)}
+                          onClick={() => handleNavClick(item.page, item.link)}
                           className="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm text-muted-foreground hover:text-foreground hover:bg-muted transition-all duration-200"
                         >
                           <Icon className="w-4 h-4 flex-shrink-0" />
@@ -327,19 +347,27 @@ export function Sidebar({ className, onNavigate, currentPage = "dashboard" }: Si
           </div>
 
           {/* User Profile */}
-          <div className="border-t border-border p-3">
-            <div className="flex items-center gap-3 px-3 py-2">
-              <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-purple-500 rounded-full flex items-center justify-center shadow-lg shadow-blue-500/25">
-                <span className="text-xs text-white">JD</span>
-              </div>
-              {(!isCollapsed || isMobile) && (
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm text-foreground truncate">John Doe</p>
-                  <p className="text-xs text-muted-foreground truncate">Lead Architect</p>
+          {user && (
+            <div className="border-t border-border p-3">
+              <div className="flex items-center gap-3 px-3 py-2">
+                <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-purple-500 rounded-full flex items-center justify-center shadow-lg shadow-blue-500/25">
+                  <span className="text-xs text-white">
+                    {user.firstName?.charAt(0)}{user.lastName?.charAt(0)}
+                  </span>
                 </div>
-              )}
+                {(!isCollapsed || isMobile) && (
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm text-foreground truncate">
+                      {user.firstName} {user.lastName}
+                    </p>
+                    <p className="text-xs text-muted-foreground truncate capitalize">
+                      {user.role?.replace('_', ' ')}
+                    </p>
+                  </div>
+                )}
+              </div>
             </div>
-          </div>
+          )}
         </div>
       </div>
     </>
