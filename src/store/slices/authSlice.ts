@@ -2,8 +2,11 @@ import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 import { RootState } from '@/store/store';
 
 export enum IAuthRoles {
-    ADMIN = 'admin',
-    USER = 'user',
+  SUPER_ADMIN = 'super_admin',
+  ADMIN = 'admin',
+  MANAGER = 'manager',
+  ACCOUNTANT = 'accountant',
+  EMPLOYEE = 'employee',
 }
 
 interface User {

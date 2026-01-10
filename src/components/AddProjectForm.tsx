@@ -1,5 +1,9 @@
 'use client';
 import { useState } from "react";
+import NextImage from "next/image";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import * as z from "zod";
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";
 import { Label } from "./ui/label";
@@ -10,9 +14,13 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "./ui/tabs";
 import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
 import { Badge } from "./ui/badge";
 import { Separator } from "./ui/separator";
-import { Search, Users, Building2, Calendar, DollarSign, MapPin, Tag, FileText, Plus, Check, Phone} from "lucide-react";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "./ui/dialog";
+import { Search, Users, Building2, Calendar, DollarSign, MapPin, Tag, FileText, Plus, Check, Phone, UserPlus, Image, X, AlertCircle, Loader2 } from "lucide-react";
 import { Project } from "../types/project";
 import { Client } from "../types/client";
+import { AddClientForm } from "./AddClientForm";
+import { useGetPresignedUrlMutation, uploadToS3WithPresignedUrl } from "@/lib/api/uploadApi";
+import { toast } from "sonner";
 
 interface AddProjectFormProps {
   onSubmit: (project: Omit<Project, "id" | "createdAt" | "updatedAt">) => void;
@@ -133,57 +141,130 @@ const mockClients: Client[] = [
   }
 ];
 
+// Zod validation schemas for each tab
+const basicInfoSchema = z.object({
+  name: z.string().min(1, "Project name is required").min(3, "Project name must be at least 3 characters"),
+  description: z.string().min(1, "Description is required").min(10, "Description must be at least 10 characters"),
+  type: z.enum(["Villa", "Commercial", "Interior", "Landscape"]),
+  category: z.string().optional(),
+  priority: z.enum(["Low", "Medium", "High", "Critical"]),
+  status: z.enum(["Planning", "In Progress", "On Hold", "Completed", "Cancelled"]),
+});
+
+const clientInfoSchema = z.object({
+  client: z.string().min(1, "Client selection is required"),
+  clientEmail: z.string().email("Invalid email address").optional().or(z.literal("")),
+  clientPhone: z.string().optional(),
+});
+
+const detailsSchema = z.object({
+  requirements: z.string().min(1, "Client requirements are required").min(20, "Requirements must be at least 20 characters"),
+  currentPhase: z.string().optional(),
+  progressPercentage: z.string().optional(),
+  projectManager: z.string().min(1, "Project manager is required"),
+  teamMembers: z.string().optional(),
+});
+
+const timelineSchema = z.object({
+  startDate: z.string().min(1, "Start date is required"),
+  endDate: z.string().optional(),
+  deadline: z.string().optional(),
+  estimatedDuration: z.string().optional(),
+  totalBudget: z.string().min(1, "Total budget is required").refine((val) => !isNaN(Number(val)) && Number(val) > 0, {
+    message: "Budget must be a positive number",
+  }),
+  spentAmount: z.string().optional(),
+});
+
+const additionalSchema = z.object({
+  address: z.string().optional(),
+  city: z.string().optional(),
+  state: z.string().optional(),
+  country: z.string().optional(),
+  tags: z.string().optional(),
+});
+
+// Combined schema for the entire form
+const projectFormSchema = basicInfoSchema
+  .merge(clientInfoSchema)
+  .merge(detailsSchema)
+  .merge(timelineSchema)
+  .merge(additionalSchema)
+  .extend({
+    createdBy: z.string(),
+  });
+
+type ProjectFormData = z.infer<typeof projectFormSchema>;
+
+// Helper component for error messages
+const ErrorMessage = ({ message }: { message?: string }) => {
+  if (!message) return null;
+  return (
+    <div className="flex items-center gap-1 text-red-500 text-sm mt-1">
+      <AlertCircle className="h-3 w-3" />
+      <span>{message}</span>
+    </div>
+  );
+};
+
 export function AddProjectForm({ onSubmit, onCancel }: AddProjectFormProps) {
   const [currentTab, setCurrentTab] = useState("basic");
   const [selectedClient, setSelectedClient] = useState<Client | null>(null);
   const [clientSearchTerm, setClientSearchTerm] = useState("");
-  const [showClientSelection, setShowClientSelection] = useState(false);
-  
-  const [formData, setFormData] = useState({
-    // Basic Information
-    name: "",
-    description: "",
-    client: "",
-    clientEmail: "",
-    clientPhone: "",
-    
-    // Project Details
-    type: "Villa" as const,
-    category: "",
-    status: "Planning" as const,
-    priority: "Medium" as const,
-    
-    // Timeline
-    startDate: "",
-    endDate: "",
-    deadline: "",
-    estimatedDuration: "",
-    
-    // Budget
-    totalBudget: "",
-    spentAmount: "0",
-    
-    // Progress
-    progressPercentage: "0",
-    currentPhase: "",
-    
-    // Team
-    projectManager: "",
-    teamMembers: "",
-    
-    // Location
-    address: "",
-    city: "",
-    state: "",
-    country: "USA",
-    
-    // Additional
-    tags: "",
-    requirements: "",
-    
-    // System
-    createdBy: "Current User"
+  const [showAddClientDialog, setShowAddClientDialog] = useState(false);
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [imageFile, setImageFile] = useState<File | null>(null);
+  const [uploadedImageUrl, setUploadedImageUrl] = useState<string | null>(null);
+  const [uploadProgress, setUploadProgress] = useState<number>(0);
+  const [isUploading, setIsUploading] = useState(false);
+  const [completedTabs, setCompletedTabs] = useState<string[]>([]);
+
+  // Presigned URL mutation
+  const [getPresignedUrl] = useGetPresignedUrlMutation();
+
+  // Initialize react-hook-form with Zod validation
+  const {
+    register,
+    handleSubmit: handleFormSubmit,
+    watch,
+    setValue,
+    formState: { errors },
+    trigger,
+  } = useForm<ProjectFormData>({
+    resolver: zodResolver(projectFormSchema),
+    mode: "onChange",
+    defaultValues: {
+      name: "",
+      description: "",
+      client: "",
+      clientEmail: "",
+      clientPhone: "",
+      type: "Villa",
+      category: "",
+      status: "Planning",
+      priority: "Medium",
+      startDate: "",
+      endDate: "",
+      deadline: "",
+      estimatedDuration: "",
+      totalBudget: "",
+      spentAmount: "0",
+      progressPercentage: "0",
+      currentPhase: "",
+      projectManager: "",
+      teamMembers: "",
+      address: "",
+      city: "",
+      state: "",
+      country: "USA",
+      tags: "",
+      requirements: "",
+      createdBy: "Current User",
+    },
   });
+
+  // Watch form values
+  const formData = watch();
 
   const filteredClients = mockClients.filter(client =>
     client.name.toLowerCase().includes(clientSearchTerm.toLowerCase()) ||
@@ -191,23 +272,54 @@ export function AddProjectForm({ onSubmit, onCancel }: AddProjectFormProps) {
     client.email.toLowerCase().includes(clientSearchTerm.toLowerCase())
   );
 
-  const handleInputChange = (field: string) => (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-    setFormData(prev => ({ ...prev, [field]: e.target.value }));
-  };
-
-  const handleSelectChange = (field: string) => (value: string) => {
-    setFormData(prev => ({ ...prev, [field]: value }));
-  };
-
   const handleClientSelect = (client: Client) => {
     setSelectedClient(client);
-    setFormData(prev => ({
-      ...prev,
-      client: client.name,
-      clientEmail: client.email,
-      clientPhone: client.phone,
-    }));
-    setShowClientSelection(false);
+    setValue("client", client.name);
+    setValue("clientEmail", client.email);
+    setValue("clientPhone", client.phone);
+  };
+
+  const handleClientCreated = () => {
+    setShowAddClientDialog(false);
+    // In a real app, you'd refresh the clients list here
+    // and potentially auto-select the newly created client
+  };
+
+  const handleImageChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      // Validate file type
+      if (!file.type.startsWith('image/')) {
+        toast.error('Invalid file type', {
+          description: 'Please select a valid image file (PNG, JPG, GIF, or WebP)',
+        });
+        return;
+      }
+
+      // Validate file size (max 10MB)
+      if (file.size > 10 * 1024 * 1024) {
+        toast.error('File too large', {
+          description: 'Image size should be less than 10MB',
+        });
+        return;
+      }
+
+      // Store the file for later upload
+      setImageFile(file);
+
+      // Create preview
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setImagePreview(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const handleRemoveImage = () => {
+    setImagePreview(null);
+    setImageFile(null);
+    setUploadedImageUrl(null);
   };
 
   const getPriorityColor = (priority: string) => {
@@ -229,45 +341,144 @@ export function AddProjectForm({ onSubmit, onCancel }: AddProjectFormProps) {
     }
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    
+  // Validate current tab before moving to next
+  const validateCurrentTab = async (tab: string): Promise<boolean> => {
+    let fields: (keyof ProjectFormData)[] = [];
+
+    switch (tab) {
+      case "basic":
+        fields = ["name", "description", "type", "category", "priority", "status"];
+        break;
+      case "client":
+        fields = ["client", "clientEmail", "clientPhone"];
+        break;
+      case "details":
+        fields = ["requirements", "projectManager", "teamMembers", "currentPhase", "progressPercentage"];
+        break;
+      case "timeline":
+        fields = ["startDate", "endDate", "deadline", "estimatedDuration", "totalBudget", "spentAmount"];
+        break;
+      case "additional":
+        fields = ["address", "city", "state", "country", "tags"];
+        break;
+    }
+
+    const result = await trigger(fields);
+    if (result) {
+      setCompletedTabs(prev => [...new Set([...prev, tab])]);
+    }
+    return result;
+  };
+
+  // Handle tab change with validation
+  const handleTabChange = async (newTab: string) => {
+    const tabs = ['basic', 'client', 'details', 'timeline', 'additional'];
+    const currentIndex = tabs.indexOf(currentTab);
+    const newIndex = tabs.indexOf(newTab);
+
+    // If moving forward, validate current tab
+    if (newIndex > currentIndex) {
+      const isValid = await validateCurrentTab(currentTab);
+      if (!isValid) {
+        return; // Don't change tab if validation fails
+      }
+    }
+
+    setCurrentTab(newTab);
+  };
+
+  // Handle next button click
+  const handleNext = async (e?: React.MouseEvent) => {
+    e?.preventDefault();
+    e?.stopPropagation();
+
+    const isValid = await validateCurrentTab(currentTab);
+    if (isValid) {
+      const tabs = ['basic', 'client', 'details', 'timeline', 'additional'];
+      const currentIndex = tabs.indexOf(currentTab);
+      if (currentIndex < tabs.length - 1) {
+        setCurrentTab(tabs[currentIndex + 1]);
+      }
+    }
+  };
+
+  const handleSubmit = handleFormSubmit(async (data: ProjectFormData) => {
+    let imageUrls: string[] = [];
+
+    // Upload image using presigned URL if one is selected
+    if (imageFile) {
+      setIsUploading(true);
+      setUploadProgress(0);
+
+      try {
+        // Step 1: Get presigned URL from backend
+        const presignedData = await getPresignedUrl({
+          fileName: imageFile.name,
+          contentType: imageFile.type,
+          folder: 'projects',
+        }).unwrap();
+
+        // Step 2: Upload directly to S3 using presigned URL
+        await uploadToS3WithPresignedUrl(
+          presignedData.uploadUrl,
+          imageFile,
+          (progress) => setUploadProgress(progress)
+        );
+
+        // Step 3: Use the CloudFront URL for the project
+        imageUrls = [presignedData.cloudFrontUrl];
+        setUploadedImageUrl(presignedData.cloudFrontUrl);
+      } catch (error) {
+        console.error('Failed to upload image:', error);
+        const errorMessage = error instanceof Error ? error.message : 'Failed to upload image. Please try again.';
+        toast.error('Upload failed', {
+          description: errorMessage,
+        });
+        setIsUploading(false);
+        setUploadProgress(0);
+        return;
+      } finally {
+        setIsUploading(false);
+      }
+    }
+
     const project: Omit<Project, "id" | "createdAt" | "updatedAt"> = {
-      name: formData.name,
-      description: `${formData.description}${formData.requirements ? '\n\nClient Requirements:\n' + formData.requirements : ''}`,
-      client: formData.client,
-      clientEmail: formData.clientEmail,
-      clientPhone: formData.clientPhone,
-      type: formData.type,
-      category: formData.category,
-      status: formData.status,
-      priority: formData.priority,
-      startDate: formData.startDate,
-      endDate: formData.endDate,
-      deadline: formData.deadline,
-      estimatedDuration: parseInt(formData.estimatedDuration) || 0,
-      totalBudget: parseFloat(formData.totalBudget) || 0,
-      spentAmount: parseFloat(formData.spentAmount) || 0,
-      remainingBudget: (parseFloat(formData.totalBudget) || 0) - (parseFloat(formData.spentAmount) || 0),
-      progressPercentage: parseInt(formData.progressPercentage) || 0,
-      currentPhase: formData.currentPhase,
+      name: data.name,
+      description: `${data.description}${data.requirements ? '\n\nClient Requirements:\n' + data.requirements : ''}`,
+      client: data.client,
+      clientEmail: data.clientEmail || undefined,
+      clientPhone: data.clientPhone || undefined,
+      type: data.type,
+      category: data.category || undefined,
+      status: data.status,
+      priority: data.priority,
+      startDate: data.startDate,
+      endDate: data.endDate || undefined,
+      deadline: data.deadline || undefined,
+      estimatedDuration: data.estimatedDuration ? parseInt(data.estimatedDuration) : undefined,
+      totalBudget: parseFloat(data.totalBudget) || 0,
+      spentAmount: data.spentAmount ? parseFloat(data.spentAmount) : undefined,
+      remainingBudget: (parseFloat(data.totalBudget) || 0) - (parseFloat(data.spentAmount || "0") || 0),
+      progressPercentage: data.progressPercentage ? parseInt(data.progressPercentage) : undefined,
+      currentPhase: data.currentPhase || undefined,
       milestones: [],
-      projectManager: formData.projectManager,
-      teamMembers: formData.teamMembers.split(",").map(member => member.trim()).filter(Boolean),
+      projectManager: data.projectManager,
+      teamMembers: data.teamMembers ? data.teamMembers.split(",").map(member => member.trim()).filter(Boolean) : [],
       location: {
-        address: formData.address,
-        city: formData.city,
-        state: formData.state,
-        country: formData.country
+        address: data.address || undefined,
+        city: data.city || undefined,
+        state: data.state || undefined,
+        country: data.country || "USA"
       },
-      tags: formData.tags.split(",").map(tag => tag.trim()).filter(Boolean),
+      tags: data.tags ? data.tags.split(",").map(tag => tag.trim()).filter(Boolean) : [],
       documents: [],
-      images: [],
-      createdBy: formData.createdBy
+      images: imageUrls,
+      coverImage: imageUrls[0] || undefined,
+      createdBy: data.createdBy
     };
 
     onSubmit(project);
-  };
+  });
 
   const getCategoryOptions = () => {
     switch (formData.type) {
@@ -286,7 +497,12 @@ export function AddProjectForm({ onSubmit, onCancel }: AddProjectFormProps) {
 
   return (
     <div className="max-w-6xl mx-auto">
-      <form onSubmit={handleSubmit} className="space-y-8">
+      <form onSubmit={handleSubmit} className="space-y-8" onKeyDown={(e) => {
+        // Prevent form submission on Enter key press
+        if (e.key === 'Enter' && e.target instanceof HTMLInputElement && e.target.type !== 'submit') {
+          e.preventDefault();
+        }
+      }}>
         {/* Header */}
         <div className="text-center space-y-4">
           <div className="flex items-center justify-center gap-3">
@@ -300,25 +516,30 @@ export function AddProjectForm({ onSubmit, onCancel }: AddProjectFormProps) {
           </div>
         </div>
 
-        <Tabs value={currentTab} onValueChange={setCurrentTab} className="w-full">
+        <Tabs value={currentTab} onValueChange={handleTabChange} className="w-full">
           <TabsList className="grid w-full grid-cols-5 bg-muted/30 p-1 rounded-xl">
-            <TabsTrigger value="basic" className="flex items-center gap-2 data-[state=active]:bg-background">
+            <TabsTrigger value="basic" className="flex items-center gap-2 data-[state=active]:bg-background relative">
+              {completedTabs.includes("basic") && <Check className="h-3 w-3 absolute top-1 right-1 text-green-600" />}
               <Building2 className="h-4 w-4" />
               <span className="hidden sm:inline">Basic Info</span>
             </TabsTrigger>
-            <TabsTrigger value="client" className="flex items-center gap-2 data-[state=active]:bg-background">
+            <TabsTrigger value="client" className="flex items-center gap-2 data-[state=active]:bg-background relative">
+              {completedTabs.includes("client") && <Check className="h-3 w-3 absolute top-1 right-1 text-green-600" />}
               <Users className="h-4 w-4" />
               <span className="hidden sm:inline">Client</span>
             </TabsTrigger>
-            <TabsTrigger value="details" className="flex items-center gap-2 data-[state=active]:bg-background">
+            <TabsTrigger value="details" className="flex items-center gap-2 data-[state=active]:bg-background relative">
+              {completedTabs.includes("details") && <Check className="h-3 w-3 absolute top-1 right-1 text-green-600" />}
               <FileText className="h-4 w-4" />
               <span className="hidden sm:inline">Details</span>
             </TabsTrigger>
-            <TabsTrigger value="timeline" className="flex items-center gap-2 data-[state=active]:bg-background">
+            <TabsTrigger value="timeline" className="flex items-center gap-2 data-[state=active]:bg-background relative">
+              {completedTabs.includes("timeline") && <Check className="h-3 w-3 absolute top-1 right-1 text-green-600" />}
               <Calendar className="h-4 w-4" />
               <span className="hidden sm:inline">Timeline</span>
             </TabsTrigger>
-            <TabsTrigger value="additional" className="flex items-center gap-2 data-[state=active]:bg-background">
+            <TabsTrigger value="additional" className="flex items-center gap-2 data-[state=active]:bg-background relative">
+              {completedTabs.includes("additional") && <Check className="h-3 w-3 absolute top-1 right-1 text-green-600" />}
               <MapPin className="h-4 w-4" />
               <span className="hidden sm:inline">Additional</span>
             </TabsTrigger>
@@ -345,16 +566,15 @@ export function AddProjectForm({ onSubmit, onCancel }: AddProjectFormProps) {
                     <Label htmlFor="name" className="text-foreground">Project Name *</Label>
                     <Input
                       id="name"
-                      value={formData.name}
-                      onChange={handleInputChange("name")}
-                      required
+                      {...register("name")}
                       placeholder="Enter project name"
                       className="bg-background/50 border-border/50 focus:bg-background transition-colors"
                     />
+                    <ErrorMessage message={errors.name?.message} />
                   </div>
                   <div className="space-y-3">
                     <Label htmlFor="type" className="text-foreground">Project Type *</Label>
-                    <Select value={formData.type} onValueChange={handleSelectChange("type")}>
+                    <Select value={formData.type} onValueChange={(value) => setValue("type", value as "Villa" | "Commercial" | "Interior" | "Landscape")}>
                       <SelectTrigger className="bg-background/50 border-border/50">
                         <SelectValue />
                       </SelectTrigger>
@@ -365,25 +585,71 @@ export function AddProjectForm({ onSubmit, onCancel }: AddProjectFormProps) {
                         <SelectItem value="Landscape">Landscape</SelectItem>
                       </SelectContent>
                     </Select>
+                    <ErrorMessage message={errors.type?.message} />
                   </div>
                 </div>
-                
+
                 <div className="space-y-3">
                   <Label htmlFor="description" className="text-foreground">Project Description *</Label>
                   <Textarea
                     id="description"
-                    value={formData.description}
-                    onChange={handleInputChange("description")}
-                    required
+                    {...register("description")}
                     placeholder="Describe the project goals, scope, and vision in detail..."
                     className="bg-background/50 border-border/50 focus:bg-background transition-colors min-h-[120px] resize-none"
                   />
+                  <ErrorMessage message={errors.description?.message} />
+                </div>
+
+                {/* Project Image Upload */}
+                <div className="space-y-3">
+                  <Label htmlFor="projectImage" className="text-foreground">Project Picture</Label>
+                  <div className="space-y-4">
+                    {!imagePreview ? (
+                      <div className="relative">
+                        <input
+                          id="projectImage"
+                          type="file"
+                          accept="image/*"
+                          onChange={handleImageChange}
+                          className="hidden"
+                        />
+                        <label
+                          htmlFor="projectImage"
+                          className="flex flex-col items-center justify-center w-full h-48 border-2 border-dashed border-border/50 rounded-lg cursor-pointer bg-background/30 hover:bg-background/50 transition-all duration-300 group"
+                        >
+                          <div className="flex flex-col items-center justify-center pt-5 pb-6">
+                            <Image className="h-10 w-10 text-muted-foreground mb-3 group-hover:text-blue-500 transition-colors" aria-label="Upload image" />
+                            <p className="mb-2 text-sm text-muted-foreground">
+                              <span className="font-semibold">Click to upload</span> or drag and drop
+                            </p>
+                            <p className="text-xs text-muted-foreground">PNG, JPG, GIF, WebP up to 10MB</p>
+                          </div>
+                        </label>
+                      </div>
+                    ) : (
+                      <div className="relative w-full h-48 border-2 border-border/50 rounded-lg overflow-hidden bg-background/30">
+                        <NextImage
+                          src={imagePreview}
+                          alt="Project preview"
+                          fill
+                          className="object-cover"
+                        />
+                        <button
+                          type="button"
+                          onClick={handleRemoveImage}
+                          className="absolute top-2 right-2 p-2 bg-red-500 hover:bg-red-600 text-white rounded-full transition-colors shadow-lg z-10"
+                        >
+                          <X className="h-4 w-4" />
+                        </button>
+                      </div>
+                    )}
+                  </div>
                 </div>
 
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                   <div className="space-y-3">
                     <Label htmlFor="category" className="text-foreground">Category</Label>
-                    <Select value={formData.category} onValueChange={handleSelectChange("category")}>
+                    <Select value={formData.category} onValueChange={(value) => setValue("category", value)}>
                       <SelectTrigger className="bg-background/50 border-border/50">
                         <SelectValue placeholder="Select category" />
                       </SelectTrigger>
@@ -393,10 +659,11 @@ export function AddProjectForm({ onSubmit, onCancel }: AddProjectFormProps) {
                         ))}
                       </SelectContent>
                     </Select>
+                    <ErrorMessage message={errors.category?.message} />
                   </div>
                   <div className="space-y-3">
                     <Label htmlFor="priority" className="text-foreground">Priority</Label>
-                    <Select value={formData.priority} onValueChange={handleSelectChange("priority")}>
+                    <Select value={formData.priority} onValueChange={(value) => setValue("priority", value as "Low" | "Medium" | "High" | "Critical")}>
                       <SelectTrigger className="bg-background/50 border-border/50">
                         <SelectValue />
                       </SelectTrigger>
@@ -407,10 +674,11 @@ export function AddProjectForm({ onSubmit, onCancel }: AddProjectFormProps) {
                         <SelectItem value="Critical">Critical</SelectItem>
                       </SelectContent>
                     </Select>
+                    <ErrorMessage message={errors.priority?.message} />
                   </div>
                   <div className="space-y-3">
                     <Label htmlFor="status" className="text-foreground">Status</Label>
-                    <Select value={formData.status} onValueChange={handleSelectChange("status")}>
+                    <Select value={formData.status} onValueChange={(value) => setValue("status", value as "Planning" | "In Progress" | "On Hold" | "Completed" | "Cancelled")}>
                       <SelectTrigger className="bg-background/50 border-border/50">
                         <SelectValue />
                       </SelectTrigger>
@@ -422,6 +690,7 @@ export function AddProjectForm({ onSubmit, onCancel }: AddProjectFormProps) {
                         <SelectItem value="Cancelled">Cancelled</SelectItem>
                       </SelectContent>
                     </Select>
+                    <ErrorMessage message={errors.status?.message} />
                   </div>
                 </div>
               </CardContent>
@@ -440,35 +709,35 @@ export function AddProjectForm({ onSubmit, onCancel }: AddProjectFormProps) {
                     </div>
                     <div>
                       <CardTitle className="text-foreground">Client Selection</CardTitle>
-                      <p className="text-sm text-muted-foreground mt-1">Choose an existing client or create a new one</p>
+                      <p className="text-sm text-muted-foreground mt-1">Select an existing client for this project</p>
                     </div>
                   </div>
                   <Button
                     type="button"
-                    variant="outline"
-                    onClick={() => setShowClientSelection(!showClientSelection)}
-                    className="bg-background/50 border-border/50"
+                    variant="default"
+                    onClick={() => setShowAddClientDialog(true)}
+                    className="bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white"
                   >
-                    {showClientSelection ? 'Manual Entry' : 'Select Existing Client'}
+                    <UserPlus className="mr-2 h-4 w-4" />
+                    Add New Client
                   </Button>
                 </div>
               </CardHeader>
               <CardContent className="relative space-y-6">
-                {showClientSelection ? (
-                  <div className="space-y-6">
-                    {/* Client Search */}
-                    <div className="relative">
-                      <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
-                      <Input
-                        placeholder="Search clients by name, company, or email..."
-                        value={clientSearchTerm}
-                        onChange={(e) => setClientSearchTerm(e.target.value)}
-                        className="pl-9 bg-background/50 border-border/50 focus:bg-background transition-colors"
-                      />
-                    </div>
+                <div className="space-y-6">
+                  {/* Client Search */}
+                  <div className="relative">
+                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
+                    <Input
+                      placeholder="Search clients by name, company, or email..."
+                      value={clientSearchTerm}
+                      onChange={(e) => setClientSearchTerm(e.target.value)}
+                      className="pl-9 bg-background/50 border-border/50 focus:bg-background transition-colors"
+                    />
+                  </div>
 
-                    {/* Client Grid */}
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 max-h-96 overflow-y-auto">
+                  {/* Client Grid */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 max-h-96 overflow-y-auto">
                       {filteredClients.map((client) => (
                         <Card 
                           key={client.id} 
@@ -523,53 +792,14 @@ export function AddProjectForm({ onSubmit, onCancel }: AddProjectFormProps) {
                       ))}
                     </div>
 
-                    {filteredClients.length === 0 && (
-                      <div className="text-center py-8">
-                        <Users className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
-                        <h3 className="text-foreground mb-2">No clients found</h3>
-                        <p className="text-muted-foreground">Try adjusting your search criteria</p>
-                      </div>
-                    )}
-                  </div>
-                ) : (
-                  /* Manual Client Entry */
-                  <div className="space-y-6">
-                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                      <div className="space-y-3">
-                        <Label htmlFor="client" className="text-foreground">Client Name *</Label>
-                        <Input
-                          id="client"
-                          value={formData.client}
-                          onChange={handleInputChange("client")}
-                          required
-                          placeholder="Client or company name"
-                          className="bg-background/50 border-border/50 focus:bg-background transition-colors"
-                        />
-                      </div>
-                      <div className="space-y-3">
-                        <Label htmlFor="clientPhone" className="text-foreground">Client Phone</Label>
-                        <Input
-                          id="clientPhone"
-                          value={formData.clientPhone}
-                          onChange={handleInputChange("clientPhone")}
-                          placeholder="+1 (555) 123-4567"
-                          className="bg-background/50 border-border/50 focus:bg-background transition-colors"
-                        />
-                      </div>
+                  {filteredClients.length === 0 && (
+                    <div className="text-center py-8">
+                      <Users className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
+                      <h3 className="text-foreground mb-2">No clients found</h3>
+                      <p className="text-muted-foreground">Try adjusting your search criteria or create a new client</p>
                     </div>
-                    <div className="space-y-3">
-                      <Label htmlFor="clientEmail" className="text-foreground">Client Email</Label>
-                      <Input
-                        id="clientEmail"
-                        type="email"
-                        value={formData.clientEmail}
-                        onChange={handleInputChange("clientEmail")}
-                        placeholder="client@email.com"
-                        className="bg-background/50 border-border/50 focus:bg-background transition-colors"
-                      />
-                    </div>
-                  </div>
-                )}
+                  )}
+                </div>
 
                 {/* Selected Client Summary */}
                 {selectedClient && (
@@ -592,7 +822,9 @@ export function AddProjectForm({ onSubmit, onCancel }: AddProjectFormProps) {
                         size="sm"
                         onClick={() => {
                           setSelectedClient(null);
-                          setFormData(prev => ({ ...prev, client: "", clientEmail: "", clientPhone: "" }));
+                          setValue("client", "");
+                          setValue("clientEmail", "");
+                          setValue("clientPhone", "");
                         }}
                         className="ml-auto text-muted-foreground hover:text-foreground"
                       >
@@ -625,11 +857,11 @@ export function AddProjectForm({ onSubmit, onCancel }: AddProjectFormProps) {
                   <Label htmlFor="requirements" className="text-foreground">Client Requirements & Specifications *</Label>
                   <Textarea
                     id="requirements"
-                    value={formData.requirements}
-                    onChange={handleInputChange("requirements")}
+                    {...register("requirements")}
                     placeholder="Detail the client's specific requirements, preferences, constraints, and any special considerations. Include architectural style preferences, space requirements, technical specifications, accessibility needs, sustainability goals, and any other important project requirements..."
                     className="bg-background/50 border-border/50 focus:bg-background transition-colors min-h-[200px] resize-none"
                   />
+                  <ErrorMessage message={errors.requirements?.message} />
                 </div>
 
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -637,11 +869,11 @@ export function AddProjectForm({ onSubmit, onCancel }: AddProjectFormProps) {
                     <Label htmlFor="currentPhase" className="text-foreground">Current Phase</Label>
                     <Input
                       id="currentPhase"
-                      value={formData.currentPhase}
-                      onChange={handleInputChange("currentPhase")}
+                      {...register("currentPhase")}
                       placeholder="e.g., Conceptual Design, Design Development, Documentation"
                       className="bg-background/50 border-border/50 focus:bg-background transition-colors"
                     />
+                    <ErrorMessage message={errors.currentPhase?.message} />
                   </div>
                   <div className="space-y-3">
                     <Label htmlFor="progressPercentage" className="text-foreground">Progress (%)</Label>
@@ -650,10 +882,10 @@ export function AddProjectForm({ onSubmit, onCancel }: AddProjectFormProps) {
                       type="number"
                       min="0"
                       max="100"
-                      value={formData.progressPercentage}
-                      onChange={handleInputChange("progressPercentage")}
+                      {...register("progressPercentage")}
                       className="bg-background/50 border-border/50 focus:bg-background transition-colors"
                     />
+                    <ErrorMessage message={errors.progressPercentage?.message} />
                   </div>
                 </div>
 
@@ -662,22 +894,21 @@ export function AddProjectForm({ onSubmit, onCancel }: AddProjectFormProps) {
                     <Label htmlFor="projectManager" className="text-foreground">Project Manager *</Label>
                     <Input
                       id="projectManager"
-                      value={formData.projectManager}
-                      onChange={handleInputChange("projectManager")}
-                      required
+                      {...register("projectManager")}
                       placeholder="Assigned project manager"
                       className="bg-background/50 border-border/50 focus:bg-background transition-colors"
                     />
+                    <ErrorMessage message={errors.projectManager?.message} />
                   </div>
                   <div className="space-y-3">
                     <Label htmlFor="teamMembers" className="text-foreground">Team Members</Label>
                     <Input
                       id="teamMembers"
-                      value={formData.teamMembers}
-                      onChange={handleInputChange("teamMembers")}
+                      {...register("teamMembers")}
                       placeholder="Team member names (comma-separated)"
                       className="bg-background/50 border-border/50 focus:bg-background transition-colors"
                     />
+                    <ErrorMessage message={errors.teamMembers?.message} />
                   </div>
                 </div>
               </CardContent>
@@ -712,42 +943,41 @@ export function AddProjectForm({ onSubmit, onCancel }: AddProjectFormProps) {
                       <Input
                         id="startDate"
                         type="date"
-                        value={formData.startDate}
-                        onChange={handleInputChange("startDate")}
-                        required
+                        {...register("startDate")}
                         className="bg-background/50 border-border/50 focus:bg-background transition-colors"
                       />
+                      <ErrorMessage message={errors.startDate?.message} />
                     </div>
                     <div className="space-y-3">
                       <Label htmlFor="endDate" className="text-foreground">End Date</Label>
                       <Input
                         id="endDate"
                         type="date"
-                        value={formData.endDate}
-                        onChange={handleInputChange("endDate")}
+                        {...register("endDate")}
                         className="bg-background/50 border-border/50 focus:bg-background transition-colors"
                       />
+                      <ErrorMessage message={errors.endDate?.message} />
                     </div>
                     <div className="space-y-3">
                       <Label htmlFor="deadline" className="text-foreground">Deadline</Label>
                       <Input
                         id="deadline"
                         type="date"
-                        value={formData.deadline}
-                        onChange={handleInputChange("deadline")}
+                        {...register("deadline")}
                         className="bg-background/50 border-border/50 focus:bg-background transition-colors"
                       />
+                      <ErrorMessage message={errors.deadline?.message} />
                     </div>
                     <div className="space-y-3">
                       <Label htmlFor="estimatedDuration" className="text-foreground">Duration (days)</Label>
                       <Input
                         id="estimatedDuration"
                         type="number"
-                        value={formData.estimatedDuration}
-                        onChange={handleInputChange("estimatedDuration")}
+                        {...register("estimatedDuration")}
                         placeholder="365"
                         className="bg-background/50 border-border/50 focus:bg-background transition-colors"
                       />
+                      <ErrorMessage message={errors.estimatedDuration?.message} />
                     </div>
                   </div>
                 </div>
@@ -766,23 +996,22 @@ export function AddProjectForm({ onSubmit, onCancel }: AddProjectFormProps) {
                       <Input
                         id="totalBudget"
                         type="number"
-                        value={formData.totalBudget}
-                        onChange={handleInputChange("totalBudget")}
-                        required
+                        {...register("totalBudget")}
                         placeholder="1000000"
                         className="bg-background/50 border-border/50 focus:bg-background transition-colors"
                       />
+                      <ErrorMessage message={errors.totalBudget?.message} />
                     </div>
                     <div className="space-y-3">
                       <Label htmlFor="spentAmount" className="text-foreground">Amount Spent ($)</Label>
                       <Input
                         id="spentAmount"
                         type="number"
-                        value={formData.spentAmount}
-                        onChange={handleInputChange("spentAmount")}
+                        {...register("spentAmount")}
                         placeholder="0"
                         className="bg-background/50 border-border/50 focus:bg-background transition-colors"
                       />
+                      <ErrorMessage message={errors.spentAmount?.message} />
                     </div>
                   </div>
                 </div>
@@ -817,8 +1046,7 @@ export function AddProjectForm({ onSubmit, onCancel }: AddProjectFormProps) {
                       <Label htmlFor="address" className="text-foreground">Street Address</Label>
                       <Input
                         id="address"
-                        value={formData.address}
-                        onChange={handleInputChange("address")}
+                        {...register("address")}
                         placeholder="Street address"
                         className="bg-background/50 border-border/50 focus:bg-background transition-colors"
                       />
@@ -827,8 +1055,7 @@ export function AddProjectForm({ onSubmit, onCancel }: AddProjectFormProps) {
                       <Label htmlFor="city" className="text-foreground">City</Label>
                       <Input
                         id="city"
-                        value={formData.city}
-                        onChange={handleInputChange("city")}
+                        {...register("city")}
                         placeholder="City"
                         className="bg-background/50 border-border/50 focus:bg-background transition-colors"
                       />
@@ -837,8 +1064,7 @@ export function AddProjectForm({ onSubmit, onCancel }: AddProjectFormProps) {
                       <Label htmlFor="state" className="text-foreground">State</Label>
                       <Input
                         id="state"
-                        value={formData.state}
-                        onChange={handleInputChange("state")}
+                        {...register("state")}
                         placeholder="State"
                         className="bg-background/50 border-border/50 focus:bg-background transition-colors"
                       />
@@ -847,8 +1073,7 @@ export function AddProjectForm({ onSubmit, onCancel }: AddProjectFormProps) {
                       <Label htmlFor="country" className="text-foreground">Country</Label>
                       <Input
                         id="country"
-                        value={formData.country}
-                        onChange={handleInputChange("country")}
+                        {...register("country")}
                         className="bg-background/50 border-border/50 focus:bg-background transition-colors"
                       />
                     </div>
@@ -867,8 +1092,7 @@ export function AddProjectForm({ onSubmit, onCancel }: AddProjectFormProps) {
                     <Label htmlFor="tags" className="text-foreground">Tags</Label>
                     <Input
                       id="tags"
-                      value={formData.tags}
-                      onChange={handleInputChange("tags")}
+                      {...register("tags")}
                       placeholder="Luxury, Sustainable, Modern, Commercial (comma-separated)"
                       className="bg-background/50 border-border/50 focus:bg-background transition-colors"
                     />
@@ -897,32 +1121,51 @@ export function AddProjectForm({ onSubmit, onCancel }: AddProjectFormProps) {
             </Button>
             
             {currentTab !== 'additional' ? (
-              <Button 
+              <Button
                 type="button"
-                onClick={() => {
-                  const tabs = ['basic', 'client', 'details', 'timeline', 'additional'];
-                  const currentIndex = tabs.indexOf(currentTab);
-                  if (currentIndex < tabs.length - 1) {
-                    setCurrentTab(tabs[currentIndex + 1]);
-                  }
-                }}
+                onClick={handleNext}
                 className="bg-gradient-to-r from-blue-600 via-blue-600 to-purple-600 hover:from-blue-700 hover:via-blue-700 hover:to-purple-700 text-white shadow-lg hover:shadow-xl transition-all duration-300 border-0"
               >
                 Next Step
               </Button>
             ) : (
-              <Button 
+              <Button
                 type="submit"
-                disabled={!formData.name || !formData.description || !formData.totalBudget || !formData.startDate || !formData.projectManager}
-                className="bg-gradient-to-r from-emerald-600 via-emerald-600 to-green-600 hover:from-emerald-700 hover:via-emerald-700 hover:to-green-700 text-white shadow-lg hover:shadow-xl transition-all duration-300 border-0"
+                disabled={isUploading}
+                className="bg-gradient-to-r from-emerald-600 via-emerald-600 to-green-600 hover:from-emerald-700 hover:via-emerald-700 hover:to-green-700 text-white shadow-lg hover:shadow-xl transition-all duration-300 border-0 disabled:opacity-50 disabled:cursor-not-allowed min-w-[160px]"
               >
-                <Plus className="mr-2 h-4 w-4" />
-                Create Project
+                {isUploading ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Uploading {uploadProgress}%
+                  </>
+                ) : (
+                  <>
+                    <Plus className="mr-2 h-4 w-4" />
+                    Create Project
+                  </>
+                )}
               </Button>
             )}
           </div>
         </div>
       </form>
+
+      {/* Add Client Dialog */}
+      <Dialog open={showAddClientDialog} onOpenChange={setShowAddClientDialog}>
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="text-2xl">Add New Client</DialogTitle>
+            <DialogDescription>
+              Create a new client to associate with this project
+            </DialogDescription>
+          </DialogHeader>
+          <AddClientForm
+            onSuccess={handleClientCreated}
+            onCancel={() => setShowAddClientDialog(false)}
+          />
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

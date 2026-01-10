@@ -20,9 +20,27 @@ export default function Home() {
   useEffect(() => {
     // Give a small delay to ensure Redux state is fully rehydrated
     const timer = setTimeout(() => {
-      // Redirect based on authentication status
-      if (isAuthenticated && accessTokenCookie) {
-        router.push('/dashboard');
+      // Redirect based on authentication status and role
+      if (isAuthenticated && accessTokenCookie && auth.user) {
+        switch (auth.user.role) {
+          case 'super_admin':
+            router.push('/super-admin/dashboard');
+            break;
+          case 'admin':
+            router.push('/admin/dashboard');
+            break;
+          case 'manager':
+            router.push('/manager/dashboard');
+            break;
+          case 'accountant':
+            router.push('/accountant/dashboard');
+            break;
+          case 'employee':
+            router.push('/employee/dashboard');
+            break;
+          default:
+            router.push('/sign-in');
+        }
       } else {
         router.push('/sign-in');
       }

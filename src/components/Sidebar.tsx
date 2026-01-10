@@ -1,3 +1,5 @@
+'use client';
+
 import { 
   Home, 
   Building2, 
@@ -13,13 +15,12 @@ import {
 } from "lucide-react";
 import { Button } from "./ui/button";
 import { cn } from "./ui/utils";
-import { useSidebar } from "./SidebarProvider";
+import { useSidebar } from "@/components/SidebarProvider";
 import { useRouter } from "next/navigation";
 import { useLogoutMutation } from "@/lib/api/apiSlice";
-import { useDispatch } from "react-redux";
+import { IAuthRoles, getAuthDetails, logout as logoutAction } from '@/store/slices/authSlice';
+import { useSelector, useDispatch } from "react-redux";
 import { deleteCookie } from "@/lib/cookies";
-import { logout as logoutAction } from '@/store/slices/authSlice';
-
 
 interface SidebarProps {
   className?: string;
@@ -27,82 +28,55 @@ interface SidebarProps {
   currentPage?: string;
 }
 
-const navigationItems = [
+// Define items with generic access or specific roles
+const bgNavigationItems = [
   {
     title: "Dashboard",
     icon: Home,
     page: "dashboard",
-    link: "/dashboard"
+    link: "/dashboard", // This will be redirected by middleware/RoleGuard effectively, but specific links better?
+    // Actually, let's keep it generic and let page.tsx internal redirect handle it or use smart links
+    roles: [IAuthRoles.SUPER_ADMIN, IAuthRoles.ADMIN, IAuthRoles.MANAGER, IAuthRoles.ACCOUNTANT, IAuthRoles.EMPLOYEE]
   },
-  // {
-  //   title: "Enquiries",
-  //   icon: MessageSquare,
-  //   page: "enquiries",
-  //   badge: "New",
-  //   link: "/enquiries"
-  // },
   {
     title: "Notifications",
     icon: Bell,
     page: "notifications",
     badge: "5",
-    link: "/notifications"
+    link: "/notifications",
+    roles: [IAuthRoles.SUPER_ADMIN, IAuthRoles.ADMIN, IAuthRoles.MANAGER]
   },
   {
     title: "Projects",
     icon: Building2,
     page: "projects",
     badge: "24",
-    link: "/projects"
+    link: "/projects",
+    roles: [IAuthRoles.SUPER_ADMIN, IAuthRoles.ADMIN, IAuthRoles.MANAGER, IAuthRoles.EMPLOYEE]
   },
-  // {
-  //   title: "Team",
-  //   icon: Users,
-  //   page: "team",
-  //   badge: "7",
-  //   link: "/team"
-  // },
   {
     title: "Clients",
     icon: UserCheck,
     page: "clients",
     badge: "3",
-    link: "/clients"
+    link: "/clients",
+    roles: [IAuthRoles.SUPER_ADMIN, IAuthRoles.ADMIN, IAuthRoles.MANAGER]
   },
-  // {
-  //   title: "CRM",
-  //   icon: Clock,
-  //   page: "crm",
-  //   badge: "New",
-  //   link: "/crm"
-  // },
-  // {
-  //   title: "Marketing",
-  //   icon: Megaphone,
-  //   page: "marketing",
-  //   badge: "12",
-  //   link: "/marketing"
-  // },
   {
     title: "Payments",
     icon: CreditCard,
     page: "payments",
     badge: "8",
-    link: "/payments"
+    link: "/payments",
+    roles: [IAuthRoles.SUPER_ADMIN, IAuthRoles.ADMIN, IAuthRoles.ACCOUNTANT]
   },
-  // {
-  //   title: "Calendar",
-  //   icon: Calendar,
-  //   page: "calendar",
-  //   badge: "3",
-  //   link: "/calendar"
-  // },
-  // {
-  //   title: "Finance",
-  //   icon: DollarSign,
-  //   page: "budget",
-  //   link: "/finance"
-  // }
+  {
+    title: "Employees", // Adding Employees for Admin
+    icon: UserCheck, // Reuse or new icon
+    page: "employees",
+    link: "/employees",
+    roles: [IAuthRoles.SUPER_ADMIN, IAuthRoles.ADMIN]
+  }
 ];
 
 const projectTypes = [
@@ -151,7 +125,18 @@ export function Sidebar({ className, onNavigate, currentPage = "dashboard" }: Si
   const { isCollapsed, toggleSidebar, isMobile, isMobileOpen, setIsMobileOpen } = useSidebar();
   const route = useRouter()
   const [logout] = useLogoutMutation();
-    const dispatch = useDispatch();
+  const dispatch = useDispatch();
+  const { user } = useSelector(getAuthDetails);
+  
+  const userRole = user?.role as IAuthRoles;
+
+  const navigationItems = bgNavigationItems.filter(item => 
+    !item.roles || item.roles.includes(userRole)
+  );
+
+  // Link for Dashboard needs to be role-aware? 
+  // currently link is "/dashboard", page.tsx redirects.
+  // Ideally filtering is enough.
   
     const handleLogout = async () => {
       try {
