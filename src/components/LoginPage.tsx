@@ -65,8 +65,32 @@ export function LoginPage() {
       // Small delay to ensure Redux persist saves the state before navigation
       await new Promise(resolve => setTimeout(resolve, 150));
 
-      // Navigate to dashboard
-      router.push('/dashboard');
+      // Role-based navigation
+      const userRole = response.user?.role;
+      let dashboardRoute = '/dashboard';
+
+      switch (userRole) {
+        case 'super_admin':
+          dashboardRoute = '/super-admin/dashboard';
+          break;
+        case 'admin':
+          dashboardRoute = '/admin/dashboard';
+          break;
+        case 'manager':
+          dashboardRoute = '/manager/dashboard';
+          break;
+        case 'accountant':
+          dashboardRoute = '/accountant/dashboard';
+          break;
+        case 'employee':
+          dashboardRoute = '/employee/dashboard';
+          break;
+        default:
+          dashboardRoute = '/dashboard';
+      }
+
+      // Navigate to role-specific dashboard
+      router.push(dashboardRoute);
     } catch (err: unknown) {
       console.error('Login failed:', err);
 

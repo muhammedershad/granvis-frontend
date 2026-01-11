@@ -15,6 +15,7 @@ import { createClientSchema, type CreateClientFormData } from "@/lib/validations
 import { useCreateClientMutation } from "@/lib/api/clientsApi";
 import { toast } from "sonner";
 import { Loader2, AlertCircle, XCircle } from "lucide-react";
+import { cn } from "./ui/utils";
 
 interface AddClientFormProps {
   onSuccess?: () => void;
@@ -204,37 +205,48 @@ export function AddClientForm({ onSuccess, onCancel }: AddClientFormProps) {
       )}
 
       {/* Personal Information */}
-      <Card className="bg-white/5 border-white/10">
-        <CardHeader>
-          <CardTitle className="text-white/90">Personal Information</CardTitle>
+      <Card className="backdrop-blur-xl bg-white/70 dark:bg-black/20 border-white/20 dark:border-white/10 shadow-xl shadow-gray-200/50 dark:shadow-black/50 relative overflow-hidden">
+        {/* Light theme gradient overlay */}
+        <div className="absolute inset-0 bg-gradient-to-br from-blue-50/60 via-indigo-50/40 to-purple-50/60 opacity-100 dark:opacity-0 pointer-events-none transition-opacity duration-300"></div>
+        {/* Dark theme gradient overlay */}
+        <div className="absolute inset-0 bg-gradient-to-br from-blue-500/5 to-purple-500/5 opacity-0 dark:opacity-100 pointer-events-none transition-opacity duration-300"></div>
+        
+        <CardHeader className="relative z-10">
+          <CardTitle className="text-foreground">Personal Information</CardTitle>
         </CardHeader>
-        <CardContent className="space-y-4">
+        <CardContent className="space-y-4 relative z-10">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="firstName" className="text-white/70">First Name *</Label>
+              <Label htmlFor="firstName" className="text-muted-foreground">First Name *</Label>
               <Input
                 id="firstName"
                 {...register("firstName")}
                 placeholder="John"
-                className={`bg-white/5 border-white/10 text-white ${errors.firstName ? 'border-red-500 focus-visible:ring-red-500' : ''}`}
+                className={cn(
+                    "bg-white/60 dark:bg-white/5 border-white/40 dark:border-white/10 text-foreground placeholder:text-muted-foreground",
+                    errors.firstName ? 'border-red-500 focus-visible:ring-red-500' : ''
+                )}
               />
               {errors.firstName && (
-                <p className="text-red-400 text-sm flex items-center gap-1">
+                <p className="text-red-500 dark:text-red-400 text-sm flex items-center gap-1">
                   <AlertCircle className="h-3 w-3" />
                   {errors.firstName.message}
                 </p>
               )}
             </div>
             <div className="space-y-2">
-              <Label htmlFor="lastName" className="text-white/70">Last Name *</Label>
+              <Label htmlFor="lastName" className="text-muted-foreground">Last Name *</Label>
               <Input
                 id="lastName"
                 {...register("lastName")}
                 placeholder="Smith"
-                className={`bg-white/5 border-white/10 text-white ${errors.lastName ? 'border-red-500 focus-visible:ring-red-500' : ''}`}
+                className={cn(
+                    "bg-white/60 dark:bg-white/5 border-white/40 dark:border-white/10 text-foreground placeholder:text-muted-foreground",
+                    errors.lastName ? 'border-red-500 focus-visible:ring-red-500' : ''
+                )}
               />
               {errors.lastName && (
-                <p className="text-red-400 text-sm flex items-center gap-1">
+                <p className="text-red-500 dark:text-red-400 text-sm flex items-center gap-1">
                   <AlertCircle className="h-3 w-3" />
                   {errors.lastName.message}
                 </p>
@@ -244,31 +256,37 @@ export function AddClientForm({ onSuccess, onCancel }: AddClientFormProps) {
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="email" className="text-white/70">Email Address *</Label>
+              <Label htmlFor="email" className="text-muted-foreground">Email Address *</Label>
               <Input
                 id="email"
                 type="email"
                 {...register("email")}
                 placeholder="john.smith@email.com"
-                className={`bg-white/5 border-white/10 text-white ${errors.email ? 'border-red-500 focus-visible:ring-red-500' : ''}`}
+                className={cn(
+                    "bg-white/60 dark:bg-white/5 border-white/40 dark:border-white/10 text-foreground placeholder:text-muted-foreground",
+                    errors.email ? 'border-red-500 focus-visible:ring-red-500' : ''
+                )}
               />
               {errors.email && (
-                <p className="text-red-400 text-sm flex items-center gap-1">
+                <p className="text-red-500 dark:text-red-400 text-sm flex items-center gap-1">
                   <AlertCircle className="h-3 w-3" />
                   {errors.email.message}
                 </p>
               )}
             </div>
             <div className="space-y-2">
-              <Label htmlFor="phone" className="text-white/70">Phone Number *</Label>
+              <Label htmlFor="phone" className="text-muted-foreground">Phone Number *</Label>
               <Input
                 id="phone"
                 {...register("phone")}
                 placeholder="+1 (555) 123-4567"
-                className={`bg-white/5 border-white/10 text-white ${errors.phone ? 'border-red-500 focus-visible:ring-red-500' : ''}`}
+                className={cn(
+                    "bg-white/60 dark:bg-white/5 border-white/40 dark:border-white/10 text-foreground placeholder:text-muted-foreground",
+                    errors.phone ? 'border-red-500 focus-visible:ring-red-500' : ''
+                )}
               />
               {errors.phone && (
-                <p className="text-red-400 text-sm flex items-center gap-1">
+                <p className="text-red-500 dark:text-red-400 text-sm flex items-center gap-1">
                   <AlertCircle className="h-3 w-3" />
                   {errors.phone.message}
                 </p>
@@ -278,27 +296,27 @@ export function AddClientForm({ onSuccess, onCancel }: AddClientFormProps) {
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="alternatePhone" className="text-white/70">Alternate Phone</Label>
+              <Label htmlFor="alternatePhone" className="text-muted-foreground">Alternate Phone</Label>
               <Input
                 id="alternatePhone"
                 {...register("alternatePhone")}
                 placeholder="+1 (555) 987-6543"
-                className="bg-white/5 border-white/10 text-white"
+                className="bg-white/60 dark:bg-white/5 border-white/40 dark:border-white/10 text-foreground placeholder:text-muted-foreground"
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="dateOfBirth" className="text-white/70">Date of Birth</Label>
+              <Label htmlFor="dateOfBirth" className="text-muted-foreground">Date of Birth</Label>
               <Input
                 id="dateOfBirth"
                 type="date"
                 {...register("dateOfBirth")}
-                className="bg-white/5 border-white/10 text-white"
+                className="bg-white/60 dark:bg-white/5 border-white/40 dark:border-white/10 text-foreground placeholder:text-muted-foreground"
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="gender" className="text-white/70">Gender</Label>
+              <Label htmlFor="gender" className="text-muted-foreground">Gender</Label>
               <Select value={genderValue} onValueChange={(value) => setValue("gender", value)}>
-                <SelectTrigger className="bg-white/5 border-white/10 text-white">
+                <SelectTrigger className="bg-white/60 dark:bg-white/5 border-white/40 dark:border-white/10 text-foreground">
                   <SelectValue placeholder="Select gender" />
                 </SelectTrigger>
                 <SelectContent>
@@ -314,28 +332,33 @@ export function AddClientForm({ onSuccess, onCancel }: AddClientFormProps) {
       </Card>
 
       {/* Professional Information */}
-      <Card className="bg-white/5 border-white/10">
-        <CardHeader>
-          <CardTitle className="text-white/90">Professional Information (Optional)</CardTitle>
+      <Card className="backdrop-blur-xl bg-white/70 dark:bg-black/20 border-white/20 dark:border-white/10 shadow-xl shadow-gray-200/50 dark:shadow-black/50 relative overflow-hidden">
+        {/* Light theme gradient overlay */}
+        <div className="absolute inset-0 bg-gradient-to-br from-green-50/60 via-emerald-50/40 to-teal-50/60 opacity-100 dark:opacity-0 pointer-events-none transition-opacity duration-300"></div>
+        {/* Dark theme gradient overlay */}
+        <div className="absolute inset-0 bg-gradient-to-br from-green-500/5 to-emerald-500/5 opacity-0 dark:opacity-100 pointer-events-none transition-opacity duration-300"></div>
+        
+        <CardHeader className="relative z-10">
+          <CardTitle className="text-foreground">Professional Information (Optional)</CardTitle>
         </CardHeader>
-        <CardContent className="space-y-4">
+        <CardContent className="space-y-4 relative z-10">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="occupation" className="text-white/70">Occupation</Label>
+              <Label htmlFor="occupation" className="text-muted-foreground">Occupation</Label>
               <Input
                 id="occupation"
                 {...register("occupation")}
                 placeholder="Software Engineer"
-                className="bg-white/5 border-white/10 text-white"
+                className="bg-white/60 dark:bg-white/5 border-white/40 dark:border-white/10 text-foreground placeholder:text-muted-foreground"
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="employer" className="text-white/70">Employer</Label>
+              <Label htmlFor="employer" className="text-muted-foreground">Employer</Label>
               <Input
                 id="employer"
                 {...register("employer")}
                 placeholder="Company Name"
-                className="bg-white/5 border-white/10 text-white"
+                className="bg-white/60 dark:bg-white/5 border-white/40 dark:border-white/10 text-foreground placeholder:text-muted-foreground"
               />
             </div>
           </div>
@@ -343,55 +366,60 @@ export function AddClientForm({ onSuccess, onCancel }: AddClientFormProps) {
       </Card>
 
       {/* Address Information */}
-      <Card className="bg-white/5 border-white/10">
-        <CardHeader>
-          <CardTitle className="text-white/90">Address Information</CardTitle>
+      <Card className="backdrop-blur-xl bg-white/70 dark:bg-black/20 border-white/20 dark:border-white/10 shadow-xl shadow-gray-200/50 dark:shadow-black/50 relative overflow-hidden">
+        {/* Light theme gradient overlay */}
+        <div className="absolute inset-0 bg-gradient-to-br from-orange-50/60 via-yellow-50/40 to-red-50/60 opacity-100 dark:opacity-0 pointer-events-none transition-opacity duration-300"></div>
+        {/* Dark theme gradient overlay */}
+        <div className="absolute inset-0 bg-gradient-to-br from-orange-500/5 to-red-500/5 opacity-0 dark:opacity-100 pointer-events-none transition-opacity duration-300"></div>
+
+        <CardHeader className="relative z-10">
+          <CardTitle className="text-foreground">Address Information</CardTitle>
         </CardHeader>
-        <CardContent className="space-y-4">
+        <CardContent className="space-y-4 relative z-10">
           <div className="space-y-2">
-            <Label htmlFor="street" className="text-white/70">Street Address</Label>
+            <Label htmlFor="street" className="text-muted-foreground">Street Address</Label>
             <Input
               id="street"
               {...register("street")}
               placeholder="123 Main Street"
-              className="bg-white/5 border-white/10 text-white"
+              className="bg-white/60 dark:bg-white/5 border-white/40 dark:border-white/10 text-foreground placeholder:text-muted-foreground"
             />
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="city" className="text-white/70">City</Label>
+              <Label htmlFor="city" className="text-muted-foreground">City</Label>
               <Input
                 id="city"
                 {...register("city")}
                 placeholder="New York"
-                className="bg-white/5 border-white/10 text-white"
+                className="bg-white/60 dark:bg-white/5 border-white/40 dark:border-white/10 text-foreground placeholder:text-muted-foreground"
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="state" className="text-white/70">State</Label>
+              <Label htmlFor="state" className="text-muted-foreground">State</Label>
               <Input
                 id="state"
                 {...register("state")}
                 placeholder="NY"
-                className="bg-white/5 border-white/10 text-white"
+                className="bg-white/60 dark:bg-white/5 border-white/40 dark:border-white/10 text-foreground placeholder:text-muted-foreground"
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="zipCode" className="text-white/70">ZIP Code</Label>
+              <Label htmlFor="zipCode" className="text-muted-foreground">ZIP Code</Label>
               <Input
                 id="zipCode"
                 {...register("zipCode")}
                 placeholder="10001"
-                className="bg-white/5 border-white/10 text-white"
+                className="bg-white/60 dark:bg-white/5 border-white/40 dark:border-white/10 text-foreground placeholder:text-muted-foreground"
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="country" className="text-white/70">Country</Label>
+              <Label htmlFor="country" className="text-muted-foreground">Country</Label>
               <Input
                 id="country"
                 {...register("country")}
-                className="bg-white/5 border-white/10 text-white"
+                className="bg-white/60 dark:bg-white/5 border-white/40 dark:border-white/10 text-foreground placeholder:text-muted-foreground"
               />
             </div>
           </div>
@@ -399,43 +427,51 @@ export function AddClientForm({ onSuccess, onCancel }: AddClientFormProps) {
       </Card>
 
       {/* Family & Emergency Contacts */}
-      <Card className="bg-white/5 border-white/10">
-        <CardHeader>
-          <CardTitle className="text-white/90">Family & Emergency Contacts (Optional)</CardTitle>
+      <Card className="backdrop-blur-xl bg-white/70 dark:bg-black/20 border-white/20 dark:border-white/10 shadow-xl shadow-gray-200/50 dark:shadow-black/50 relative overflow-hidden">
+        {/* Light theme gradient overlay */}
+        <div className="absolute inset-0 bg-gradient-to-br from-pink-50/60 via-purple-50/40 to-blue-50/60 opacity-100 dark:opacity-0 pointer-events-none transition-opacity duration-300"></div>
+        {/* Dark theme gradient overlay */}
+        <div className="absolute inset-0 bg-gradient-to-br from-pink-500/5 to-blue-500/5 opacity-0 dark:opacity-100 pointer-events-none transition-opacity duration-300"></div>
+
+        <CardHeader className="relative z-10">
+          <CardTitle className="text-foreground">Family & Emergency Contacts (Optional)</CardTitle>
         </CardHeader>
-        <CardContent className="space-y-6">
+        <CardContent className="space-y-6 relative z-10">
           <div>
-            <h4 className="text-white/80 text-sm mb-3">Spouse/Partner Information</h4>
+            <h4 className="text-foreground/80 text-sm mb-3">Spouse/Partner Information</h4>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="spouseName" className="text-white/70">Name</Label>
+                <Label htmlFor="spouseName" className="text-muted-foreground">Name</Label>
                 <Input
                   id="spouseName"
                   {...register("spouseName")}
                   placeholder="Jane Smith"
-                  className="bg-white/5 border-white/10 text-white"
+                  className="bg-white/60 dark:bg-white/5 border-white/40 dark:border-white/10 text-foreground placeholder:text-muted-foreground"
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="spousePhone" className="text-white/70">Phone</Label>
+                <Label htmlFor="spousePhone" className="text-muted-foreground">Phone</Label>
                 <Input
                   id="spousePhone"
                   {...register("spousePhone")}
                   placeholder="+1 (555) 123-4568"
-                  className="bg-white/5 border-white/10 text-white"
+                  className="bg-white/60 dark:bg-white/5 border-white/40 dark:border-white/10 text-foreground placeholder:text-muted-foreground"
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="spouseEmail" className="text-white/70">Email</Label>
+                <Label htmlFor="spouseEmail" className="text-muted-foreground">Email</Label>
                 <Input
                   id="spouseEmail"
                   type="email"
                   {...register("spouseEmail")}
                   placeholder="jane.smith@email.com"
-                  className={`bg-white/5 border-white/10 text-white ${errors.spouseEmail ? 'border-red-500 focus-visible:ring-red-500' : ''}`}
+                  className={cn(
+                    "bg-white/60 dark:bg-white/5 border-white/40 dark:border-white/10 text-foreground placeholder:text-muted-foreground",
+                    errors.spouseEmail ? 'border-red-500 focus-visible:ring-red-500' : ''
+                  )}
                 />
                 {errors.spouseEmail && (
-                  <p className="text-red-400 text-sm flex items-center gap-1">
+                  <p className="text-red-500 dark:text-red-400 text-sm flex items-center gap-1">
                     <AlertCircle className="h-3 w-3" />
                     {errors.spouseEmail.message}
                   </p>
@@ -444,36 +480,36 @@ export function AddClientForm({ onSuccess, onCancel }: AddClientFormProps) {
             </div>
           </div>
 
-          <Separator className="bg-white/10" />
+          <Separator className="bg-border" />
 
           <div>
-            <h4 className="text-white/80 text-sm mb-3">Emergency Contact</h4>
+            <h4 className="text-foreground/80 text-sm mb-3">Emergency Contact</h4>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="emergencyContactName" className="text-white/70">Name</Label>
+                <Label htmlFor="emergencyContactName" className="text-muted-foreground">Name</Label>
                 <Input
                   id="emergencyContactName"
                   {...register("emergencyContactName")}
                   placeholder="Emergency contact name"
-                  className="bg-white/5 border-white/10 text-white"
+                  className="bg-white/60 dark:bg-white/5 border-white/40 dark:border-white/10 text-foreground placeholder:text-muted-foreground"
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="emergencyContactRelationship" className="text-white/70">Relationship</Label>
+                <Label htmlFor="emergencyContactRelationship" className="text-muted-foreground">Relationship</Label>
                 <Input
                   id="emergencyContactRelationship"
                   {...register("emergencyContactRelationship")}
                   placeholder="Brother, Sister, Friend"
-                  className="bg-white/5 border-white/10 text-white"
+                  className="bg-white/60 dark:bg-white/5 border-white/40 dark:border-white/10 text-foreground placeholder:text-muted-foreground"
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="emergencyContactPhone" className="text-white/70">Phone</Label>
+                <Label htmlFor="emergencyContactPhone" className="text-muted-foreground">Phone</Label>
                 <Input
                   id="emergencyContactPhone"
                   {...register("emergencyContactPhone")}
                   placeholder="+1 (555) 123-4569"
-                  className="bg-white/5 border-white/10 text-white"
+                  className="bg-white/60 dark:bg-white/5 border-white/40 dark:border-white/10 text-foreground placeholder:text-muted-foreground"
                 />
               </div>
             </div>
@@ -482,16 +518,21 @@ export function AddClientForm({ onSuccess, onCancel }: AddClientFormProps) {
       </Card>
 
       {/* Client Status & Preferences */}
-      <Card className="bg-white/5 border-white/10">
-        <CardHeader>
-          <CardTitle className="text-white/90">Client Status & Preferences</CardTitle>
+      <Card className="backdrop-blur-xl bg-white/70 dark:bg-black/20 border-white/20 dark:border-white/10 shadow-xl shadow-gray-200/50 dark:shadow-black/50 relative overflow-hidden">
+        {/* Light theme gradient overlay */}
+        <div className="absolute inset-0 bg-gradient-to-br from-cyan-50/60 via-blue-50/40 to-indigo-50/60 opacity-100 dark:opacity-0 pointer-events-none transition-opacity duration-300"></div>
+        {/* Dark theme gradient overlay */}
+        <div className="absolute inset-0 bg-gradient-to-br from-cyan-500/5 to-blue-500/5 opacity-0 dark:opacity-100 pointer-events-none transition-opacity duration-300"></div>
+
+        <CardHeader className="relative z-10">
+          <CardTitle className="text-foreground">Client Status & Preferences</CardTitle>
         </CardHeader>
-        <CardContent className="space-y-4">
+        <CardContent className="space-y-4 relative z-10">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="status" className="text-white/70">Status</Label>
+              <Label htmlFor="status" className="text-muted-foreground">Status</Label>
               <Select value={statusValue} onValueChange={(value) => setValue("status", value as "Active" | "Inactive" | "Potential" | "Former")}>
-                <SelectTrigger className="bg-white/5 border-white/10 text-white">
+                <SelectTrigger className="bg-white/60 dark:bg-white/5 border-white/40 dark:border-white/10 text-foreground">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -504,9 +545,9 @@ export function AddClientForm({ onSuccess, onCancel }: AddClientFormProps) {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="priority" className="text-white/70">Priority</Label>
+              <Label htmlFor="priority" className="text-muted-foreground">Priority</Label>
               <Select value={priorityValue} onValueChange={(value) => setValue("priority", value as "Low" | "Medium" | "High" | "VIP")}>
-                <SelectTrigger className="bg-white/5 border-white/10 text-white">
+                <SelectTrigger className="bg-white/60 dark:bg-white/5 border-white/40 dark:border-white/10 text-foreground">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -519,9 +560,9 @@ export function AddClientForm({ onSuccess, onCancel }: AddClientFormProps) {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="source" className="text-white/70">Lead Source</Label>
+              <Label htmlFor="source" className="text-muted-foreground">Lead Source</Label>
               <Select value={sourceValue} onValueChange={(value) => setValue("source", value as "Referral" | "Website" | "Social Media" | "Advertisement" | "Cold Call" | "Other")}>
-                <SelectTrigger className="bg-white/5 border-white/10 text-white">
+                <SelectTrigger className="bg-white/60 dark:bg-white/5 border-white/40 dark:border-white/10 text-foreground">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -538,9 +579,9 @@ export function AddClientForm({ onSuccess, onCancel }: AddClientFormProps) {
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="preferredContactMethod" className="text-white/70">Preferred Contact Method</Label>
+              <Label htmlFor="preferredContactMethod" className="text-muted-foreground">Preferred Contact Method</Label>
               <Select value={preferredContactMethodValue} onValueChange={(value) => setValue("preferredContactMethod", value)}>
-                <SelectTrigger className="bg-white/5 border-white/10 text-white">
+                <SelectTrigger className="bg-white/60 dark:bg-white/5 border-white/40 dark:border-white/10 text-foreground">
                   <SelectValue placeholder="Select method" />
                 </SelectTrigger>
                 <SelectContent>
@@ -552,21 +593,21 @@ export function AddClientForm({ onSuccess, onCancel }: AddClientFormProps) {
               </Select>
             </div>
             <div className="space-y-2">
-              <Label htmlFor="preferredContactTime" className="text-white/70">Preferred Contact Time</Label>
+              <Label htmlFor="preferredContactTime" className="text-muted-foreground">Preferred Contact Time</Label>
               <Input
                 id="preferredContactTime"
                 {...register("preferredContactTime")}
                 placeholder="9 AM - 5 PM, Weekdays"
-                className="bg-white/5 border-white/10 text-white"
+                className="bg-white/60 dark:bg-white/5 border-white/40 dark:border-white/10 text-foreground placeholder:text-muted-foreground"
               />
             </div>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="architecturalStyle" className="text-white/70">Preferred Architectural Style</Label>
+              <Label htmlFor="architecturalStyle" className="text-muted-foreground">Preferred Architectural Style</Label>
               <Select value={architecturalStyleValue} onValueChange={(value) => setValue("architecturalStyle", value)}>
-                <SelectTrigger className="bg-white/5 border-white/10 text-white">
+                <SelectTrigger className="bg-white/60 dark:bg-white/5 border-white/40 dark:border-white/10 text-foreground">
                   <SelectValue placeholder="Select architectural style" />
                 </SelectTrigger>
                 <SelectContent>
@@ -591,9 +632,9 @@ export function AddClientForm({ onSuccess, onCancel }: AddClientFormProps) {
               </Select>
             </div>
             <div className="space-y-2">
-              <Label htmlFor="budgetRange" className="text-white/70">Budget Range</Label>
+              <Label htmlFor="budgetRange" className="text-muted-foreground">Budget Range</Label>
               <Select value={budgetRangeValue} onValueChange={(value) => setValue("budgetRange", value)}>
-                <SelectTrigger className="bg-white/5 border-white/10 text-white">
+                <SelectTrigger className="bg-white/60 dark:bg-white/5 border-white/40 dark:border-white/10 text-foreground">
                   <SelectValue placeholder="Select budget range" />
                 </SelectTrigger>
                 <SelectContent>
@@ -617,28 +658,33 @@ export function AddClientForm({ onSuccess, onCancel }: AddClientFormProps) {
       </Card>
 
       {/* Additional Information */}
-      <Card className="bg-white/5 border-white/10">
-        <CardHeader>
-          <CardTitle className="text-white/90">Additional Information</CardTitle>
+      <Card className="backdrop-blur-xl bg-white/70 dark:bg-black/20 border-white/20 dark:border-white/10 shadow-xl shadow-gray-200/50 dark:shadow-black/50 relative overflow-hidden">
+        {/* Light theme gradient overlay */}
+        <div className="absolute inset-0 bg-gradient-to-br from-indigo-50/60 via-purple-50/40 to-pink-50/60 opacity-100 dark:opacity-0 pointer-events-none transition-opacity duration-300"></div>
+        {/* Dark theme gradient overlay */}
+        <div className="absolute inset-0 bg-gradient-to-br from-indigo-500/5 to-pink-500/5 opacity-0 dark:opacity-100 pointer-events-none transition-opacity duration-300"></div>
+
+        <CardHeader className="relative z-10">
+          <CardTitle className="text-foreground">Additional Information</CardTitle>
         </CardHeader>
-        <CardContent className="space-y-4">
+        <CardContent className="space-y-4 relative z-10">
           <div className="space-y-2">
-            <Label htmlFor="tags" className="text-white/70">Tags</Label>
+            <Label htmlFor="tags" className="text-muted-foreground">Tags</Label>
             <Input
               id="tags"
               {...register("tags")}
               placeholder="VIP, Luxury, Eco-Friendly (comma-separated)"
-              className="bg-white/5 border-white/10 text-white"
+              className="bg-white/60 dark:bg-white/5 border-white/40 dark:border-white/10 text-foreground placeholder:text-muted-foreground"
             />
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="notes" className="text-white/70">Notes</Label>
+            <Label htmlFor="notes" className="text-muted-foreground">Notes</Label>
             <Textarea
               id="notes"
               {...register("notes")}
               placeholder="Additional notes about this client..."
-              className="bg-white/5 border-white/10 text-white min-h-[100px]"
+              className="bg-white/60 dark:bg-white/5 border-white/40 dark:border-white/10 text-foreground placeholder:text-muted-foreground min-h-[100px]"
             />
           </div>
         </CardContent>
@@ -651,14 +697,14 @@ export function AddClientForm({ onSuccess, onCancel }: AddClientFormProps) {
           variant="outline"
           onClick={onCancel}
           disabled={isLoading}
-          className="bg-white/5 border-white/10 text-white/70 hover:bg-white/10"
+          className="bg-white/60 dark:bg-white/5 border-white/40 dark:border-white/10 text-foreground hover:bg-white/80 dark:hover:bg-white/10"
         >
           Cancel
         </Button>
         <Button
           type="submit"
           disabled={isLoading}
-          className="bg-gradient-to-r from-purple-500 to-blue-500 hover:from-purple-600 hover:to-blue-600 border-0"
+          className="bg-gradient-to-r from-purple-500 to-blue-500 hover:from-purple-600 hover:to-blue-600 border-0 shadow-lg shadow-purple-200/50 dark:shadow-purple-500/25"
         >
           {isLoading ? (
             <>
