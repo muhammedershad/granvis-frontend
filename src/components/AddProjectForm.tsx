@@ -1,4 +1,5 @@
 'use client';
+ 
 import { useState } from "react";
 import NextImage from "next/image";
 import { useForm } from "react-hook-form";
@@ -9,18 +10,39 @@ import { Input } from "./ui/input";
 import { Label } from "./ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./ui/select";
 import { Textarea } from "./ui/textarea";
-import { Card, CardContent, CardHeader, CardTitle } from "./ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "./ui/tabs";
+
 import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
 import { Badge } from "./ui/badge";
 import { Separator } from "./ui/separator";
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "./ui/dialog";
-import { Search, Users, Building2, Calendar, DollarSign, MapPin, Tag, FileText, Plus, Check, Phone, UserPlus, Image, X, AlertCircle, Loader2 } from "lucide-react";
+import {
+  Search,
+  Users,
+  Building2,
+  Calendar,
+  DollarSign,
+  MapPin,
+
+  FileText,
+  Plus,
+  Check,
+  Phone,
+  UserPlus,
+  Image as ImageIcon,
+  X,
+  AlertCircle,
+  Loader2,
+  Sparkles,
+  ChevronDown,
+  ChevronRight,
+  CheckCircle2
+} from "lucide-react";
 import { Project } from "../types/project";
 import { Client } from "../types/client";
 import { AddClientForm } from "./AddClientForm";
 import { useGetPresignedUrlMutation, uploadToS3WithPresignedUrl } from "@/lib/api/uploadApi";
 import { toast } from "sonner";
+import { cn } from "./ui/utils";
+import { Alert, AlertDescription, AlertTitle } from "./ui/alert";
 
 interface AddProjectFormProps {
   onSubmit: (project: Omit<Project, "id" | "createdAt" | "updatedAt">) => void;
@@ -141,7 +163,7 @@ const mockClients: Client[] = [
   }
 ];
 
-// Zod validation schemas for each tab
+// Zod validation schemas for each section
 const basicInfoSchema = z.object({
   name: z.string().min(1, "Project name is required").min(3, "Project name must be at least 3 characters"),
   description: z.string().min(1, "Description is required").min(10, "Description must be at least 10 characters"),
@@ -196,19 +218,8 @@ const projectFormSchema = basicInfoSchema
 
 type ProjectFormData = z.infer<typeof projectFormSchema>;
 
-// Helper component for error messages
-const ErrorMessage = ({ message }: { message?: string }) => {
-  if (!message) return null;
-  return (
-    <div className="flex items-center gap-1 text-red-500 text-sm mt-1">
-      <AlertCircle className="h-3 w-3" />
-      <span>{message}</span>
-    </div>
-  );
-};
-
 export function AddProjectForm({ onSubmit, onCancel }: AddProjectFormProps) {
-  const [currentTab, setCurrentTab] = useState("basic");
+  const [expandedSection, setExpandedSection] = useState<string>("identity");
   const [selectedClient, setSelectedClient] = useState<Client | null>(null);
   const [clientSearchTerm, setClientSearchTerm] = useState("");
   const [showAddClientDialog, setShowAddClientDialog] = useState(false);
@@ -216,7 +227,9 @@ export function AddProjectForm({ onSubmit, onCancel }: AddProjectFormProps) {
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [uploadProgress, setUploadProgress] = useState<number>(0);
   const [isUploading, setIsUploading] = useState(false);
-  const [completedTabs, setCompletedTabs] = useState<string[]>([]);
+  const [submitError, setSubmitError] = useState<string | null>(null);
+  const [tagsList, setTagsList] = useState<string[]>([]);
+  const [teamList, setTeamList] = useState<string[]>([]);
 
   // Presigned URL mutation
   const [getPresignedUrl] = useGetPresignedUrlMutation();
@@ -228,7 +241,6 @@ export function AddProjectForm({ onSubmit, onCancel }: AddProjectFormProps) {
     watch,
     setValue,
     formState: { errors },
-    trigger,
   } = useForm<ProjectFormData>({
     resolver: zodResolver(projectFormSchema),
     mode: "onChange",
@@ -276,12 +288,6 @@ export function AddProjectForm({ onSubmit, onCancel }: AddProjectFormProps) {
     setValue("client", client.name);
     setValue("clientEmail", client.email);
     setValue("clientPhone", client.phone);
-  };
-
-  const handleClientCreated = () => {
-    setShowAddClientDialog(false);
-    // In a real app, you'd refresh the clients list here
-    // and potentially auto-select the newly created client
   };
 
   const handleImageChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -339,68 +345,8 @@ export function AddProjectForm({ onSubmit, onCancel }: AddProjectFormProps) {
     }
   };
 
-  // Validate current tab before moving to next
-  const validateCurrentTab = async (tab: string): Promise<boolean> => {
-    let fields: (keyof ProjectFormData)[] = [];
-
-    switch (tab) {
-      case "basic":
-        fields = ["name", "description", "type", "category", "priority", "status"];
-        break;
-      case "client":
-        fields = ["client", "clientEmail", "clientPhone"];
-        break;
-      case "details":
-        fields = ["requirements", "projectManager", "teamMembers", "currentPhase", "progressPercentage"];
-        break;
-      case "timeline":
-        fields = ["startDate", "endDate", "deadline", "estimatedDuration", "totalBudget", "spentAmount"];
-        break;
-      case "additional":
-        fields = ["address", "city", "state", "country", "tags"];
-        break;
-    }
-
-    const result = await trigger(fields);
-    if (result) {
-      setCompletedTabs(prev => [...new Set([...prev, tab])]);
-    }
-    return result;
-  };
-
-  // Handle tab change with validation
-  const handleTabChange = async (newTab: string) => {
-    const tabs = ['basic', 'client', 'details', 'timeline', 'additional'];
-    const currentIndex = tabs.indexOf(currentTab);
-    const newIndex = tabs.indexOf(newTab);
-
-    // If moving forward, validate current tab
-    if (newIndex > currentIndex) {
-      const isValid = await validateCurrentTab(currentTab);
-      if (!isValid) {
-        return; // Don't change tab if validation fails
-      }
-    }
-
-    setCurrentTab(newTab);
-  };
-
-  // Handle next button click
-  const handleNext = async (e?: React.MouseEvent) => {
-    e?.preventDefault();
-    e?.stopPropagation();
-
-    const isValid = await validateCurrentTab(currentTab);
-    if (isValid) {
-      const tabs = ['basic', 'client', 'details', 'timeline', 'additional'];
-      const currentIndex = tabs.indexOf(currentTab);
-      if (currentIndex < tabs.length - 1) {
-        setCurrentTab(tabs[currentIndex + 1]);
-      }
-    }
-  };
-
   const handleSubmit = handleFormSubmit(async (data: ProjectFormData) => {
+    setSubmitError(null);
     let imageUrls: string[] = [];
 
     // Upload image using presigned URL if one is selected
@@ -428,6 +374,7 @@ export function AddProjectForm({ onSubmit, onCancel }: AddProjectFormProps) {
       } catch (error) {
         console.error('Failed to upload image:', error);
         const errorMessage = error instanceof Error ? error.message : 'Failed to upload image. Please try again.';
+        setSubmitError(errorMessage);
         toast.error('Upload failed', {
           description: errorMessage,
         });
@@ -481,98 +428,160 @@ export function AddProjectForm({ onSubmit, onCancel }: AddProjectFormProps) {
     switch (formData.type) {
       case "Villa":
         return ["Luxury Residential", "Family Home", "Vacation Villa", "Sustainable Housing"];
-      // case "Commercial":
-      //   return ["Office Building", "Retail Complex", "Mixed-use Development", "Industrial Facility"];
-      // case "Interior":
-      //   return ["Residential Interior", "Commercial Interior", "Hospitality Design", "Office Design"];
-      // case "Landscape":
-      //   return ["Residential Landscape", "Commercial Landscape", "Urban Planning", "Educational Campus"];
+      case "Commercial":
+        return ["Office Building", "Retail Complex", "Mixed-use Development", "Industrial Facility"];
+      case "Interior":
+        return ["Residential Interior", "Commercial Interior", "Hospitality Design", "Office Design"];
+      case "Landscape":
+        return ["Residential Landscape", "Commercial Landscape", "Urban Planning", "Educational Campus"];
       default:
         return [];
     }
   };
 
+  // Check for errors in each section
+  const hasIdentityErrors = !!(errors.name || errors.description || errors.type || errors.status || errors.priority);
+  const hasClientErrors = !!(errors.client || errors.clientEmail || errors.clientPhone);
+  const hasScopeErrors = !!(errors.requirements || errors.projectManager);
+  const hasFinancialsErrors = !!(errors.startDate || errors.totalBudget);
+  const hasLocationErrors = !!(errors.address || errors.city || errors.state || errors.country);
+
+  const SectionHeader = ({
+    id,
+    icon: Icon,
+    title,
+    subtitle,
+    status,
+    isActive,
+    hasErrors
+  }: {
+    id: string;
+    icon: React.ElementType;
+    title: string;
+    subtitle: string;
+    status: string;
+    isActive: boolean;
+    hasErrors?: boolean;
+  }) => (
+    <div
+      className={cn(
+        "flex items-center justify-between p-4 cursor-pointer transition-all border rounded-xl",
+        hasErrors
+          ? "bg-red-50/50 dark:bg-red-950/20 border-red-200 dark:border-red-900/50"
+          : isActive
+          ? "bg-white/70 dark:bg-white/5 border-orange-500/20 dark:border-white/10 shadow-[0_8px_30px_rgb(0,0,0,0.04)] dark:shadow-[0_0_20px_rgba(0,0,0,0.3)]"
+          : "border-gray-200 dark:border-white/10 hover:bg-gray-50 dark:hover:bg-white/5"
+      )}
+      onClick={() => setExpandedSection(expandedSection === id ? "" : id)}
+    >
+      <div className="flex items-center gap-4">
+        <div className={cn(
+          "p-2.5 rounded-xl border transition-all",
+          hasErrors
+            ? "bg-red-500/10 dark:bg-red-500/20 border-red-500/30 text-red-600 dark:text-red-400"
+            : isActive
+            ? "bg-orange-500/10 dark:bg-orange-500/20 border-orange-500/30 text-orange-600 dark:text-orange-400"
+            : "bg-gray-100 dark:bg-white/5 border-gray-200 dark:border-white/10 text-muted-foreground"
+        )}>
+          {hasErrors ? <AlertCircle className="w-5 h-5" /> : <Icon className="w-5 h-5" />}
+        </div>
+        <div>
+          <h3 className="font-semibold text-foreground text-sm tracking-tight">{title}</h3>
+          <p className={cn(
+            "text-xs",
+            hasErrors ? "text-red-600 dark:text-red-400" : "text-muted-foreground"
+          )}>{hasErrors ? "Please fix errors" : subtitle}</p>
+        </div>
+      </div>
+      <div className="flex items-center gap-4">
+        <div className="flex items-center gap-2">
+          {hasErrors ? (
+            <div className="flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-red-500/10 border border-red-500/20 text-[10px] font-bold text-red-600 dark:text-red-400 uppercase tracking-wider">
+              <AlertCircle className="w-3 h-3 text-red-600 dark:text-red-400" />
+              Error
+            </div>
+          ) : isActive ? (
+            <div className="flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-orange-500/10 border border-orange-500/20 text-[10px] font-bold text-orange-600 dark:text-orange-400 uppercase tracking-wider">
+              <span className="w-1 h-1 rounded-full bg-orange-500 dark:bg-orange-400 animate-pulse" />
+              In Progress
+            </div>
+          ) : (
+            <div className="flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-[10px] font-bold text-emerald-600 dark:text-emerald-400 uppercase tracking-wider">
+              <CheckCircle2 className="w-3 h-3 text-emerald-600 dark:text-emerald-400" />
+              {status}
+            </div>
+          )}
+        </div>
+        {isActive ? <ChevronDown className="w-4 h-4 text-muted-foreground" /> : <ChevronRight className="w-4 h-4 text-muted-foreground" />}
+      </div>
+    </div>
+  );
+
   return (
-    <div className="max-w-6xl mx-auto">
-      <form onSubmit={handleSubmit} className="space-y-8" onKeyDown={(e) => {
+    <div className="flex flex-col gap-6 max-w-5xl mx-auto">
+      {/* Header Area */}
+      <div className="relative overflow-hidden p-6 rounded-2xl bg-gradient-to-br from-indigo-50/50 to-purple-50/50 dark:from-white/5 dark:to-white/10 border border-indigo-100/50 dark:border-white/10">
+        <div className="absolute top-0 right-0 w-64 h-64 bg-emerald-500/5 dark:bg-emerald-500/10 rounded-full -mr-32 -mt-32 blur-[80px]" />
+        <div className="absolute bottom-0 left-0 w-64 h-64 bg-blue-500/5 dark:bg-blue-500/10 rounded-full -ml-32 -mb-32 blur-[80px]" />
+        
+        <div className="relative flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <div className="flex items-center gap-4">
+            <div className="p-3 rounded-2xl bg-gradient-to-br from-indigo-500 to-purple-600 shadow-lg shadow-indigo-500/20">
+              <Sparkles className="w-8 h-8 text-white" />
+            </div>
+            <div>
+              <h2 className="text-2xl font-bold text-gray-900 dark:text-white tracking-tight">Create New Project</h2>
+              <p className="text-sm text-gray-500 dark:text-muted-foreground font-medium">Set up a comprehensive project with client information</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <form onSubmit={handleSubmit} className="space-y-4" onKeyDown={(e) => {
         // Prevent form submission on Enter key press
         if (e.key === 'Enter' && e.target instanceof HTMLInputElement && e.target.type !== 'submit') {
           e.preventDefault();
         }
       }}>
-        {/* Header */}
-        <div className="text-center space-y-4">
-          <div className="flex items-center justify-center gap-3">
-            <div className="p-3 bg-gradient-to-br from-blue-500/10 to-purple-500/10 rounded-xl border border-blue-200/50 dark:border-blue-800/50">
-              <Building2 className="h-8 w-8 text-blue-600 dark:text-blue-400" />
-            </div>
-            <div>
-              <h1 className="text-foreground">Create New Project</h1>
-              <p className="text-muted-foreground">Set up a comprehensive project with client information, requirements, and specifications</p>
-            </div>
-          </div>
-        </div>
+        {submitError && (
+          <Alert variant="destructive" className="bg-red-500/10 border-red-500/20 text-red-600 dark:text-red-400">
+            <AlertCircle className="h-4 w-4" />
+            <AlertTitle>Submission Error</AlertTitle>
+            <AlertDescription>{submitError}</AlertDescription>
+          </Alert>
+        )}
 
-        <Tabs value={currentTab} onValueChange={handleTabChange} className="w-full">
-          <TabsList className="grid w-full grid-cols-5 bg-muted/30 p-1 rounded-xl">
-            <TabsTrigger value="basic" className="flex items-center gap-2 data-[state=active]:bg-background relative">
-              {completedTabs.includes("basic") && <Check className="h-3 w-3 absolute top-1 right-1 text-green-600" />}
-              <Building2 className="h-4 w-4" />
-              <span className="hidden sm:inline">Basic Info</span>
-            </TabsTrigger>
-            <TabsTrigger value="client" className="flex items-center gap-2 data-[state=active]:bg-background relative">
-              {completedTabs.includes("client") && <Check className="h-3 w-3 absolute top-1 right-1 text-green-600" />}
-              <Users className="h-4 w-4" />
-              <span className="hidden sm:inline">Client</span>
-            </TabsTrigger>
-            <TabsTrigger value="details" className="flex items-center gap-2 data-[state=active]:bg-background relative">
-              {completedTabs.includes("details") && <Check className="h-3 w-3 absolute top-1 right-1 text-green-600" />}
-              <FileText className="h-4 w-4" />
-              <span className="hidden sm:inline">Details</span>
-            </TabsTrigger>
-            <TabsTrigger value="timeline" className="flex items-center gap-2 data-[state=active]:bg-background relative">
-              {completedTabs.includes("timeline") && <Check className="h-3 w-3 absolute top-1 right-1 text-green-600" />}
-              <Calendar className="h-4 w-4" />
-              <span className="hidden sm:inline">Timeline</span>
-            </TabsTrigger>
-            <TabsTrigger value="additional" className="flex items-center gap-2 data-[state=active]:bg-background relative">
-              {completedTabs.includes("additional") && <Check className="h-3 w-3 absolute top-1 right-1 text-green-600" />}
-              <MapPin className="h-4 w-4" />
-              <span className="hidden sm:inline">Additional</span>
-            </TabsTrigger>
-          </TabsList>
-
-          {/* Basic Information Tab */}
-          <TabsContent value="basic" className="space-y-6">
-            <Card className="relative overflow-hidden bg-card/50 backdrop-blur-sm border-border/50">
-              <div className="absolute inset-0 bg-gradient-to-br from-blue-500/[0.02] via-purple-500/[0.02] to-indigo-500/[0.02] dark:from-blue-400/[0.05] dark:via-purple-400/[0.05] dark:to-indigo-400/[0.05]"></div>
-              <CardHeader className="relative">
-                <div className="flex items-center gap-3">
-                  <div className="p-2 bg-gradient-to-br from-blue-500/10 to-purple-500/10 rounded-lg border border-blue-200/50 dark:border-blue-800/50">
-                    <Building2 className="h-5 w-5 text-blue-600 dark:text-blue-400" />
-                  </div>
-                  <div>
-                    <CardTitle className="text-foreground">Project Information</CardTitle>
-                    <p className="text-sm text-muted-foreground mt-1">Basic project details and overview</p>
-                  </div>
-                </div>
-              </CardHeader>
-              <CardContent className="relative space-y-6">
+        {/* Roadmap Style Sections */}
+        <div className="space-y-3 bg-white dark:bg-black/40 p-4 rounded-2xl border border-gray-100 dark:border-white/5 shadow-sm dark:shadow-none">
+          
+          {/* Section 1: Project Identity */}
+          <div className="space-y-3">
+             <SectionHeader
+              id="identity"
+              icon={Building2}
+              title="Project Identity"
+              subtitle="Basic project details and classification"
+              status="Required"
+              isActive={expandedSection === "identity"}
+              hasErrors={hasIdentityErrors}
+            />
+            {expandedSection === "identity" && (
+              <div className="p-4 pt-2 space-y-6 animate-in fade-in slide-in-from-top-2 duration-300">
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                   <div className="space-y-3">
-                    <Label htmlFor="name" className="text-foreground">Project Name *</Label>
+                    <Label htmlFor="name" className="text-xs font-medium text-muted-foreground">Project Name *</Label>
                     <Input
                       id="name"
                       {...register("name")}
-                      placeholder="Enter project name"
-                      className="bg-background/50 border-border/50 focus:bg-background transition-colors"
+                      placeholder="e.g. Modern Villa Landscape"
+                      className="bg-background"
                     />
-                    <ErrorMessage message={errors.name?.message} />
+                    {errors.name && <p className="text-[10px] text-red-500">{errors.name.message}</p>}
                   </div>
                   <div className="space-y-3">
-                    <Label htmlFor="type" className="text-foreground">Project Type *</Label>
+                    <Label htmlFor="type" className="text-xs font-medium text-muted-foreground">Project Type *</Label>
                     <Select value={formData.type} onValueChange={(value) => setValue("type", value as "Villa" | "Commercial" | "Interior" | "Landscape")}>
-                      <SelectTrigger className="bg-background/50 border-border/50">
+                      <SelectTrigger className="bg-background">
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
@@ -582,24 +591,24 @@ export function AddProjectForm({ onSubmit, onCancel }: AddProjectFormProps) {
                         <SelectItem value="Landscape">Landscape</SelectItem>
                       </SelectContent>
                     </Select>
-                    <ErrorMessage message={errors.type?.message} />
+                    {errors.type && <p className="text-[10px] text-red-500">{errors.type.message}</p>}
                   </div>
                 </div>
 
                 <div className="space-y-3">
-                  <Label htmlFor="description" className="text-foreground">Project Description *</Label>
+                  <Label htmlFor="description" className="text-xs font-medium text-muted-foreground">Project Description *</Label>
                   <Textarea
                     id="description"
                     {...register("description")}
                     placeholder="Describe the project goals, scope, and vision in detail..."
-                    className="bg-background/50 border-border/50 focus:bg-background transition-colors min-h-[120px] resize-none"
+                    className="bg-background min-h-[120px] resize-none"
                   />
-                  <ErrorMessage message={errors.description?.message} />
+                  {errors.description && <p className="text-[10px] text-red-500">{errors.description.message}</p>}
                 </div>
 
-                {/* Project Image Upload */}
-                <div className="space-y-3">
-                  <Label htmlFor="projectImage" className="text-foreground">Project Picture</Label>
+                 {/* Project Image Upload */}
+                 <div className="space-y-3">
+                  <Label htmlFor="projectImage" className="text-xs font-medium text-muted-foreground">Project Picture</Label>
                   <div className="space-y-4">
                     {!imagePreview ? (
                       <div className="relative">
@@ -612,14 +621,13 @@ export function AddProjectForm({ onSubmit, onCancel }: AddProjectFormProps) {
                         />
                         <label
                           htmlFor="projectImage"
-                          className="flex flex-col items-center justify-center w-full h-48 border-2 border-dashed border-border/50 rounded-lg cursor-pointer bg-background/30 hover:bg-background/50 transition-all duration-300 group"
+                          className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed border-border/50 rounded-lg cursor-pointer bg-background/30 hover:bg-background/50 transition-all duration-300 group"
                         >
                           <div className="flex flex-col items-center justify-center pt-5 pb-6">
-                            <Image className="h-10 w-10 text-muted-foreground mb-3 group-hover:text-blue-500 transition-colors" aria-label="Upload image" />
-                            <p className="mb-2 text-sm text-muted-foreground">
+                            <ImageIcon className="h-8 w-8 text-muted-foreground mb-3 group-hover:text-blue-500 transition-colors" aria-label="Upload image" />
+                            <p className="text-xs text-muted-foreground">
                               <span className="font-semibold">Click to upload</span> or drag and drop
                             </p>
-                            <p className="text-xs text-muted-foreground">PNG, JPG, GIF, WebP up to 10MB</p>
                           </div>
                         </label>
                       </div>
@@ -634,9 +642,9 @@ export function AddProjectForm({ onSubmit, onCancel }: AddProjectFormProps) {
                         <button
                           type="button"
                           onClick={handleRemoveImage}
-                          className="absolute top-2 right-2 p-2 bg-red-500 hover:bg-red-600 text-white rounded-full transition-colors shadow-lg z-10"
+                          className="absolute top-2 right-2 p-1.5 bg-red-500 hover:bg-red-600 text-white rounded-full transition-colors shadow-lg z-10"
                         >
-                          <X className="h-4 w-4" />
+                          <X className="h-3 w-3" />
                         </button>
                       </div>
                     )}
@@ -645,9 +653,9 @@ export function AddProjectForm({ onSubmit, onCancel }: AddProjectFormProps) {
 
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                   <div className="space-y-3">
-                    <Label htmlFor="category" className="text-foreground">Category</Label>
+                    <Label htmlFor="category" className="text-xs font-medium text-muted-foreground">Category</Label>
                     <Select value={formData.category} onValueChange={(value) => setValue("category", value)}>
-                      <SelectTrigger className="bg-background/50 border-border/50">
+                      <SelectTrigger className="bg-background">
                         <SelectValue placeholder="Select category" />
                       </SelectTrigger>
                       <SelectContent>
@@ -656,12 +664,11 @@ export function AddProjectForm({ onSubmit, onCancel }: AddProjectFormProps) {
                         ))}
                       </SelectContent>
                     </Select>
-                    <ErrorMessage message={errors.category?.message} />
                   </div>
                   <div className="space-y-3">
-                    <Label htmlFor="priority" className="text-foreground">Priority</Label>
+                    <Label htmlFor="priority" className="text-xs font-medium text-muted-foreground">Priority</Label>
                     <Select value={formData.priority} onValueChange={(value) => setValue("priority", value as "Low" | "Medium" | "High" | "Critical")}>
-                      <SelectTrigger className="bg-background/50 border-border/50">
+                      <SelectTrigger className="bg-background">
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
@@ -671,12 +678,11 @@ export function AddProjectForm({ onSubmit, onCancel }: AddProjectFormProps) {
                         <SelectItem value="Critical">Critical</SelectItem>
                       </SelectContent>
                     </Select>
-                    <ErrorMessage message={errors.priority?.message} />
                   </div>
                   <div className="space-y-3">
-                    <Label htmlFor="status" className="text-foreground">Status</Label>
+                    <Label htmlFor="status" className="text-xs font-medium text-muted-foreground">Status</Label>
                     <Select value={formData.status} onValueChange={(value) => setValue("status", value as "Planning" | "In Progress" | "On Hold" | "Completed" | "Cancelled")}>
-                      <SelectTrigger className="bg-background/50 border-border/50">
+                      <SelectTrigger className="bg-background">
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
@@ -687,482 +693,387 @@ export function AddProjectForm({ onSubmit, onCancel }: AddProjectFormProps) {
                         <SelectItem value="Cancelled">Cancelled</SelectItem>
                       </SelectContent>
                     </Select>
-                    <ErrorMessage message={errors.status?.message} />
                   </div>
                 </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
+              </div>
+            )}
+          </div>
 
-          {/* Client Selection Tab */}
-          <TabsContent value="client" className="space-y-6">
-            <Card className="relative overflow-hidden bg-card/50 backdrop-blur-sm border-border/50">
-              <div className="absolute inset-0 bg-gradient-to-br from-purple-500/[0.02] via-blue-500/[0.02] to-indigo-500/[0.02] dark:from-purple-400/[0.05] dark:via-blue-400/[0.05] dark:to-indigo-400/[0.05]"></div>
-              <CardHeader className="relative">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <div className="p-2 bg-gradient-to-br from-purple-500/10 to-blue-500/10 rounded-lg border border-purple-200/50 dark:border-purple-800/50">
-                      <Users className="h-5 w-5 text-purple-600 dark:text-purple-400" />
-                    </div>
-                    <div>
-                      <CardTitle className="text-foreground">Client Selection</CardTitle>
-                      <p className="text-sm text-muted-foreground mt-1">Select an existing client for this project</p>
-                    </div>
-                  </div>
+          <Separator className="bg-gray-100 dark:bg-white/5" />
+
+          {/* Section 2: Client & Stakeholders */}
+          <div className="space-y-3">
+             <SectionHeader
+              id="stakeholders"
+              icon={Users}
+              title="Client & Stakeholders"
+              subtitle="Select or add client details"
+              status="Required"
+              isActive={expandedSection === "stakeholders"}
+              hasErrors={hasClientErrors}
+            />
+            {expandedSection === "stakeholders" && (
+              <div className="p-4 pt-2 space-y-6 animate-in fade-in slide-in-from-top-2 duration-300">
+                <div className="flex justify-between items-center">
+                  <Label className="text-xs font-medium text-muted-foreground">Lead Client</Label>
                   <Button
                     type="button"
-                    variant="default"
+                    variant="link"
+                    size="sm"
+                    className="text-blue-600 h-auto p-0"
                     onClick={() => setShowAddClientDialog(true)}
-                    className="bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white"
                   >
-                    <UserPlus className="mr-2 h-4 w-4" />
-                    Add New Client
+                    <UserPlus className="mr-1 h-3 w-3" />
+                    New Client
                   </Button>
                 </div>
-              </CardHeader>
-              <CardContent className="relative space-y-6">
-                <div className="space-y-6">
-                  {/* Client Search */}
-                  <div className="relative">
+                
+                 {/* Client Search */}
+                 <div className="relative">
                     <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
                     <Input
                       placeholder="Search clients by name, company, or email..."
                       value={clientSearchTerm}
                       onChange={(e) => setClientSearchTerm(e.target.value)}
-                      className="pl-9 bg-background/50 border-border/50 focus:bg-background transition-colors"
+                      className="pl-9 bg-background"
                     />
                   </div>
 
                   {/* Client Grid */}
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 max-h-96 overflow-y-auto">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 max-h-80 overflow-y-auto">
                       {filteredClients.map((client) => (
-                        <Card 
-                          key={client.id} 
-                          className={`relative overflow-hidden cursor-pointer transition-all duration-300 hover:shadow-lg group ${
-                            selectedClient?.id === client.id 
-                              ? 'ring-2 ring-blue-500 border-blue-500/50 bg-blue-50/50 dark:bg-blue-950/20' 
-                              : 'bg-card/30 hover:bg-card/50 border-border/30 hover:border-border/60'
-                          }`}
+                        <div
+                          key={client.id}
+                          className={cn(
+                            "relative overflow-hidden cursor-pointer transition-all duration-300 hover:shadow-md border rounded-xl p-3 flex items-start gap-3",
+                            selectedClient?.id === client.id
+                              ? "ring-2 ring-blue-500 border-blue-500/50 bg-blue-50/50 dark:bg-blue-950/20"
+                              : "bg-background border-border hover:border-border/60"
+                          )}
                           onClick={() => handleClientSelect(client)}
                         >
-                          <div className="absolute inset-0 bg-gradient-to-br from-blue-500/[0.01] to-purple-500/[0.01] group-hover:from-blue-500/[0.02] group-hover:to-purple-500/[0.02] transition-all duration-300"></div>
-                          <CardContent className="relative p-4">
-                            <div className="flex items-start space-y-3">
-                              <div className="flex-shrink-0">
-                                <Avatar className="h-12 w-12 border-2 border-border/50">
-                                  <AvatarImage src={`https://avatar.vercel.sh/${client.name}`} alt={client.name} />
-                                  <AvatarFallback className="bg-gradient-to-br from-blue-500/10 to-purple-500/10">
-                                    {client.name.split(' ').map(n => n[0]).join('')}
-                                  </AvatarFallback>
-                                </Avatar>
-                              </div>
-                              <div className="flex-1 min-w-0 ml-3">
-                                <div className="flex items-center justify-between mb-2">
-                                  <h4 className="text-foreground truncate">{client.name}</h4>
-                                  {selectedClient?.id === client.id && (
-                                    <div className="p-1 bg-blue-500 rounded-full">
-                                      <Check className="h-3 w-3 text-white" />
-                                    </div>
-                                  )}
+                            <Avatar className="h-10 w-10 border border-border/50">
+                              <AvatarImage src={`https://avatar.vercel.sh/${client.name}`} alt={client.name} />
+                              <AvatarFallback className="bg-gradient-to-br from-blue-500/10 to-purple-500/10 text-xs">
+                                {client.name.split(' ').map(n => n[0]).join('')}
+                              </AvatarFallback>
+                            </Avatar>
+                            <div className="flex-1 min-w-0">
+                                <div className="flex items-center justify-between">
+                                  <h4 className="text-sm font-medium text-foreground truncate">{client.name}</h4>
+                                  {selectedClient?.id === client.id && <Check className="h-3 w-3 text-blue-600" />}
                                 </div>
-                                <p className="text-sm text-muted-foreground truncate mb-2">{client.companyName}</p>
-                                <div className="flex items-center gap-2 text-xs text-muted-foreground mb-2">
-                                  <Phone className="h-3 w-3" />
-                                  <span className="truncate">{client.phone}</span>
-                                </div>
-                                <div className="flex items-center gap-2 mb-3">
-                                  <Badge variant="outline" className={`text-xs ${getPriorityColor(client.priority)}`}>
+                                <p className="text-xs text-muted-foreground truncate">{client.companyName}</p>
+                                <div className="flex items-center gap-2 mt-1">
+                                   <Badge variant="outline" className={`text-[10px] px-1.5 py-0 ${getPriorityColor(client.priority)}`}>
                                     {client.priority}
                                   </Badge>
-                                  <Badge variant="outline" className={`text-xs ${getStatusColor(client.status)}`}>
-                                    {client.status}
-                                  </Badge>
                                 </div>
-                                <div className="text-xs text-muted-foreground">
-                                  <div>Projects: {client.projectsCount}</div>
-                                  <div>Value: ${client.totalProjectValue.toLocaleString()}</div>
-                                </div>
-                              </div>
                             </div>
-                          </CardContent>
-                        </Card>
+                        </div>
                       ))}
-                    </div>
+                  </div>
+                  {errors.client && <p className="text-[10px] text-red-500">{errors.client.message}</p>}
+              </div>
+            )}
+          </div>
 
-                  {filteredClients.length === 0 && (
-                    <div className="text-center py-8">
-                      <Users className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
-                      <h3 className="text-foreground mb-2">No clients found</h3>
-                      <p className="text-muted-foreground">Try adjusting your search criteria or create a new client</p>
-                    </div>
-                  )}
-                </div>
+          <Separator className="bg-gray-100 dark:bg-white/5" />
 
-                {/* Selected Client Summary */}
-                {selectedClient && (
-                  <div className="mt-6 p-4 bg-blue-50/50 dark:bg-blue-950/20 border border-blue-200/50 dark:border-blue-800/50 rounded-lg">
-                    <div className="flex items-center gap-3">
-                      <Avatar className="h-10 w-10 border-2 border-blue-200/50 dark:border-blue-800/50">
-                        <AvatarImage src={`https://avatar.vercel.sh/${selectedClient.name}`} alt={selectedClient.name} />
-                        <AvatarFallback className="bg-gradient-to-br from-blue-500/10 to-purple-500/10">
-                          {selectedClient.name.split(' ').map(n => n[0]).join('')}
-                        </AvatarFallback>
-                      </Avatar>
-                      <div>
-                        <h4 className="text-foreground">{selectedClient.name}</h4>
-                        <p className="text-sm text-muted-foreground">{selectedClient.companyName}</p>
-                        <p className="text-sm text-muted-foreground">{selectedClient.phone}</p>
-                      </div>
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => {
-                          setSelectedClient(null);
-                          setValue("client", "");
-                          setValue("clientEmail", "");
-                          setValue("clientPhone", "");
+           {/* Section 3: Scope & Resources */}
+           <div className="space-y-3">
+             <SectionHeader
+              id="scope"
+              icon={FileText}
+              title="Scope & Resources"
+              subtitle="Requirements and team allocation"
+              status="Required"
+              isActive={expandedSection === "scope"}
+              hasErrors={hasScopeErrors}
+            />
+            {expandedSection === "scope" && (
+                <div className="p-4 pt-2 space-y-6 animate-in fade-in slide-in-from-top-2 duration-300">
+                  <div className="space-y-3">
+                    <Label htmlFor="requirements" className="text-xs font-medium text-muted-foreground">Client Requirements *</Label>
+                    <Textarea
+                      id="requirements"
+                      {...register("requirements")}
+                      placeholder="List key requirements and deliverables..."
+                      className="bg-background min-h-[100px]"
+                    />
+                    {errors.requirements && <p className="text-[10px] text-red-500">{errors.requirements.message}</p>}
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                     <div className="space-y-3">
+                        <Label htmlFor="projectManager" className="text-xs font-medium text-muted-foreground">Project Manager *</Label>
+                        <Input
+                          id="projectManager"
+                          {...register("projectManager")}
+                          placeholder="Lead Architect / Manager"
+                          className="bg-background"
+                        />
+                        {errors.projectManager && <p className="text-[10px] text-red-500">{errors.projectManager.message}</p>}
+                     </div>
+                     <div className="space-y-3">
+                        <Label htmlFor="currentPhase" className="text-xs font-medium text-muted-foreground">Current Phase</Label>
+                        <Input
+                          id="currentPhase"
+                          {...register("currentPhase")}
+                          placeholder="e.g. Initial Design"
+                          className="bg-background"
+                        />
+                     </div>
+                  </div>
+
+                  <div className="space-y-3">
+                    <Label className="text-xs font-medium text-muted-foreground">Team Members</Label>
+                     <Input
+                        placeholder="Add member and press Enter"
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter') {
+                            e.preventDefault();
+                            const input = e.currentTarget;
+                            const newMember = input.value.trim();
+                            if (newMember && !teamList.includes(newMember)) {
+                              const updatedTeam = [...teamList, newMember];
+                              setTeamList(updatedTeam);
+                              setValue("teamMembers", updatedTeam.join(", "));
+                              input.value = "";
+                            }
+                          }
                         }}
-                        className="ml-auto text-muted-foreground hover:text-foreground"
-                      >
-                        Remove
-                      </Button>
-                    </div>
+                        className="bg-background"
+                      />
+                      {teamList.length > 0 && (
+                        <div className="flex flex-wrap gap-2 mt-2">
+                          {teamList.map((member, index) => (
+                            <Badge key={index} variant="secondary" className="gap-1">
+                              {member}
+                              <X
+                                className="h-3 w-3 cursor-pointer hover:text-red-500"
+                                onClick={() => {
+                                  const updatedTeam = teamList.filter(t => t !== member);
+                                  setTeamList(updatedTeam);
+                                  setValue("teamMembers", updatedTeam.join(", "));
+                                }}
+                              />
+                            </Badge>
+                          ))}
+                        </div>
+                      )}
+                       <input type="hidden" {...register("teamMembers")} />
                   </div>
-                )}
-              </CardContent>
-            </Card>
-          </TabsContent>
+                </div>
+            )}
+           </div>
 
-          {/* Details Tab */}
-          <TabsContent value="details" className="space-y-6">
-            <Card className="relative overflow-hidden bg-card/50 backdrop-blur-sm border-border/50">
-              <div className="absolute inset-0 bg-gradient-to-br from-emerald-500/[0.02] via-green-500/[0.02] to-emerald-600/[0.02] dark:from-emerald-400/[0.05] dark:via-green-400/[0.05] dark:to-emerald-500/[0.05]"></div>
-              <CardHeader className="relative">
-                <div className="flex items-center gap-3">
-                  <div className="p-2 bg-gradient-to-br from-emerald-500/10 to-green-500/10 rounded-lg border border-emerald-200/50 dark:border-emerald-800/50">
-                    <FileText className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />
-                  </div>
-                  <div>
-                    <CardTitle className="text-foreground">Project Requirements & Details</CardTitle>
-                    <p className="text-sm text-muted-foreground mt-1">Detailed specifications and client requirements</p>
-                  </div>
-                </div>
-              </CardHeader>
-              <CardContent className="relative space-y-6">
-                <div className="space-y-3">
-                  <Label htmlFor="requirements" className="text-foreground">Client Requirements & Specifications *</Label>
-                  <Textarea
-                    id="requirements"
-                    {...register("requirements")}
-                    placeholder="Detail the client's specific requirements, preferences, constraints, and any special considerations. Include architectural style preferences, space requirements, technical specifications, accessibility needs, sustainability goals, and any other important project requirements..."
-                    className="bg-background/50 border-border/50 focus:bg-background transition-colors min-h-[200px] resize-none"
-                  />
-                  <ErrorMessage message={errors.requirements?.message} />
-                </div>
+           <Separator className="bg-gray-100 dark:bg-white/5" />
 
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                  <div className="space-y-3">
-                    <Label htmlFor="currentPhase" className="text-foreground">Current Phase</Label>
-                    <Input
-                      id="currentPhase"
-                      {...register("currentPhase")}
-                      placeholder="e.g., Conceptual Design, Design Development, Documentation"
-                      className="bg-background/50 border-border/50 focus:bg-background transition-colors"
-                    />
-                    <ErrorMessage message={errors.currentPhase?.message} />
-                  </div>
-                  <div className="space-y-3">
-                    <Label htmlFor="progressPercentage" className="text-foreground">Progress (%)</Label>
-                    <Input
-                      id="progressPercentage"
-                      type="number"
-                      min="0"
-                      max="100"
-                      {...register("progressPercentage")}
-                      className="bg-background/50 border-border/50 focus:bg-background transition-colors"
-                    />
-                    <ErrorMessage message={errors.progressPercentage?.message} />
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                  <div className="space-y-3">
-                    <Label htmlFor="projectManager" className="text-foreground">Project Manager *</Label>
-                    <Input
-                      id="projectManager"
-                      {...register("projectManager")}
-                      placeholder="Assigned project manager"
-                      className="bg-background/50 border-border/50 focus:bg-background transition-colors"
-                    />
-                    <ErrorMessage message={errors.projectManager?.message} />
-                  </div>
-                  <div className="space-y-3">
-                    <Label htmlFor="teamMembers" className="text-foreground">Team Members</Label>
-                    <Input
-                      id="teamMembers"
-                      {...register("teamMembers")}
-                      placeholder="Team member names (comma-separated)"
-                      className="bg-background/50 border-border/50 focus:bg-background transition-colors"
-                    />
-                    <ErrorMessage message={errors.teamMembers?.message} />
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
-
-          {/* Timeline & Budget Tab */}
-          <TabsContent value="timeline" className="space-y-6">
-            <Card className="relative overflow-hidden bg-card/50 backdrop-blur-sm border-border/50">
-              <div className="absolute inset-0 bg-gradient-to-br from-amber-500/[0.02] via-orange-500/[0.02] to-amber-600/[0.02] dark:from-amber-400/[0.05] dark:via-orange-400/[0.05] dark:to-amber-500/[0.05]"></div>
-              <CardHeader className="relative">
-                <div className="flex items-center gap-3">
-                  <div className="p-2 bg-gradient-to-br from-amber-500/10 to-orange-500/10 rounded-lg border border-amber-200/50 dark:border-amber-800/50">
-                    <Calendar className="h-5 w-5 text-amber-600 dark:text-amber-400" />
-                  </div>
-                  <div>
-                    <CardTitle className="text-foreground">Timeline & Budget</CardTitle>
-                    <p className="text-sm text-muted-foreground mt-1">Project schedule and financial planning</p>
-                  </div>
-                </div>
-              </CardHeader>
-              <CardContent className="relative space-y-6">
-                {/* Timeline Section */}
-                <div className="space-y-4">
-                  <h3 className="text-foreground flex items-center gap-2">
-                    <Calendar className="h-4 w-4" />
-                    Project Timeline
-                  </h3>
-                  <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+           {/* Section 4: Timeline & Financials */}
+           <div className="space-y-3">
+             <SectionHeader
+              id="financials"
+              icon={Calendar}
+              title="Timeline & Financials"
+              subtitle="Schedule and budget details"
+              status="Required"
+              isActive={expandedSection === "financials"}
+              hasErrors={hasFinancialsErrors}
+            />
+            {expandedSection === "financials" && (
+               <div className="p-4 pt-2 space-y-6 animate-in fade-in slide-in-from-top-2 duration-300">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="space-y-3">
-                      <Label htmlFor="startDate" className="text-foreground">Start Date *</Label>
+                      <Label htmlFor="startDate" className="text-xs font-medium text-muted-foreground">Start Date *</Label>
                       <Input
                         id="startDate"
                         type="date"
                         {...register("startDate")}
-                        className="bg-background/50 border-border/50 focus:bg-background transition-colors"
+                        className="bg-background"
                       />
-                      <ErrorMessage message={errors.startDate?.message} />
+                      {errors.startDate && <p className="text-[10px] text-red-500">{errors.startDate.message}</p>}
                     </div>
-                    <div className="space-y-3">
-                      <Label htmlFor="endDate" className="text-foreground">End Date</Label>
-                      <Input
-                        id="endDate"
-                        type="date"
-                        {...register("endDate")}
-                        className="bg-background/50 border-border/50 focus:bg-background transition-colors"
-                      />
-                      <ErrorMessage message={errors.endDate?.message} />
-                    </div>
-                    <div className="space-y-3">
-                      <Label htmlFor="deadline" className="text-foreground">Deadline</Label>
+                     <div className="space-y-3">
+                      <Label htmlFor="deadline" className="text-xs font-medium text-muted-foreground">Deadline</Label>
                       <Input
                         id="deadline"
                         type="date"
                         {...register("deadline")}
-                        className="bg-background/50 border-border/50 focus:bg-background transition-colors"
-                      />
-                      <ErrorMessage message={errors.deadline?.message} />
-                    </div>
-                    <div className="space-y-3">
-                      <Label htmlFor="estimatedDuration" className="text-foreground">Duration (days)</Label>
-                      <Input
-                        id="estimatedDuration"
-                        type="number"
-                        {...register("estimatedDuration")}
-                        placeholder="365"
-                        className="bg-background/50 border-border/50 focus:bg-background transition-colors"
-                      />
-                      <ErrorMessage message={errors.estimatedDuration?.message} />
-                    </div>
-                  </div>
-                </div>
-
-                <Separator />
-
-                {/* Budget Section */}
-                <div className="space-y-4">
-                  <h3 className="text-foreground flex items-center gap-2">
-                    <DollarSign className="h-4 w-4" />
-                    Project Budget
-                  </h3>
-                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                    <div className="space-y-3">
-                      <Label htmlFor="totalBudget" className="text-foreground">Total Budget ($) *</Label>
-                      <Input
-                        id="totalBudget"
-                        type="number"
-                        {...register("totalBudget")}
-                        placeholder="1000000"
-                        className="bg-background/50 border-border/50 focus:bg-background transition-colors"
-                      />
-                      <ErrorMessage message={errors.totalBudget?.message} />
-                    </div>
-                    <div className="space-y-3">
-                      <Label htmlFor="spentAmount" className="text-foreground">Amount Spent ($)</Label>
-                      <Input
-                        id="spentAmount"
-                        type="number"
-                        {...register("spentAmount")}
-                        placeholder="0"
-                        className="bg-background/50 border-border/50 focus:bg-background transition-colors"
-                      />
-                      <ErrorMessage message={errors.spentAmount?.message} />
-                    </div>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
-
-          {/* Additional Information Tab */}
-          <TabsContent value="additional" className="space-y-6">
-            <Card className="relative overflow-hidden bg-card/50 backdrop-blur-sm border-border/50">
-              <div className="absolute inset-0 bg-gradient-to-br from-purple-500/[0.02] via-indigo-500/[0.02] to-purple-600/[0.02] dark:from-purple-400/[0.05] dark:via-indigo-400/[0.05] dark:to-purple-500/[0.05]"></div>
-              <CardHeader className="relative">
-                <div className="flex items-center gap-3">
-                  <div className="p-2 bg-gradient-to-br from-purple-500/10 to-indigo-500/10 rounded-lg border border-purple-200/50 dark:border-purple-800/50">
-                    <MapPin className="h-5 w-5 text-purple-600 dark:text-purple-400" />
-                  </div>
-                  <div>
-                    <CardTitle className="text-foreground">Location & Additional Info</CardTitle>
-                    <p className="text-sm text-muted-foreground mt-1">Project location and supplementary details</p>
-                  </div>
-                </div>
-              </CardHeader>
-              <CardContent className="relative space-y-6">
-                {/* Location Section */}
-                <div className="space-y-4">
-                  <h3 className="text-foreground flex items-center gap-2">
-                    <MapPin className="h-4 w-4" />
-                    Project Location
-                  </h3>
-                  <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-                    <div className="space-y-3">
-                      <Label htmlFor="address" className="text-foreground">Street Address</Label>
-                      <Input
-                        id="address"
-                        {...register("address")}
-                        placeholder="Street address"
-                        className="bg-background/50 border-border/50 focus:bg-background transition-colors"
-                      />
-                    </div>
-                    <div className="space-y-3">
-                      <Label htmlFor="city" className="text-foreground">City</Label>
-                      <Input
-                        id="city"
-                        {...register("city")}
-                        placeholder="City"
-                        className="bg-background/50 border-border/50 focus:bg-background transition-colors"
-                      />
-                    </div>
-                    <div className="space-y-3">
-                      <Label htmlFor="state" className="text-foreground">State</Label>
-                      <Input
-                        id="state"
-                        {...register("state")}
-                        placeholder="State"
-                        className="bg-background/50 border-border/50 focus:bg-background transition-colors"
-                      />
-                    </div>
-                    <div className="space-y-3">
-                      <Label htmlFor="country" className="text-foreground">Country</Label>
-                      <Input
-                        id="country"
-                        {...register("country")}
-                        className="bg-background/50 border-border/50 focus:bg-background transition-colors"
+                        className="bg-background"
                       />
                     </div>
                   </div>
-                </div>
 
-                <Separator />
-
-                {/* Tags Section */}
-                <div className="space-y-4">
-                  <h3 className="text-foreground flex items-center gap-2">
-                    <Tag className="h-4 w-4" />
-                    Project Tags
-                  </h3>
-                  <div className="space-y-3">
-                    <Label htmlFor="tags" className="text-foreground">Tags</Label>
-                    <Input
-                      id="tags"
-                      {...register("tags")}
-                      placeholder="Luxury, Sustainable, Modern, Commercial (comma-separated)"
-                      className="bg-background/50 border-border/50 focus:bg-background transition-colors"
-                    />
-                    <p className="text-sm text-muted-foreground">Add tags to help categorize and filter projects</p>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="space-y-3">
+                      <Label htmlFor="totalBudget" className="text-xs font-medium text-muted-foreground">Total Budget *</Label>
+                      <div className="relative">
+                        <DollarSign className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
+                        <Input
+                          id="totalBudget"
+                          type="number"
+                          {...register("totalBudget")}
+                          className="pl-9 bg-background"
+                          placeholder="0.00"
+                        />
+                      </div>
+                      {errors.totalBudget && <p className="text-[10px] text-red-500">{errors.totalBudget.message}</p>}
+                    </div>
+                     <div className="space-y-3">
+                      <Label htmlFor="spentAmount" className="text-xs font-medium text-muted-foreground">Spent Amount</Label>
+                       <div className="relative">
+                        <DollarSign className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
+                        <Input
+                          id="spentAmount"
+                          type="number"
+                          {...register("spentAmount")}
+                          className="pl-9 bg-background"
+                          placeholder="0.00"
+                        />
+                      </div>
+                    </div>
                   </div>
-                </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
-        </Tabs>
-
-        {/* Form Actions */}
-        <div className="flex justify-between items-center pt-6 border-t border-border/50">
-          <div className="flex items-center gap-2 text-sm text-muted-foreground">
-            <span>Step {['basic', 'client', 'details', 'timeline', 'additional'].indexOf(currentTab) + 1} of 5</span>
-          </div>
-          
-          <div className="flex gap-4">
-            <Button 
-              type="button" 
-              variant="outline" 
-              onClick={onCancel}
-              className="border-border/50 hover:bg-muted/50"
-            >
-              Cancel
-            </Button>
-            
-            {currentTab !== 'additional' ? (
-              <Button
-                type="button"
-                onClick={handleNext}
-                className="bg-gradient-to-r from-blue-600 via-blue-600 to-purple-600 hover:from-blue-700 hover:via-blue-700 hover:to-purple-700 text-white shadow-lg hover:shadow-xl transition-all duration-300 border-0"
-              >
-                Next Step
-              </Button>
-            ) : (
-              <Button
-                type="submit"
-                disabled={isUploading}
-                className="bg-gradient-to-r from-emerald-600 via-emerald-600 to-green-600 hover:from-emerald-700 hover:via-emerald-700 hover:to-green-700 text-white shadow-lg hover:shadow-xl transition-all duration-300 border-0 disabled:opacity-50 disabled:cursor-not-allowed min-w-[160px]"
-              >
-                {isUploading ? (
-                  <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Uploading {uploadProgress}%
-                  </>
-                ) : (
-                  <>
-                    <Plus className="mr-2 h-4 w-4" />
-                    Create Project
-                  </>
-                )}
-              </Button>
+               </div>
             )}
-          </div>
-        </div>
-      </form>
+           </div>
 
-      {/* Add Client Dialog */}
-      <Dialog open={showAddClientDialog} onOpenChange={setShowAddClientDialog}>
-        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle className="text-2xl">Add New Client</DialogTitle>
-            <DialogDescription>
-              Create a new client to associate with this project
-            </DialogDescription>
-          </DialogHeader>
-          <AddClientForm
-            onSuccess={handleClientCreated}
-            onCancel={() => setShowAddClientDialog(false)}
-          />
-        </DialogContent>
-      </Dialog>
+           <Separator className="bg-gray-100 dark:bg-white/5" />
+
+           {/* Section 5: Location & Meta */}
+           <div className="space-y-3">
+             <SectionHeader
+              id="location"
+              icon={MapPin}
+              title="Location & Meta"
+              subtitle="Site address and categorization"
+              status="Optional"
+              isActive={expandedSection === "location"}
+              hasErrors={hasLocationErrors}
+            />
+            {expandedSection === "location" && (
+              <div className="p-4 pt-2 space-y-6 animate-in fade-in slide-in-from-top-2 duration-300">
+                <div className="space-y-3">
+                   <Label htmlFor="address" className="text-xs font-medium text-muted-foreground">Address</Label>
+                   <Input
+                    id="address"
+                    {...register("address")}
+                    placeholder="Street address of project site"
+                    className="bg-background"
+                  />
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                   <div className="space-y-3">
+                      <Label htmlFor="city" className="text-xs font-medium text-muted-foreground">City</Label>
+                      <Input id="city" {...register("city")} className="bg-background" />
+                   </div>
+                   <div className="space-y-3">
+                      <Label htmlFor="state" className="text-xs font-medium text-muted-foreground">State</Label>
+                      <Input id="state" {...register("state")} className="bg-background" />
+                   </div>
+                   <div className="space-y-3">
+                      <Label htmlFor="country" className="text-xs font-medium text-muted-foreground">Country</Label>
+                      <Input id="country" {...register("country")} className="bg-background" />
+                   </div>
+                </div>
+
+                <div className="space-y-3">
+                   <Label className="text-xs font-medium text-muted-foreground">Tags</Label>
+                    <Input
+                      placeholder="Add tag and press Enter"
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') {
+                          e.preventDefault();
+                          const input = e.currentTarget;
+                          const newTag = input.value.trim();
+                          if (newTag && !tagsList.includes(newTag)) {
+                            const updatedTags = [...tagsList, newTag];
+                            setTagsList(updatedTags);
+                            setValue("tags", updatedTags.join(", "));
+                            input.value = "";
+                          }
+                        }
+                      }}
+                      className="bg-background"
+                    />
+                     {tagsList.length > 0 && (
+                        <div className="flex flex-wrap gap-2 mt-2">
+                          {tagsList.map((tag, index) => (
+                            <Badge key={index} variant="outline" className="gap-1">
+                              {tag}
+                              <X
+                                className="h-3 w-3 cursor-pointer hover:text-red-500"
+                                onClick={() => {
+                                  const updatedTags = tagsList.filter(t => t !== tag);
+                                  setTagsList(updatedTags);
+                                  setValue("tags", updatedTags.join(", "));
+                                }}
+                              />
+                            </Badge>
+                          ))}
+                        </div>
+                      )}
+                      <input type="hidden" {...register("tags")} />
+                </div>
+              </div>
+            )}
+           </div>
+
+        </div>
+
+        {/* Footer Actions */}
+        <div className="flex items-center justify-end gap-3 pt-4 border-t">
+          <Button
+            type="button"
+            variant="outline"
+            onClick={onCancel}
+            disabled={isUploading}
+          >
+            Cancel
+          </Button>
+          <Button
+            type="submit"
+            disabled={isUploading}
+            className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white"
+          >
+            {isUploading ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                Uploading... {uploadProgress}%
+              </>
+            ) : (
+                "Create Project"
+            )}
+          </Button>
+        </div>
+
+      </form>
+      
+      {/* Client Dialog */}
+      {showAddClientDialog && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
+           <div className="relative w-full max-w-4xl bg-background rounded-lg shadow-xl max-h-[90vh] overflow-y-auto">
+             <Button
+                variant="ghost"
+                size="icon"
+                className="absolute right-4 top-4 z-10"
+                onClick={() => setShowAddClientDialog(false)}
+              >
+                <X className="h-4 w-4" />
+              </Button>
+              <div className="p-6">
+                 <AddClientForm 
+                    onCancel={() => setShowAddClientDialog(false)}
+                    onSuccess={() => {
+                      setShowAddClientDialog(false);
+                      // In a real app we'd refresh the list
+                    }}
+                 />
+              </div>
+           </div>
+        </div>
+      )}
+
     </div>
   );
 }

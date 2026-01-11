@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
 import { useState } from "react";
@@ -50,6 +51,7 @@ export function AddClientForm({ onSuccess, onCancel }: AddClientFormProps) {
     resolver: zodResolver(createClientSchema),
     defaultValues: {
       firstName: "",
+      middleName: "",
       lastName: "",
       email: "",
       phone: "",
@@ -86,15 +88,16 @@ export function AddClientForm({ onSuccess, onCancel }: AddClientFormProps) {
   const onSubmit = async (data: CreateClientFormData) => {
     setSubmitError(null);
     try {
+      const fullName = [data.firstName, data.middleName, data.lastName].filter(Boolean).join(' ');
       const clientData = {
         firstName: data.firstName,
         lastName: data.lastName,
-        fullName: `${data.firstName} ${data.lastName}`,
-        name: `${data.firstName} ${data.lastName}`,
+        fullName: fullName,
+        name: fullName,
         email: data.email || "",
         phone: data.phone,
         website: undefined,
-        companyName: data.employer || `${data.firstName} ${data.lastName}`,
+        companyName: data.employer || fullName,
         companyType: 'Individual' as const,
         industry: data.occupation || 'Other',
         address: {
@@ -105,7 +108,7 @@ export function AddClientForm({ onSuccess, onCancel }: AddClientFormProps) {
           country: data.country
         },
         primaryContact: {
-          name: `${data.firstName} ${data.lastName}`,
+          name: fullName,
           title: data.occupation || 'Client',
           email: data.email || "",
           phone: data.phone
@@ -130,8 +133,9 @@ export function AddClientForm({ onSuccess, onCancel }: AddClientFormProps) {
       };
 
       await createClient(clientData).unwrap();
+      const displayName = [data.firstName, data.middleName, data.lastName].filter(Boolean).join(' ');
       toast.success("Client added successfully!", {
-        description: `${data.firstName} ${data.lastName} has been added to your clients.`,
+        description: `${displayName} has been added to your clients.`,
       });
       onSuccess?.();
     } catch (error) {
@@ -153,47 +157,68 @@ export function AddClientForm({ onSuccess, onCancel }: AddClientFormProps) {
   const genderValue = watch("gender");
   const architecturalStyleValue = watch("architecturalStyle");
 
-  const SectionHeader = ({ 
-    id, 
-    icon: Icon, 
-    title, 
-    subtitle, 
-    status, 
-    isActive 
-  }: { 
-    id: string; 
-    icon: any; 
-    title: string; 
-    subtitle: string; 
-    status: string; 
+  // Check for errors in each section
+  const hasPersonalErrors = !!(errors.firstName || errors.middleName || errors.lastName || errors.email || errors.phone || errors.dateOfBirth || errors.gender);
+  const hasProfessionalErrors = !!(errors.occupation || errors.employer);
+  const hasAddressErrors = !!(errors.street || errors.city || errors.state || errors.postalCode || errors.country);
+  const hasStatusErrors = !!(errors.status || errors.priority || errors.architecturalStyle || errors.architecturalStyleOther);
+  const hasNotesErrors = !!(errors.notes || errors.tags);
+
+  const SectionHeader = ({
+    id,
+    icon: Icon,
+    title,
+    subtitle,
+    status,
+    isActive,
+    hasErrors
+  }: {
+    id: string;
+    icon: any;
+    title: string;
+    subtitle: string;
+    status: string;
     isActive: boolean;
+    hasErrors?: boolean;
   }) => (
-    <div 
+    <div
       className={cn(
-        "flex items-center justify-between p-4 cursor-pointer transition-all border border-transparent rounded-xl",
-        isActive 
-          ? "bg-white/70 dark:bg-white/5 border-orange-500/20 dark:border-white/10 shadow-[0_8px_30px_rgb(0,0,0,0.04)] dark:shadow-[0_0_20px_rgba(0,0,0,0.3)]" 
-          : "hover:bg-gray-50 dark:hover:bg-white/5"
+        "flex items-center justify-between p-4 cursor-pointer transition-all border rounded-xl",
+        hasErrors
+          ? "bg-red-50/50 dark:bg-red-950/20 border-red-200 dark:border-red-900/50"
+          : isActive
+          ? "bg-white/70 dark:bg-white/5 border-orange-500/20 dark:border-white/10 shadow-[0_8px_30px_rgb(0,0,0,0.04)] dark:shadow-[0_0_20px_rgba(0,0,0,0.3)]"
+          : "border-gray-200 dark:border-white/10 hover:bg-gray-50 dark:hover:bg-white/5"
       )}
       onClick={() => setExpandedSection(expandedSection === id ? "" : id)}
     >
       <div className="flex items-center gap-4">
         <div className={cn(
           "p-2.5 rounded-xl border transition-all",
-          isActive 
-            ? "bg-orange-500/10 dark:bg-orange-500/20 border-orange-500/30 text-orange-600 dark:text-orange-400" 
+          hasErrors
+            ? "bg-red-500/10 dark:bg-red-500/20 border-red-500/30 text-red-600 dark:text-red-400"
+            : isActive
+            ? "bg-orange-500/10 dark:bg-orange-500/20 border-orange-500/30 text-orange-600 dark:text-orange-400"
             : "bg-gray-100 dark:bg-white/5 border-gray-200 dark:border-white/10 text-muted-foreground"
         )}>
-          <Icon className="w-5 h-5" />
+          {hasErrors ? <AlertCircle className="w-5 h-5" /> : <Icon className="w-5 h-5" />}
         </div>
         <div>
           <h3 className="font-semibold text-foreground text-sm tracking-tight">{title}</h3>
-          <p className="text-xs text-muted-foreground">{subtitle}</p>
+          <p className={cn(
+            "text-xs",
+            hasErrors ? "text-red-600 dark:text-red-400" : "text-muted-foreground"
+          )}>{hasErrors ? "Please fix errors" : subtitle}</p>
         </div>
       </div>
       <div className="flex items-center gap-4">
         <div className="flex items-center gap-2">
-          {isActive ? (
+          {hasErrors ? (
+            <div className="flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-red-500/10 border border-red-500/20 text-[10px] font-bold text-red-600 dark:text-red-400 uppercase tracking-wider">
+              <AlertCircle className="w-3 h-3 text-red-600 dark:text-red-400" />
+              Error
+            </div>
+          ) : isActive ? (
             <div className="flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-orange-500/10 border border-orange-500/20 text-[10px] font-bold text-orange-600 dark:text-orange-400 uppercase tracking-wider">
               <span className="w-1 h-1 rounded-full bg-orange-500 dark:bg-orange-400 animate-pulse" />
               In Progress
@@ -224,24 +249,9 @@ export function AddClientForm({ onSuccess, onCancel }: AddClientFormProps) {
             </div>
             <div>
               <h2 className="text-2xl font-bold text-gray-900 dark:text-white tracking-tight">New Client Intake</h2>
-              <p className="text-sm text-gray-500 dark:text-muted-foreground font-medium">Lead Management • Architecture CRM</p>
+              <p className="text-sm text-gray-500 dark:text-muted-foreground font-medium">Lead Management</p>
             </div>
           </div>
-          <div className="flex items-center gap-3">
-            <div className="px-3 py-1 rounded-lg bg-orange-500/10 border border-orange-500/20">
-              <span className="text-xs font-bold text-orange-600 dark:text-orange-400 uppercase tracking-widest">Draft Intake</span>
-            </div>
-            <p className="text-xs text-gray-400 dark:text-muted-foreground font-semibold">Auto-saving...</p>
-          </div>
-        </div>
-
-        {/* Progress Bar Container */}
-        <div className="relative mt-8 h-2 w-full bg-indigo-100/30 dark:bg-white/5 rounded-full overflow-hidden">
-          <div className="absolute inset-0 bg-gradient-to-r from-orange-400 to-amber-500 w-[35%] rounded-full shadow-[0_0_15px_rgba(249,115,22,0.3)]" />
-        </div>
-        <div className="flex justify-between mt-2.5">
-          <span className="text-[10px] font-bold text-orange-600 dark:text-orange-400 uppercase tracking-wider">35% complete</span>
-          <span className="text-[10px] font-bold text-gray-400 dark:text-muted-foreground uppercase tracking-wider">Required: Contacts, Status</span>
         </div>
       </div>
 
@@ -258,24 +268,30 @@ export function AddClientForm({ onSuccess, onCancel }: AddClientFormProps) {
         <div className="space-y-3 bg-white dark:bg-black/40 p-4 rounded-2xl border border-gray-100 dark:border-white/5 shadow-sm dark:shadow-none">
           {/* Section 1: Personal */}
           <div className="space-y-3">
-            <SectionHeader 
+            <SectionHeader
               id="personal"
               icon={User}
               title="Personal Information"
               subtitle="Core identity and primary contact details"
               status="Required"
               isActive={expandedSection === "personal"}
+              hasErrors={hasPersonalErrors}
             />
             {expandedSection === "personal" && (
-              <div className="p-4 pt-2 grid grid-cols-1 md:grid-cols-2 gap-4 animate-in fade-in slide-in-from-top-2 duration-300">
+              <div className="p-4 pt-2 grid grid-cols-1 md:grid-cols-3 gap-4 animate-in fade-in slide-in-from-top-2 duration-300">
                 <div className="space-y-1.5">
                   <Label className="text-xs font-medium text-muted-foreground">First Name *</Label>
-                  <Input {...register("firstName")} placeholder="e.g. Liam" className="h-10" />
+                  <Input {...register("firstName")} placeholder="e.g. Liam" className="h-10" maxLength={50} />
                   {errors.firstName && <p className="text-[10px] text-red-500">{errors.firstName.message}</p>}
                 </div>
                 <div className="space-y-1.5">
+                  <Label className="text-xs font-medium text-muted-foreground">Middle Name</Label>
+                  <Input {...register("middleName")} placeholder="e.g. James" className="h-10" maxLength={50} />
+                  {errors.middleName && <p className="text-[10px] text-red-500">{errors.middleName.message}</p>}
+                </div>
+                <div className="space-y-1.5">
                   <Label className="text-xs font-medium text-muted-foreground">Last Name *</Label>
-                  <Input {...register("lastName")} placeholder="e.g. Chen" className="h-10" />
+                  <Input {...register("lastName")} placeholder="e.g. Chen" className="h-10" maxLength={50} />
                   {errors.lastName && <p className="text-[10px] text-red-500">{errors.lastName.message}</p>}
                 </div>
                 <div className="space-y-1.5">
@@ -313,13 +329,14 @@ export function AddClientForm({ onSuccess, onCancel }: AddClientFormProps) {
 
           {/* Section 2: Professional */}
           <div className="space-y-3">
-            <SectionHeader 
+            <SectionHeader
               id="professional"
               icon={Briefcase}
               title="Work & Profession"
               subtitle="Industry context and occupational background"
               status="Completed"
               isActive={expandedSection === "professional"}
+              hasErrors={hasProfessionalErrors}
             />
             {expandedSection === "professional" && (
               <div className="p-4 pt-2 grid grid-cols-1 md:grid-cols-2 gap-4 animate-in fade-in slide-in-from-top-2 duration-300">
@@ -346,33 +363,34 @@ export function AddClientForm({ onSuccess, onCancel }: AddClientFormProps) {
               subtitle="Physical address for project planning"
               status="Required"
               isActive={expandedSection === "address"}
+              hasErrors={hasAddressErrors}
             />
             {expandedSection === "address" && (
               <div className="p-4 pt-2 space-y-4 animate-in fade-in slide-in-from-top-2 duration-300">
                 <div className="space-y-1.5">
                   <Label className="text-xs font-medium text-muted-foreground">Street Address *</Label>
-                  <Input {...register("street")} placeholder="123 Harmony Lane" className="h-10" />
+                  <Input {...register("street")} placeholder="e.g. 123 Main St" className="h-10" />
                   {errors.street && <p className="text-[10px] text-red-500">{errors.street.message}</p>}
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="space-y-1.5">
                     <Label className="text-xs font-medium text-muted-foreground">City *</Label>
-                    <Input {...register("city")} placeholder="New York" className="h-10" />
+                    <Input {...register("city")} placeholder="Mananthavady" className="h-10" />
                     {errors.city && <p className="text-[10px] text-red-500">{errors.city.message}</p>}
                   </div>
                   <div className="space-y-1.5">
                     <Label className="text-xs font-medium text-muted-foreground">State *</Label>
-                    <Input {...register("state")} placeholder="NY" className="h-10" />
+                    <Input {...register("state")} placeholder="Kerala" className="h-10" />
                     {errors.state && <p className="text-[10px] text-red-500">{errors.state.message}</p>}
                   </div>
                   <div className="space-y-1.5">
                     <Label className="text-xs font-medium text-muted-foreground">Postal Code *</Label>
-                    <Input {...register("postalCode")} placeholder="10001" className="h-10" />
+                    <Input {...register("postalCode")} placeholder="670731" className="h-10" />
                     {errors.postalCode && <p className="text-[10px] text-red-500">{errors.postalCode.message}</p>}
                   </div>
                   <div className="space-y-1.5">
                     <Label className="text-xs font-medium text-muted-foreground">Country *</Label>
-                    <Input {...register("country")} placeholder="USA" className="h-10" />
+                    <Input {...register("country")} placeholder="India" className="h-10" />
                     {errors.country && <p className="text-[10px] text-red-500">{errors.country.message}</p>}
                   </div>
                 </div>
@@ -384,13 +402,14 @@ export function AddClientForm({ onSuccess, onCancel }: AddClientFormProps) {
 
           {/* Section 4: Status */}
           <div className="space-y-3">
-            <SectionHeader 
+            <SectionHeader
               id="status"
               icon={Activity}
               title="Lifecycle & Status"
               subtitle="Current position in the client journey"
               status="Action Needed"
               isActive={expandedSection === "status"}
+              hasErrors={hasStatusErrors}
             />
             {expandedSection === "status" && (
               <div className="p-4 pt-2 grid grid-cols-1 md:grid-cols-2 gap-4 animate-in fade-in slide-in-from-top-2 duration-300">
@@ -459,13 +478,14 @@ export function AddClientForm({ onSuccess, onCancel }: AddClientFormProps) {
 
           {/* Section 5: Notes */}
           <div className="space-y-3">
-            <SectionHeader 
+            <SectionHeader
               id="notes"
               icon={PlusCircle}
               title="Additional Context"
               subtitle="Custom notes and internal remarks"
               status="Optional"
               isActive={expandedSection === "notes"}
+              hasErrors={hasNotesErrors}
             />
             {expandedSection === "notes" && (
               <div className="p-4 pt-2 space-y-4 animate-in fade-in slide-in-from-top-2 duration-300">
@@ -527,28 +547,26 @@ export function AddClientForm({ onSuccess, onCancel }: AddClientFormProps) {
         </div>
 
         {/* Action Buttons */}
-        <div className="flex items-center justify-end gap-3 pt-6 border-t border-gray-100 dark:border-white/5">
+        <div className="flex items-center justify-end gap-3 pt-4 border-t">
           <Button
             type="button"
-            variant="ghost"
+            variant="outline"
             onClick={onCancel}
             disabled={isLoading}
-            className="text-gray-500 dark:text-muted-foreground hover:text-indigo-600 dark:hover:text-white hover:bg-indigo-50 dark:hover:bg-white/5 px-6 font-semibold tracking-tight transition-colors"
           >
-            Discard
+            Cancel
           </Button>
           <Button
             type="submit"
             disabled={isLoading}
-            className="bg-emerald-500 hover:bg-emerald-600 text-white dark:text-black font-bold px-8 rounded-xl shadow-lg shadow-emerald-500/20 border-0 transition-all hover:scale-[1.02] active:scale-[0.98]"
           >
             {isLoading ? (
-              <div className="flex items-center gap-2">
+              <>
                 <Loader2 className="w-4 h-4 animate-spin" />
-                Initializing...
-              </div>
+                Creating...
+              </>
             ) : (
-              "Complete Intake"
+              "Create Client"
             )}
           </Button>
         </div>

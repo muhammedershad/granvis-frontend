@@ -69,7 +69,7 @@ export interface ClientFilters {
   companyType: string;
   status: string;
   priority: string;
-  industry: string;
+  architecturalStyle: string;
   source: string;
 }
 

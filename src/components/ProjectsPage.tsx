@@ -1,12 +1,12 @@
 'use client';
 import { useState, useMemo, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { toast } from "sonner";
+
 import {
   Search,
   Plus,
   Filter,
-  Download,
+
   MoreHorizontal,
   Edit,
   Eye,
@@ -39,7 +39,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from ".
 import { Badge } from "./ui/badge";
 import { Progress } from "./ui/progress";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from "./ui/dropdown-menu";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "./ui/dialog";
+
 import {
   AlertDialog,
   AlertDialogAction,
@@ -50,7 +50,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "./ui/alert-dialog";
-import { AddProjectForm } from "./AddProjectForm";
+
 import { Project, ProjectFilters, ProjectSort, ProjectViewType } from "../types/project";
 import { cn } from "./ui/utils";
 import { ImageWithFallback } from "./figma/ImageWithFallback";
@@ -64,7 +64,6 @@ import {
 } from "./ui/pagination";
 import {
   useGetProjectsQuery,
-  useCreateProjectMutation,
   useDeleteProjectMutation
 } from "@/lib/api/projectsApi";
 import { useDebounce } from "@/hooks/useDebounce";
@@ -93,7 +92,7 @@ export function ProjectsPage({ onProjectSelect }: ProjectsPageProps) {
     field: "createdAt",
     direction: "desc"
   });
-  const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
+
   const [deleteConfirmation, setDeleteConfirmation] = useState<{
     isOpen: boolean;
     projectId: string | null;
@@ -183,7 +182,7 @@ export function ProjectsPage({ onProjectSelect }: ProjectsPageProps) {
     sortOrder: sort.direction,
   });
 
-  const [createProject] = useCreateProjectMutation();
+
   const [deleteProject] = useDeleteProjectMutation();
 
   const projects = useMemo(() => data?.data || [], [data?.data]);
@@ -256,21 +255,7 @@ export function ProjectsPage({ onProjectSelect }: ProjectsPageProps) {
     return sort.direction === "asc" ? <ArrowUp className="w-4 h-4" /> : <ArrowDown className="w-4 h-4" />;
   };
 
-  const handleAddProject = async (newProject: Omit<Project, "id" | "createdAt" | "updatedAt">) => {
-    try {
-      await createProject(newProject).unwrap();
-      setIsAddDialogOpen(false);
-      toast.success("Project created successfully");
-    } catch (err) {
-      console.error("Failed to create project:", err);
-      const errorMessage = err && typeof err === 'object' && 'data' in err
-        ? (err.data as { message?: string })?.message || "Failed to create project"
-        : "Failed to create project";
-      toast.error("Error creating project", {
-        description: Array.isArray(errorMessage) ? errorMessage.join(", ") : errorMessage,
-      });
-    }
-  };
+
 
   const openDeleteConfirmation = (projectId: string, projectName: string) => {
     setDeleteConfirmation({
@@ -363,25 +348,18 @@ export function ProjectsPage({ onProjectSelect }: ProjectsPageProps) {
             </Button>
           </div>
           
-          <Button variant="outline" className="bg-white/60 dark:bg-white/5 border-white/40 dark:border-white/10 text-muted-foreground hover:bg-white/80 dark:hover:bg-white/10 shadow-lg shadow-gray-200/50 dark:shadow-black/20">
+          {/* <Button variant="outline" className="bg-white/60 dark:bg-white/5 border-white/40 dark:border-white/10 text-muted-foreground hover:bg-white/80 dark:hover:bg-white/10 shadow-lg shadow-gray-200/50 dark:shadow-black/20">
             <Download className="w-4 h-4 mr-2" />
             Export
-          </Button>
+          </Button> */}
           
-          <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
-            <DialogTrigger asChild>
-              <Button className="bg-gradient-to-r from-purple-500 to-blue-500 hover:from-purple-600 hover:to-blue-600 border-0 shadow-lg shadow-purple-200/50 dark:shadow-purple-500/25">
-                <Plus className="w-4 h-4 mr-2" />
-                New Project
-              </Button>
-            </DialogTrigger>
-            <DialogContent className="max-w-7xl max-h-[95vh] overflow-y-auto backdrop-blur-xl bg-card/95 dark:bg-card/95 border-border/50 shadow-2xl">
-              <DialogHeader>
-                <DialogTitle>Create New Project</DialogTitle>
-              </DialogHeader>
-              <AddProjectForm onSubmit={handleAddProject} onCancel={() => setIsAddDialogOpen(false)} />
-            </DialogContent>
-          </Dialog>
+        <Button 
+            onClick={() => router.push('/admin/projects/new')}
+            className="bg-gradient-to-r from-purple-500 to-blue-500 hover:from-purple-600 hover:to-blue-600 border-0 shadow-lg shadow-purple-200/50 dark:shadow-purple-500/25"
+          >
+            <Plus className="w-4 h-4 mr-2" />
+            New Project
+          </Button>
         </div>
       </div>
 

@@ -3,8 +3,18 @@ import { z } from "zod";
 // Zod schema for creating a new client
 export const createClientSchema = z.object({
   // Personal Information
-  firstName: z.string().min(1, "First name is required"),
-  lastName: z.string().min(1, "Last name is required"),
+  firstName: z.string()
+    .min(1, "First name is required")
+    .max(50, "First name must be 50 characters or less")
+    .regex(/^\S+$/, "First name must be a single word without spaces"),
+  middleName: z.string()
+    .max(50, "Middle name must be 50 characters or less")
+    .regex(/^$|^\S+$/, "Middle name must be a single word without spaces")
+    .optional(),
+  lastName: z.string()
+    .min(1, "Last name is required")
+    .max(50, "Last name must be 50 characters or less")
+    .regex(/^\S+$/, "Last name must be a single word without spaces"),
   email: z.string().email("Invalid email address").optional().or(z.literal("")),
   phone: z.string().min(1, "Phone number is required"),
   alternatePhone: z.string().optional(),

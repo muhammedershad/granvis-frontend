@@ -69,6 +69,7 @@ export const clientsApi = apiSlice.injectEndpoints({
       byIndustry: Record<string, number>;
       byStatus: Record<string, number>;
       byPriority: Record<string, number>;
+      byArchitecturalStyle: Record<string, number>;
     }, void>({
       query: () => ({
         url: '/clients/statistics',

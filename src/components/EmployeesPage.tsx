@@ -1,4 +1,4 @@
-'use client";'
+import { useRouter } from "next/navigation";
 import { useState, useMemo } from "react";
 import { 
   Search, 
@@ -38,8 +38,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from ".
 import { Badge } from "./ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from "./ui/dropdown-menu";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "./ui/dialog";
-import { AddEmployeeForm } from "./AddEmployeeForm";
+
 import { Employee, EmployeeFilters, EmployeeSort } from "../types/employee";
 import { cn } from "./ui/utils";
 
@@ -360,6 +359,7 @@ interface EmployeesPageProps {
 }
 
 export function EmployeesPage({ onEmployeeSelect }: EmployeesPageProps) {
+  const router = useRouter();
   const [employees, setEmployees] = useState<Employee[]>(mockEmployees);
   const [currentPage, setCurrentPage] = useState(1);
   const [viewType, setViewType] = useState<ViewType>("cards");
@@ -374,7 +374,7 @@ export function EmployeesPage({ onEmployeeSelect }: EmployeesPageProps) {
     field: "firstName",
     direction: "asc"
   });
-  const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
+
 
   // Calculate statistics
   const stats = useMemo(() => {
@@ -488,16 +488,7 @@ export function EmployeesPage({ onEmployeeSelect }: EmployeesPageProps) {
     }
   };
 
-  const handleAddEmployee = (newEmployee: Omit<Employee, "id" | "createdAt" | "updatedAt">) => {
-    const employee: Employee = {
-      ...newEmployee,
-      id: Date.now().toString(),
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString()
-    };
-    setEmployees(prev => [...prev, employee]);
-    setIsAddDialogOpen(false);
-  };
+
 
   const handleDeleteEmployee = (employeeId: string) => {
     setEmployees(prev => prev.filter(emp => emp.id !== employeeId));
@@ -547,20 +538,13 @@ export function EmployeesPage({ onEmployeeSelect }: EmployeesPageProps) {
             Export
           </Button>
           
-          <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
-            <DialogTrigger asChild>
-              <Button className="bg-gradient-to-r from-purple-500 to-blue-500 hover:from-purple-600 hover:to-blue-600 border-0 shadow-lg shadow-purple-200/50 dark:shadow-purple-500/25">
-                <Plus className="w-4 h-4 mr-2" />
-                Add Employee
-              </Button>
-            </DialogTrigger>
-            <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto backdrop-blur-xl bg-white/90 dark:bg-black/90 border-white/30 dark:border-white/10 shadow-2xl">
-              <DialogHeader>
-                <DialogTitle className="text-foreground">Add New Employee</DialogTitle>
-              </DialogHeader>
-              <AddEmployeeForm onSubmit={handleAddEmployee} onCancel={() => setIsAddDialogOpen(false)} />
-            </DialogContent>
-          </Dialog>
+          <Button 
+            onClick={() => router.push('/admin/employees/new')}
+            className="bg-gradient-to-r from-purple-500 to-blue-500 hover:from-purple-600 hover:to-blue-600 border-0 shadow-lg shadow-purple-200/50 dark:shadow-purple-500/25"
+          >
+            <Plus className="w-4 h-4 mr-2" />
+            Add Employee
+          </Button>
         </div>
       </div>
 

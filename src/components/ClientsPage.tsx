@@ -15,8 +15,6 @@ import {
   Phone,
   Mail,
   Globe,
-  DollarSign,
-  Briefcase,
   Star,
   TrendingUp,
   CheckCircle,
@@ -72,7 +70,7 @@ export function ClientsPage({ onClientSelect }: ClientsPageProps) {
     companyType: "all",
     status: "all",
     priority: "all",
-    industry: "all",
+    architecturalStyle: "all",
     source: "all"
   });
   const [sort, setSort] = useState<ClientSort>({
@@ -92,7 +90,7 @@ export function ClientsPage({ onClientSelect }: ClientsPageProps) {
       search: searchParams.get('search') || "",
       status: searchParams.get('status') || "all",
       priority: searchParams.get('priority') || "all",
-      industry: searchParams.get('industry') || "all",
+      architecturalStyle: searchParams.get('architecturalStyle') || "all",
       companyType: searchParams.get('companyType') || "all",
       source: searchParams.get('source') || "all"
     };
@@ -122,13 +120,13 @@ export function ClientsPage({ onClientSelect }: ClientsPageProps) {
     if (debouncedSearchTerm) params.search = debouncedSearchTerm;
     if (filters.status !== "all") params.status = filters.status;
     if (filters.priority !== "all") params.priority = filters.priority;
-    if (filters.industry !== "all") params.industry = filters.industry;
+    if (filters.architecturalStyle !== "all") params.architecturalStyle = filters.architecturalStyle;
     if (filters.companyType !== "all") params.companyType = filters.companyType;
     if (filters.source !== "all") params.source = filters.source;
     params.page = currentPage;
     params.limit = ITEMS_PER_PAGE;
     return params;
-  }, [debouncedSearchTerm, filters.status, filters.priority, filters.industry, filters.companyType, filters.source, currentPage]);
+  }, [debouncedSearchTerm, filters.status, filters.priority, filters.architecturalStyle, filters.companyType, filters.source, currentPage]);
 
   // Fetch clients with filters and pagination
   const { data: clientsResponse, isLoading, error } = useGetClientsQuery(apiFilters);
@@ -144,10 +142,44 @@ export function ClientsPage({ onClientSelect }: ClientsPageProps) {
   // Delete client mutation
   const [deleteClient] = useDeleteClientMutation();
 
-  // Get unique values for filter options from fetched clients
-  const statuses = useMemo(() => [...new Set(clients.map(client => client.status))], [clients]);
-  const priorities = useMemo(() => [...new Set(clients.map(client => client.priority))], [clients]);
-  const industries = useMemo(() => [...new Set(clients.map(client => client.industry))], [clients]);
+  // Get unique values for filter options from API statistics (not from filtered clients)
+  const statuses = useMemo(() => {
+    if (apiStats?.byStatus) {
+      return Object.keys(apiStats.byStatus);
+    }
+    // Fallback to predefined statuses
+    return ["Potential Lead", "Active", "On Hold", "Inactive", "Former Client"];
+  }, [apiStats?.byStatus]);
+
+  const priorities = useMemo(() => {
+    if (apiStats?.byPriority) {
+      return Object.keys(apiStats.byPriority);
+    }
+    // Fallback to predefined priorities
+    return ["Low", "Medium", "High", "VIP"];
+  }, [apiStats?.byPriority]);
+
+  const architecturalStyles = useMemo(() => {
+    if (apiStats?.byArchitecturalStyle) {
+      return Object.keys(apiStats.byArchitecturalStyle);
+    }
+    // Fallback to predefined architectural styles
+    return [
+      "Modern",
+      "Contemporary",
+      "Traditional",
+      "Industrial",
+      "Scandinavian",
+      "Minimalist",
+      "Mediterranean",
+      "Sustainable",
+      "Art Deco",
+      "Colonial",
+      "Craftsman",
+      "Victorian",
+      "Mid-Century Modern"
+    ];
+  }, [apiStats?.byArchitecturalStyle]);
 
   // Always use API statistics (not affected by pagination)
   const stats = useMemo(() => {
@@ -157,9 +189,9 @@ export function ClientsPage({ onClientSelect }: ClientsPageProps) {
         active: apiStats.activeClients,
         potential: apiStats.potentialClients,
         vip: apiStats.vipClients,
-        totalValue: apiStats.totalValue,
-        avgValue: apiStats.avgValue,
-        totalProjects: apiStats.totalProjects
+        low: apiStats.byPriority?.Low || 0,
+        medium: apiStats.byPriority?.Medium || 0,
+        high: apiStats.byPriority?.High || 0
       };
     }
 
@@ -169,9 +201,9 @@ export function ClientsPage({ onClientSelect }: ClientsPageProps) {
       active: 0,
       potential: 0,
       vip: 0,
-      totalValue: 0,
-      avgValue: 0,
-      totalProjects: 0
+      low: 0,
+      medium: 0,
+      high: 0
     };
   }, [apiStats]);
 
@@ -182,7 +214,7 @@ export function ClientsPage({ onClientSelect }: ClientsPageProps) {
     if (newFilters.search) params.set('search', newFilters.search);
     if (newFilters.status !== 'all') params.set('status', newFilters.status);
     if (newFilters.priority !== 'all') params.set('priority', newFilters.priority);
-    if (newFilters.industry !== 'all') params.set('industry', newFilters.industry);
+    if (newFilters.architecturalStyle !== 'all') params.set('architecturalStyle', newFilters.architecturalStyle);
     if (newFilters.companyType !== 'all') params.set('companyType', newFilters.companyType);
     if (newFilters.source !== 'all') params.set('source', newFilters.source);
     if (page > 1) params.set('page', page.toString());
@@ -296,7 +328,7 @@ export function ClientsPage({ onClientSelect }: ClientsPageProps) {
       companyType: "all",
       status: "all",
       priority: "all",
-      industry: "all",
+      architecturalStyle: "all",
       source: "all"
     };
     setFilters(clearedFilters);
@@ -387,10 +419,10 @@ export function ClientsPage({ onClientSelect }: ClientsPageProps) {
             </Button>
           </div>
           
-          <Button variant="outline" className="bg-white/60 dark:bg-white/5 border-white/40 dark:border-white/10 text-muted-foreground hover:bg-white/80 dark:hover:bg-white/10 shadow-lg shadow-gray-200/50 dark:shadow-black/20">
+          {/* <Button variant="outline" className="bg-white/60 dark:bg-white/5 border-white/40 dark:border-white/10 text-muted-foreground hover:bg-white/80 dark:hover:bg-white/10 shadow-lg shadow-gray-200/50 dark:shadow-black/20">
             <Download className="w-4 h-4 mr-2" />
             Export
-          </Button>
+          </Button> */}
           
           <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
             <DialogTrigger asChild>
@@ -468,43 +500,43 @@ export function ClientsPage({ onClientSelect }: ClientsPageProps) {
         </Card>
         
         <Card className="p-4 backdrop-blur-xl bg-white/70 dark:bg-black/20 border-white/20 dark:border-white/10 relative overflow-hidden shadow-xl shadow-gray-200/50 dark:shadow-black/50">
-          <div className="absolute inset-0 bg-gradient-to-br from-cyan-100/60 to-blue-50/40 opacity-100 dark:opacity-0 transition-opacity duration-300"></div>
-          <div className="absolute inset-0 bg-gradient-to-br from-cyan-500/5 to-blue-500/5 opacity-0 dark:opacity-100 transition-opacity duration-300"></div>
+          <div className="absolute inset-0 bg-gradient-to-br from-emerald-100/60 to-green-50/40 opacity-100 dark:opacity-0 transition-opacity duration-300"></div>
+          <div className="absolute inset-0 bg-gradient-to-br from-emerald-500/5 to-green-500/5 opacity-0 dark:opacity-100 transition-opacity duration-300"></div>
           <div className="relative flex items-center space-x-3">
-            <div className="p-3 bg-cyan-500/20 rounded-xl border border-cyan-500/30 shadow-lg shadow-cyan-200/50 dark:shadow-cyan-500/20">
-              <DollarSign className="w-6 h-6 text-cyan-600 dark:text-cyan-400" />
+            <div className="p-3 bg-emerald-500/20 rounded-xl border border-emerald-500/30 shadow-lg shadow-emerald-200/50 dark:shadow-emerald-500/20">
+              <ArrowDown className="w-6 h-6 text-emerald-600 dark:text-emerald-400" />
             </div>
             <div>
-              <p className="text-muted-foreground text-sm">Total Value</p>
-              <p className="text-foreground text-xl">{formatIndianCurrency(stats.totalValue)}</p>
+              <p className="text-muted-foreground text-sm">Low Priority</p>
+              <p className="text-foreground text-2xl">{stats.low}</p>
             </div>
           </div>
         </Card>
-        
+
         <Card className="p-4 backdrop-blur-xl bg-white/70 dark:bg-black/20 border-white/20 dark:border-white/10 relative overflow-hidden shadow-xl shadow-gray-200/50 dark:shadow-black/50">
-          <div className="absolute inset-0 bg-gradient-to-br from-indigo-100/60 to-purple-50/40 opacity-100 dark:opacity-0 transition-opacity duration-300"></div>
-          <div className="absolute inset-0 bg-gradient-to-br from-indigo-500/5 to-purple-500/5 opacity-0 dark:opacity-100 transition-opacity duration-300"></div>
+          <div className="absolute inset-0 bg-gradient-to-br from-orange-100/60 to-amber-50/40 opacity-100 dark:opacity-0 transition-opacity duration-300"></div>
+          <div className="absolute inset-0 bg-gradient-to-br from-orange-500/5 to-amber-500/5 opacity-0 dark:opacity-100 transition-opacity duration-300"></div>
           <div className="relative flex items-center space-x-3">
-            <div className="p-3 bg-indigo-500/20 rounded-xl border border-indigo-500/30 shadow-lg shadow-indigo-200/50 dark:shadow-indigo-500/20">
-              <TrendingUp className="w-6 h-6 text-indigo-600 dark:text-indigo-400" />
+            <div className="p-3 bg-orange-500/20 rounded-xl border border-orange-500/30 shadow-lg shadow-orange-200/50 dark:shadow-orange-500/20">
+              <AlertCircle className="w-6 h-6 text-orange-600 dark:text-orange-400" />
             </div>
             <div>
-              <p className="text-muted-foreground text-sm">Avg Value</p>
-              <p className="text-foreground text-xl">{formatIndianCurrency(stats.avgValue)}</p>
+              <p className="text-muted-foreground text-sm">Medium Priority</p>
+              <p className="text-foreground text-2xl">{stats.medium}</p>
             </div>
           </div>
         </Card>
-        
+
         <Card className="p-4 backdrop-blur-xl bg-white/70 dark:bg-black/20 border-white/20 dark:border-white/10 relative overflow-hidden shadow-xl shadow-gray-200/50 dark:shadow-black/50">
-          <div className="absolute inset-0 bg-gradient-to-br from-pink-100/60 to-red-50/40 opacity-100 dark:opacity-0 transition-opacity duration-300"></div>
-          <div className="absolute inset-0 bg-gradient-to-br from-pink-500/5 to-red-500/5 opacity-0 dark:opacity-100 transition-opacity duration-300"></div>
+          <div className="absolute inset-0 bg-gradient-to-br from-red-100/60 to-rose-50/40 opacity-100 dark:opacity-0 transition-opacity duration-300"></div>
+          <div className="absolute inset-0 bg-gradient-to-br from-red-500/5 to-rose-500/5 opacity-0 dark:opacity-100 transition-opacity duration-300"></div>
           <div className="relative flex items-center space-x-3">
-            <div className="p-3 bg-pink-500/20 rounded-xl border border-pink-500/30 shadow-lg shadow-pink-200/50 dark:shadow-pink-500/20">
-              <Briefcase className="w-6 h-6 text-pink-600 dark:text-pink-400" />
+            <div className="p-3 bg-red-500/20 rounded-xl border border-red-500/30 shadow-lg shadow-red-200/50 dark:shadow-red-500/20">
+              <ArrowUp className="w-6 h-6 text-red-600 dark:text-red-400" />
             </div>
             <div>
-              <p className="text-muted-foreground text-sm">Total Projects</p>
-              <p className="text-foreground text-2xl">{stats.totalProjects}</p>
+              <p className="text-muted-foreground text-sm">High Priority</p>
+              <p className="text-foreground text-2xl">{stats.high}</p>
             </div>
           </div>
         </Card>
@@ -557,14 +589,14 @@ export function ClientsPage({ onClientSelect }: ClientsPageProps) {
               </SelectContent>
             </Select>
 
-            <Select value={filters.industry} onValueChange={(value) => handleFilterChange('industry', value)}>
+            <Select value={filters.architecturalStyle} onValueChange={(value) => handleFilterChange('architecturalStyle', value)}>
               <SelectTrigger className="bg-white/60 dark:bg-white/5 border-white/40 dark:border-white/10 text-foreground shadow-sm">
-                <SelectValue placeholder="Industry" />
+                <SelectValue placeholder="Architectural Style" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">All Industries</SelectItem>
-                {industries.map(industry => (
-                  <SelectItem key={industry} value={industry}>{industry}</SelectItem>
+                <SelectItem value="all">All Styles</SelectItem>
+                {architecturalStyles.map(style => (
+                  <SelectItem key={style} value={style}>{style}</SelectItem>
                 ))}
               </SelectContent>
             </Select>

@@ -275,6 +275,7 @@ export function ClientDetailsPage({ clientId, onBack }: ClientDetailsPageProps) 
     }
   };
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const handleInputChange = (field: string, value: any) => {
     if (editedClient) {
       setEditedClient({
