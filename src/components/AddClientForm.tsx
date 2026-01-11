@@ -8,13 +8,25 @@ import { Input } from "./ui/input";
 import { Label } from "./ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./ui/select";
 import { Textarea } from "./ui/textarea";
-import { Card, CardContent, CardHeader, CardTitle } from "./ui/card";
 import { Separator } from "./ui/separator";
 import { Alert, AlertDescription, AlertTitle } from "./ui/alert";
 import { createClientSchema, type CreateClientFormData } from "@/lib/validations/client";
 import { useCreateClientMutation } from "@/lib/api/clientsApi";
 import { toast } from "sonner";
-import { Loader2, AlertCircle, XCircle } from "lucide-react";
+import {
+  Loader2,
+  AlertCircle,
+  User,
+  Briefcase,
+  MapPin,
+  Activity,
+  PlusCircle,
+  ChevronDown,
+  ChevronRight,
+  CheckCircle2,
+  Sparkles,
+  X as XIcon
+} from "lucide-react";
 import { cn } from "./ui/utils";
 
 interface AddClientFormProps {
@@ -25,6 +37,8 @@ interface AddClientFormProps {
 export function AddClientForm({ onSuccess, onCancel }: AddClientFormProps) {
   const [createClient, { isLoading }] = useCreateClientMutation();
   const [submitError, setSubmitError] = useState<string | null>(null);
+  const [expandedSection, setExpandedSection] = useState<string>("personal");
+  const [tagsList, setTagsList] = useState<string[]>([]);
 
   const {
     register,
@@ -41,26 +55,27 @@ export function AddClientForm({ onSuccess, onCancel }: AddClientFormProps) {
       phone: "",
       alternatePhone: "",
       dateOfBirth: "",
-      gender: "",
+      gender: "Male",
       occupation: "",
       employer: "",
       street: "",
       city: "",
       state: "",
-      zipCode: "",
-      country: "USA",
+      postalCode: "",
+      country: "",
       spouseName: "",
       spousePhone: "",
       spouseEmail: "",
       emergencyContactName: "",
       emergencyContactRelationship: "",
       emergencyContactPhone: "",
-      status: "Potential",
+      status: "Potential Lead",
       source: "Website",
       priority: "Medium",
       preferredContactMethod: "",
       preferredContactTime: "",
       architecturalStyle: "",
+      architecturalStyleOther: "",
       budgetRange: "",
       notes: "",
       tags: "",
@@ -69,32 +84,30 @@ export function AddClientForm({ onSuccess, onCancel }: AddClientFormProps) {
   });
 
   const onSubmit = async (data: CreateClientFormData) => {
-    // Clear previous error
     setSubmitError(null);
-
     try {
       const clientData = {
         firstName: data.firstName,
         lastName: data.lastName,
         fullName: `${data.firstName} ${data.lastName}`,
         name: `${data.firstName} ${data.lastName}`,
-        email: data.email,
+        email: data.email || "",
         phone: data.phone,
         website: undefined,
         companyName: data.employer || `${data.firstName} ${data.lastName}`,
         companyType: 'Individual' as const,
         industry: data.occupation || 'Other',
         address: {
-          street: data.street || "",
-          city: data.city || "",
-          state: data.state || "",
-          zipCode: data.zipCode || "",
-          country: data.country || "USA"
+          street: data.street,
+          city: data.city,
+          state: data.state,
+          zipCode: data.postalCode,
+          country: data.country
         },
         primaryContact: {
           name: `${data.firstName} ${data.lastName}`,
           title: data.occupation || 'Client',
-          email: data.email,
+          email: data.email || "",
           phone: data.phone
         },
         secondaryContact: data.spouseName ? {
@@ -117,605 +130,429 @@ export function AddClientForm({ onSuccess, onCancel }: AddClientFormProps) {
       };
 
       await createClient(clientData).unwrap();
-
-      // Clear error and show success
-      setSubmitError(null);
       toast.success("Client added successfully!", {
         description: `${data.firstName} ${data.lastName} has been added to your clients.`,
-        duration: 4000,
       });
       onSuccess?.();
     } catch (error) {
       console.error("Failed to create client:", error);
-
-      // Extract error message from various error formats
       let errorMessage = "Failed to add client. Please try again.";
       const err = error as { data?: { message?: string } | string; message?: string };
-
       if (err?.data && typeof err.data === 'object' && err.data.message) {
         errorMessage = err.data.message;
       } else if (err?.message) {
         errorMessage = err.message;
-      } else if (typeof err?.data === 'string') {
-        errorMessage = err.data;
       }
-
-      // Set error state for visual display
       setSubmitError(errorMessage);
-
-      // Show error toast with detailed message
-      toast.error("Failed to Add Client", {
-        description: errorMessage,
-        duration: 5000,
-      });
-
-      // Scroll to top to show error alert
-      window.scrollTo({ top: 0, behavior: 'smooth' });
+      toast.error("Failed to Add Client", { description: errorMessage });
     }
   };
 
-  // Watch form values for select components
   const statusValue = watch("status");
   const priorityValue = watch("priority");
-  const sourceValue = watch("source");
   const genderValue = watch("gender");
-  const preferredContactMethodValue = watch("preferredContactMethod");
   const architecturalStyleValue = watch("architecturalStyle");
-  const budgetRangeValue = watch("budgetRange");
+
+  const SectionHeader = ({ 
+    id, 
+    icon: Icon, 
+    title, 
+    subtitle, 
+    status, 
+    isActive 
+  }: { 
+    id: string; 
+    icon: any; 
+    title: string; 
+    subtitle: string; 
+    status: string; 
+    isActive: boolean;
+  }) => (
+    <div 
+      className={cn(
+        "flex items-center justify-between p-4 cursor-pointer transition-all border border-transparent rounded-xl",
+        isActive 
+          ? "bg-white/70 dark:bg-white/5 border-orange-500/20 dark:border-white/10 shadow-[0_8px_30px_rgb(0,0,0,0.04)] dark:shadow-[0_0_20px_rgba(0,0,0,0.3)]" 
+          : "hover:bg-gray-50 dark:hover:bg-white/5"
+      )}
+      onClick={() => setExpandedSection(expandedSection === id ? "" : id)}
+    >
+      <div className="flex items-center gap-4">
+        <div className={cn(
+          "p-2.5 rounded-xl border transition-all",
+          isActive 
+            ? "bg-orange-500/10 dark:bg-orange-500/20 border-orange-500/30 text-orange-600 dark:text-orange-400" 
+            : "bg-gray-100 dark:bg-white/5 border-gray-200 dark:border-white/10 text-muted-foreground"
+        )}>
+          <Icon className="w-5 h-5" />
+        </div>
+        <div>
+          <h3 className="font-semibold text-foreground text-sm tracking-tight">{title}</h3>
+          <p className="text-xs text-muted-foreground">{subtitle}</p>
+        </div>
+      </div>
+      <div className="flex items-center gap-4">
+        <div className="flex items-center gap-2">
+          {isActive ? (
+            <div className="flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-orange-500/10 border border-orange-500/20 text-[10px] font-bold text-orange-600 dark:text-orange-400 uppercase tracking-wider">
+              <span className="w-1 h-1 rounded-full bg-orange-500 dark:bg-orange-400 animate-pulse" />
+              In Progress
+            </div>
+          ) : (
+            <div className="flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-[10px] font-bold text-emerald-600 dark:text-emerald-400 uppercase tracking-wider">
+              <CheckCircle2 className="w-3 h-3 text-emerald-600 dark:text-emerald-400" />
+              {status}
+            </div>
+          )}
+        </div>
+        {isActive ? <ChevronDown className="w-4 h-4 text-muted-foreground" /> : <ChevronRight className="w-4 h-4 text-muted-foreground" />}
+      </div>
+    </div>
+  );
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-      {/* Error Alert */}
-      {submitError && (
-        <Alert variant="destructive" className="bg-red-500/10 border-red-500/50">
-          <AlertCircle className="h-5 w-5" />
-          <AlertTitle className="text-red-600 dark:text-red-400 font-semibold">Error Adding Client</AlertTitle>
-          <AlertDescription className="text-red-600/90 dark:text-red-400/90">
-            {submitError}
-          </AlertDescription>
+    <div className="flex flex-col gap-6">
+      {/* Header Area */}
+      <div className="relative overflow-hidden p-6 rounded-2xl bg-gradient-to-br from-indigo-50/50 to-purple-50/50 dark:from-white/5 dark:to-white/10 border border-indigo-100/50 dark:border-white/10">
+        <div className="absolute top-0 right-0 w-64 h-64 bg-emerald-500/5 dark:bg-emerald-500/10 rounded-full -mr-32 -mt-32 blur-[80px]" />
+        <div className="absolute bottom-0 left-0 w-64 h-64 bg-blue-500/5 dark:bg-blue-500/10 rounded-full -ml-32 -mb-32 blur-[80px]" />
+        
+        <div className="relative flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <div className="flex items-center gap-4">
+            <div className="p-3 rounded-2xl bg-gradient-to-br from-indigo-500 to-purple-600 shadow-lg shadow-indigo-500/20">
+              <Sparkles className="w-8 h-8 text-white" />
+            </div>
+            <div>
+              <h2 className="text-2xl font-bold text-gray-900 dark:text-white tracking-tight">New Client Intake</h2>
+              <p className="text-sm text-gray-500 dark:text-muted-foreground font-medium">Lead Management • Architecture CRM</p>
+            </div>
+          </div>
+          <div className="flex items-center gap-3">
+            <div className="px-3 py-1 rounded-lg bg-orange-500/10 border border-orange-500/20">
+              <span className="text-xs font-bold text-orange-600 dark:text-orange-400 uppercase tracking-widest">Draft Intake</span>
+            </div>
+            <p className="text-xs text-gray-400 dark:text-muted-foreground font-semibold">Auto-saving...</p>
+          </div>
+        </div>
+
+        {/* Progress Bar Container */}
+        <div className="relative mt-8 h-2 w-full bg-indigo-100/30 dark:bg-white/5 rounded-full overflow-hidden">
+          <div className="absolute inset-0 bg-gradient-to-r from-orange-400 to-amber-500 w-[35%] rounded-full shadow-[0_0_15px_rgba(249,115,22,0.3)]" />
+        </div>
+        <div className="flex justify-between mt-2.5">
+          <span className="text-[10px] font-bold text-orange-600 dark:text-orange-400 uppercase tracking-wider">35% complete</span>
+          <span className="text-[10px] font-bold text-gray-400 dark:text-muted-foreground uppercase tracking-wider">Required: Contacts, Status</span>
+        </div>
+      </div>
+
+      <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+        {submitError && (
+          <Alert variant="destructive" className="bg-red-500/10 border-red-500/20 text-red-600 dark:text-red-400">
+            <AlertCircle className="h-4 w-4" />
+            <AlertTitle>Submission Error</AlertTitle>
+            <AlertDescription>{submitError}</AlertDescription>
+          </Alert>
+        )}
+
+        {/* Roadmap Style Sections */}
+        <div className="space-y-3 bg-white dark:bg-black/40 p-4 rounded-2xl border border-gray-100 dark:border-white/5 shadow-sm dark:shadow-none">
+          {/* Section 1: Personal */}
+          <div className="space-y-3">
+            <SectionHeader 
+              id="personal"
+              icon={User}
+              title="Personal Information"
+              subtitle="Core identity and primary contact details"
+              status="Required"
+              isActive={expandedSection === "personal"}
+            />
+            {expandedSection === "personal" && (
+              <div className="p-4 pt-2 grid grid-cols-1 md:grid-cols-2 gap-4 animate-in fade-in slide-in-from-top-2 duration-300">
+                <div className="space-y-1.5">
+                  <Label className="text-xs font-medium text-muted-foreground">First Name *</Label>
+                  <Input {...register("firstName")} placeholder="e.g. Liam" className="h-10" />
+                  {errors.firstName && <p className="text-[10px] text-red-500">{errors.firstName.message}</p>}
+                </div>
+                <div className="space-y-1.5">
+                  <Label className="text-xs font-medium text-muted-foreground">Last Name *</Label>
+                  <Input {...register("lastName")} placeholder="e.g. Chen" className="h-10" />
+                  {errors.lastName && <p className="text-[10px] text-red-500">{errors.lastName.message}</p>}
+                </div>
+                <div className="space-y-1.5">
+                  <Label className="text-xs font-medium text-muted-foreground">Email Address</Label>
+                  <Input type="email" {...register("email")} placeholder="liam.chen@example.com" className="h-10" />
+                  {errors.email && <p className="text-[10px] text-red-500">{errors.email.message}</p>}
+                </div>
+                <div className="space-y-1.5">
+                  <Label className="text-xs font-medium text-muted-foreground">Phone Number *</Label>
+                  <Input {...register("phone")} placeholder="+1 (555) 000-0000" className="h-10" />
+                  {errors.phone && <p className="text-[10px] text-red-500">{errors.phone.message}</p>}
+                </div>
+                <div className="space-y-1.5">
+                  <Label className="text-xs font-medium text-muted-foreground">Gender</Label>
+                  <Select value={genderValue} onValueChange={(value) => setValue("gender", value)}>
+                    <SelectTrigger className="h-10">
+                      <SelectValue placeholder="Select Identity" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="Male">Male</SelectItem>
+                      <SelectItem value="Female">Female</SelectItem>
+                      <SelectItem value="Other">Other</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-1.5">
+                  <Label className="text-xs font-medium text-muted-foreground">Date of Birth</Label>
+                  <Input type="date" {...register("dateOfBirth")} className="h-10" />
+                </div>
+              </div>
+            )}
+          </div>
+
+          <Separator className="bg-gray-100 dark:bg-white/5" />
+
+          {/* Section 2: Professional */}
+          <div className="space-y-3">
+            <SectionHeader 
+              id="professional"
+              icon={Briefcase}
+              title="Work & Profession"
+              subtitle="Industry context and occupational background"
+              status="Completed"
+              isActive={expandedSection === "professional"}
+            />
+            {expandedSection === "professional" && (
+              <div className="p-4 pt-2 grid grid-cols-1 md:grid-cols-2 gap-4 animate-in fade-in slide-in-from-top-2 duration-300">
+                <div className="space-y-1.5">
+                  <Label className="text-xs font-medium text-muted-foreground">Occupation</Label>
+                  <Input {...register("occupation")} placeholder="e.g. Project Lead" className="h-10" />
+                </div>
+                <div className="space-y-1.5">
+                  <Label className="text-xs font-medium text-muted-foreground">Employer</Label>
+                  <Input {...register("employer")} placeholder="e.g. TechCorp" className="h-10" />
+                </div>
+              </div>
+            )}
+          </div>
+
+          <Separator className="bg-gray-100 dark:bg-white/5" />
+
+          {/* Section 3: Address */}
+          <div className="space-y-3">
+            <SectionHeader
+              id="address"
+              icon={MapPin}
+              title="Location Details"
+              subtitle="Physical address for project planning"
+              status="Required"
+              isActive={expandedSection === "address"}
+            />
+            {expandedSection === "address" && (
+              <div className="p-4 pt-2 space-y-4 animate-in fade-in slide-in-from-top-2 duration-300">
+                <div className="space-y-1.5">
+                  <Label className="text-xs font-medium text-muted-foreground">Street Address *</Label>
+                  <Input {...register("street")} placeholder="123 Harmony Lane" className="h-10" />
+                  {errors.street && <p className="text-[10px] text-red-500">{errors.street.message}</p>}
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-1.5">
+                    <Label className="text-xs font-medium text-muted-foreground">City *</Label>
+                    <Input {...register("city")} placeholder="New York" className="h-10" />
+                    {errors.city && <p className="text-[10px] text-red-500">{errors.city.message}</p>}
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label className="text-xs font-medium text-muted-foreground">State *</Label>
+                    <Input {...register("state")} placeholder="NY" className="h-10" />
+                    {errors.state && <p className="text-[10px] text-red-500">{errors.state.message}</p>}
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label className="text-xs font-medium text-muted-foreground">Postal Code *</Label>
+                    <Input {...register("postalCode")} placeholder="10001" className="h-10" />
+                    {errors.postalCode && <p className="text-[10px] text-red-500">{errors.postalCode.message}</p>}
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label className="text-xs font-medium text-muted-foreground">Country *</Label>
+                    <Input {...register("country")} placeholder="USA" className="h-10" />
+                    {errors.country && <p className="text-[10px] text-red-500">{errors.country.message}</p>}
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+
+          <Separator className="bg-gray-100 dark:bg-white/5" />
+
+          {/* Section 4: Status */}
+          <div className="space-y-3">
+            <SectionHeader 
+              id="status"
+              icon={Activity}
+              title="Lifecycle & Status"
+              subtitle="Current position in the client journey"
+              status="Action Needed"
+              isActive={expandedSection === "status"}
+            />
+            {expandedSection === "status" && (
+              <div className="p-4 pt-2 grid grid-cols-1 md:grid-cols-2 gap-4 animate-in fade-in slide-in-from-top-2 duration-300">
+                <div className="space-y-1.5">
+                  <Label className="text-xs font-medium text-muted-foreground">Client Status</Label>
+                  <Select value={statusValue} onValueChange={(v) => setValue("status", v as any)}>
+                    <SelectTrigger className="h-10">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="Potential Lead">Potential Lead</SelectItem>
+                      <SelectItem value="On Hold">On Hold</SelectItem>
+                      <SelectItem value="Active">Active</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-1.5">
+                  <Label className="text-xs font-medium text-muted-foreground">Priority Rank</Label>
+                  <Select value={priorityValue} onValueChange={(v) => setValue("priority", v as any)}>
+                    <SelectTrigger className="h-10">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="Low">Low</SelectItem>
+                      <SelectItem value="Medium">Medium</SelectItem>
+                      <SelectItem value="High">High</SelectItem>
+                      <SelectItem value="VIP">VIP</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="md:col-span-2 space-y-1.5">
+                  <Label className="text-xs font-medium text-muted-foreground">Architectural Interest</Label>
+                  <Select value={architecturalStyleValue} onValueChange={(v) => setValue("architecturalStyle", v)}>
+                    <SelectTrigger className="h-10">
+                      <SelectValue placeholder="Style Profile" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="Modern">Modern</SelectItem>
+                      <SelectItem value="Contemporary">Contemporary</SelectItem>
+                      <SelectItem value="Traditional">Traditional</SelectItem>
+                      <SelectItem value="Industrial">Industrial</SelectItem>
+                      <SelectItem value="Scandinavian">Scandinavian</SelectItem>
+                      <SelectItem value="Minimalist">Minimalist</SelectItem>
+                      <SelectItem value="Mediterranean">Mediterranean</SelectItem>
+                      <SelectItem value="Sustainable">Sustainable/Green</SelectItem>
+                      <SelectItem value="Art Deco">Art Deco</SelectItem>
+                      <SelectItem value="Colonial">Colonial</SelectItem>
+                      <SelectItem value="Craftsman">Craftsman</SelectItem>
+                      <SelectItem value="Victorian">Victorian</SelectItem>
+                      <SelectItem value="Mid-Century Modern">Mid-Century Modern</SelectItem>
+                      <SelectItem value="Other">Other</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                {architecturalStyleValue === "Other" && (
+                  <div className="md:col-span-2 space-y-1.5">
+                    <Label className="text-xs font-medium text-muted-foreground">Please Specify Architectural Style</Label>
+                    <Input {...register("architecturalStyleOther")} placeholder="Enter custom architectural style" className="h-10" />
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+
+          <Separator className="bg-gray-100 dark:bg-white/5" />
+
+          {/* Section 5: Notes */}
+          <div className="space-y-3">
+            <SectionHeader 
+              id="notes"
+              icon={PlusCircle}
+              title="Additional Context"
+              subtitle="Custom notes and internal remarks"
+              status="Optional"
+              isActive={expandedSection === "notes"}
+            />
+            {expandedSection === "notes" && (
+              <div className="p-4 pt-2 space-y-4 animate-in fade-in slide-in-from-top-2 duration-300">
+                <div className="space-y-1.5">
+                  <Label className="text-xs font-medium text-muted-foreground">Internal Notes</Label>
+                  <Textarea
+                    {...register("notes")}
+                    placeholder="Enter strategic details or client preferences..."
+                    className="min-h-[120px]"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label className="text-xs font-medium text-muted-foreground">Search Tags</Label>
+                  <Input
+                    placeholder="Type a tag and press Enter"
+                    className="h-10"
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') {
+                        e.preventDefault();
+                        const input = e.currentTarget;
+                        const newTag = input.value.trim();
+                        if (newTag && !tagsList.includes(newTag)) {
+                          const updatedTags = [...tagsList, newTag];
+                          setTagsList(updatedTags);
+                          setValue("tags", updatedTags.join(", "));
+                          input.value = "";
+                        }
+                      }
+                    }}
+                  />
+                  {tagsList.length > 0 && (
+                    <div className="flex flex-wrap gap-2 mt-3 p-3 bg-muted/50 rounded-lg border border-border">
+                      {tagsList.map((tag, index) => (
+                        <div
+                          key={index}
+                          className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-background border border-border rounded-md text-sm font-medium"
+                        >
+                          <span>{tag}</span>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              const updatedTags = tagsList.filter(t => t !== tag);
+                              setTagsList(updatedTags);
+                              setValue("tags", updatedTags.join(", "));
+                            }}
+                            className="hover:bg-muted rounded-full p-0.5 transition-colors"
+                          >
+                            <XIcon className="w-3 h-3" />
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                  <input type="hidden" {...register("tags")} />
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Action Buttons */}
+        <div className="flex items-center justify-end gap-3 pt-6 border-t border-gray-100 dark:border-white/5">
           <Button
             type="button"
             variant="ghost"
-            size="icon"
-            className="absolute top-2 right-2 h-6 w-6 text-red-600 dark:text-red-400 hover:bg-red-500/20"
-            onClick={() => setSubmitError(null)}
+            onClick={onCancel}
+            disabled={isLoading}
+            className="text-gray-500 dark:text-muted-foreground hover:text-indigo-600 dark:hover:text-white hover:bg-indigo-50 dark:hover:bg-white/5 px-6 font-semibold tracking-tight transition-colors"
           >
-            <XCircle className="h-4 w-4" />
+            Discard
           </Button>
-        </Alert>
-      )}
-
-      {/* Form Validation Errors Summary */}
-      {Object.keys(errors).length > 0 && (
-        <Alert variant="destructive" className="bg-orange-500/10 border-orange-500/50">
-          <AlertCircle className="h-5 w-5" />
-          <AlertTitle className="text-orange-600 dark:text-orange-400 font-semibold">
-            Please Fix the Following Errors
-          </AlertTitle>
-          <AlertDescription className="text-orange-600/90 dark:text-orange-400/90">
-            <ul className="list-disc list-inside space-y-1 mt-2">
-              {errors.firstName && <li>First name is required</li>}
-              {errors.lastName && <li>Last name is required</li>}
-              {errors.email && <li>{errors.email.message}</li>}
-              {errors.phone && <li>Phone number is required</li>}
-              {errors.spouseEmail && <li>{errors.spouseEmail.message}</li>}
-            </ul>
-          </AlertDescription>
-        </Alert>
-      )}
-
-      {/* Personal Information */}
-      <Card className="backdrop-blur-xl bg-white/70 dark:bg-black/20 border-white/20 dark:border-white/10 shadow-xl shadow-gray-200/50 dark:shadow-black/50 relative overflow-hidden">
-        {/* Light theme gradient overlay */}
-        <div className="absolute inset-0 bg-gradient-to-br from-blue-50/60 via-indigo-50/40 to-purple-50/60 opacity-100 dark:opacity-0 pointer-events-none transition-opacity duration-300"></div>
-        {/* Dark theme gradient overlay */}
-        <div className="absolute inset-0 bg-gradient-to-br from-blue-500/5 to-purple-500/5 opacity-0 dark:opacity-100 pointer-events-none transition-opacity duration-300"></div>
-        
-        <CardHeader className="relative z-10">
-          <CardTitle className="text-foreground">Personal Information</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4 relative z-10">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="firstName" className="text-muted-foreground">First Name *</Label>
-              <Input
-                id="firstName"
-                {...register("firstName")}
-                placeholder="John"
-                className={cn(
-                    "bg-white/60 dark:bg-white/5 border-white/40 dark:border-white/10 text-foreground placeholder:text-muted-foreground",
-                    errors.firstName ? 'border-red-500 focus-visible:ring-red-500' : ''
-                )}
-              />
-              {errors.firstName && (
-                <p className="text-red-500 dark:text-red-400 text-sm flex items-center gap-1">
-                  <AlertCircle className="h-3 w-3" />
-                  {errors.firstName.message}
-                </p>
-              )}
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="lastName" className="text-muted-foreground">Last Name *</Label>
-              <Input
-                id="lastName"
-                {...register("lastName")}
-                placeholder="Smith"
-                className={cn(
-                    "bg-white/60 dark:bg-white/5 border-white/40 dark:border-white/10 text-foreground placeholder:text-muted-foreground",
-                    errors.lastName ? 'border-red-500 focus-visible:ring-red-500' : ''
-                )}
-              />
-              {errors.lastName && (
-                <p className="text-red-500 dark:text-red-400 text-sm flex items-center gap-1">
-                  <AlertCircle className="h-3 w-3" />
-                  {errors.lastName.message}
-                </p>
-              )}
-            </div>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="email" className="text-muted-foreground">Email Address *</Label>
-              <Input
-                id="email"
-                type="email"
-                {...register("email")}
-                placeholder="john.smith@email.com"
-                className={cn(
-                    "bg-white/60 dark:bg-white/5 border-white/40 dark:border-white/10 text-foreground placeholder:text-muted-foreground",
-                    errors.email ? 'border-red-500 focus-visible:ring-red-500' : ''
-                )}
-              />
-              {errors.email && (
-                <p className="text-red-500 dark:text-red-400 text-sm flex items-center gap-1">
-                  <AlertCircle className="h-3 w-3" />
-                  {errors.email.message}
-                </p>
-              )}
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="phone" className="text-muted-foreground">Phone Number *</Label>
-              <Input
-                id="phone"
-                {...register("phone")}
-                placeholder="+1 (555) 123-4567"
-                className={cn(
-                    "bg-white/60 dark:bg-white/5 border-white/40 dark:border-white/10 text-foreground placeholder:text-muted-foreground",
-                    errors.phone ? 'border-red-500 focus-visible:ring-red-500' : ''
-                )}
-              />
-              {errors.phone && (
-                <p className="text-red-500 dark:text-red-400 text-sm flex items-center gap-1">
-                  <AlertCircle className="h-3 w-3" />
-                  {errors.phone.message}
-                </p>
-              )}
-            </div>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="alternatePhone" className="text-muted-foreground">Alternate Phone</Label>
-              <Input
-                id="alternatePhone"
-                {...register("alternatePhone")}
-                placeholder="+1 (555) 987-6543"
-                className="bg-white/60 dark:bg-white/5 border-white/40 dark:border-white/10 text-foreground placeholder:text-muted-foreground"
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="dateOfBirth" className="text-muted-foreground">Date of Birth</Label>
-              <Input
-                id="dateOfBirth"
-                type="date"
-                {...register("dateOfBirth")}
-                className="bg-white/60 dark:bg-white/5 border-white/40 dark:border-white/10 text-foreground placeholder:text-muted-foreground"
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="gender" className="text-muted-foreground">Gender</Label>
-              <Select value={genderValue} onValueChange={(value) => setValue("gender", value)}>
-                <SelectTrigger className="bg-white/60 dark:bg-white/5 border-white/40 dark:border-white/10 text-foreground">
-                  <SelectValue placeholder="Select gender" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="Male">Male</SelectItem>
-                  <SelectItem value="Female">Female</SelectItem>
-                  <SelectItem value="Other">Other</SelectItem>
-                  <SelectItem value="Prefer not to say">Prefer not to say</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Professional Information */}
-      <Card className="backdrop-blur-xl bg-white/70 dark:bg-black/20 border-white/20 dark:border-white/10 shadow-xl shadow-gray-200/50 dark:shadow-black/50 relative overflow-hidden">
-        {/* Light theme gradient overlay */}
-        <div className="absolute inset-0 bg-gradient-to-br from-green-50/60 via-emerald-50/40 to-teal-50/60 opacity-100 dark:opacity-0 pointer-events-none transition-opacity duration-300"></div>
-        {/* Dark theme gradient overlay */}
-        <div className="absolute inset-0 bg-gradient-to-br from-green-500/5 to-emerald-500/5 opacity-0 dark:opacity-100 pointer-events-none transition-opacity duration-300"></div>
-        
-        <CardHeader className="relative z-10">
-          <CardTitle className="text-foreground">Professional Information (Optional)</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4 relative z-10">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="occupation" className="text-muted-foreground">Occupation</Label>
-              <Input
-                id="occupation"
-                {...register("occupation")}
-                placeholder="Software Engineer"
-                className="bg-white/60 dark:bg-white/5 border-white/40 dark:border-white/10 text-foreground placeholder:text-muted-foreground"
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="employer" className="text-muted-foreground">Employer</Label>
-              <Input
-                id="employer"
-                {...register("employer")}
-                placeholder="Company Name"
-                className="bg-white/60 dark:bg-white/5 border-white/40 dark:border-white/10 text-foreground placeholder:text-muted-foreground"
-              />
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Address Information */}
-      <Card className="backdrop-blur-xl bg-white/70 dark:bg-black/20 border-white/20 dark:border-white/10 shadow-xl shadow-gray-200/50 dark:shadow-black/50 relative overflow-hidden">
-        {/* Light theme gradient overlay */}
-        <div className="absolute inset-0 bg-gradient-to-br from-orange-50/60 via-yellow-50/40 to-red-50/60 opacity-100 dark:opacity-0 pointer-events-none transition-opacity duration-300"></div>
-        {/* Dark theme gradient overlay */}
-        <div className="absolute inset-0 bg-gradient-to-br from-orange-500/5 to-red-500/5 opacity-0 dark:opacity-100 pointer-events-none transition-opacity duration-300"></div>
-
-        <CardHeader className="relative z-10">
-          <CardTitle className="text-foreground">Address Information</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4 relative z-10">
-          <div className="space-y-2">
-            <Label htmlFor="street" className="text-muted-foreground">Street Address</Label>
-            <Input
-              id="street"
-              {...register("street")}
-              placeholder="123 Main Street"
-              className="bg-white/60 dark:bg-white/5 border-white/40 dark:border-white/10 text-foreground placeholder:text-muted-foreground"
-            />
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="city" className="text-muted-foreground">City</Label>
-              <Input
-                id="city"
-                {...register("city")}
-                placeholder="New York"
-                className="bg-white/60 dark:bg-white/5 border-white/40 dark:border-white/10 text-foreground placeholder:text-muted-foreground"
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="state" className="text-muted-foreground">State</Label>
-              <Input
-                id="state"
-                {...register("state")}
-                placeholder="NY"
-                className="bg-white/60 dark:bg-white/5 border-white/40 dark:border-white/10 text-foreground placeholder:text-muted-foreground"
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="zipCode" className="text-muted-foreground">ZIP Code</Label>
-              <Input
-                id="zipCode"
-                {...register("zipCode")}
-                placeholder="10001"
-                className="bg-white/60 dark:bg-white/5 border-white/40 dark:border-white/10 text-foreground placeholder:text-muted-foreground"
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="country" className="text-muted-foreground">Country</Label>
-              <Input
-                id="country"
-                {...register("country")}
-                className="bg-white/60 dark:bg-white/5 border-white/40 dark:border-white/10 text-foreground placeholder:text-muted-foreground"
-              />
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Family & Emergency Contacts */}
-      <Card className="backdrop-blur-xl bg-white/70 dark:bg-black/20 border-white/20 dark:border-white/10 shadow-xl shadow-gray-200/50 dark:shadow-black/50 relative overflow-hidden">
-        {/* Light theme gradient overlay */}
-        <div className="absolute inset-0 bg-gradient-to-br from-pink-50/60 via-purple-50/40 to-blue-50/60 opacity-100 dark:opacity-0 pointer-events-none transition-opacity duration-300"></div>
-        {/* Dark theme gradient overlay */}
-        <div className="absolute inset-0 bg-gradient-to-br from-pink-500/5 to-blue-500/5 opacity-0 dark:opacity-100 pointer-events-none transition-opacity duration-300"></div>
-
-        <CardHeader className="relative z-10">
-          <CardTitle className="text-foreground">Family & Emergency Contacts (Optional)</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-6 relative z-10">
-          <div>
-            <h4 className="text-foreground/80 text-sm mb-3">Spouse/Partner Information</h4>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="spouseName" className="text-muted-foreground">Name</Label>
-                <Input
-                  id="spouseName"
-                  {...register("spouseName")}
-                  placeholder="Jane Smith"
-                  className="bg-white/60 dark:bg-white/5 border-white/40 dark:border-white/10 text-foreground placeholder:text-muted-foreground"
-                />
+          <Button
+            type="submit"
+            disabled={isLoading}
+            className="bg-emerald-500 hover:bg-emerald-600 text-white dark:text-black font-bold px-8 rounded-xl shadow-lg shadow-emerald-500/20 border-0 transition-all hover:scale-[1.02] active:scale-[0.98]"
+          >
+            {isLoading ? (
+              <div className="flex items-center gap-2">
+                <Loader2 className="w-4 h-4 animate-spin" />
+                Initializing...
               </div>
-              <div className="space-y-2">
-                <Label htmlFor="spousePhone" className="text-muted-foreground">Phone</Label>
-                <Input
-                  id="spousePhone"
-                  {...register("spousePhone")}
-                  placeholder="+1 (555) 123-4568"
-                  className="bg-white/60 dark:bg-white/5 border-white/40 dark:border-white/10 text-foreground placeholder:text-muted-foreground"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="spouseEmail" className="text-muted-foreground">Email</Label>
-                <Input
-                  id="spouseEmail"
-                  type="email"
-                  {...register("spouseEmail")}
-                  placeholder="jane.smith@email.com"
-                  className={cn(
-                    "bg-white/60 dark:bg-white/5 border-white/40 dark:border-white/10 text-foreground placeholder:text-muted-foreground",
-                    errors.spouseEmail ? 'border-red-500 focus-visible:ring-red-500' : ''
-                  )}
-                />
-                {errors.spouseEmail && (
-                  <p className="text-red-500 dark:text-red-400 text-sm flex items-center gap-1">
-                    <AlertCircle className="h-3 w-3" />
-                    {errors.spouseEmail.message}
-                  </p>
-                )}
-              </div>
-            </div>
-          </div>
-
-          <Separator className="bg-border" />
-
-          <div>
-            <h4 className="text-foreground/80 text-sm mb-3">Emergency Contact</h4>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="emergencyContactName" className="text-muted-foreground">Name</Label>
-                <Input
-                  id="emergencyContactName"
-                  {...register("emergencyContactName")}
-                  placeholder="Emergency contact name"
-                  className="bg-white/60 dark:bg-white/5 border-white/40 dark:border-white/10 text-foreground placeholder:text-muted-foreground"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="emergencyContactRelationship" className="text-muted-foreground">Relationship</Label>
-                <Input
-                  id="emergencyContactRelationship"
-                  {...register("emergencyContactRelationship")}
-                  placeholder="Brother, Sister, Friend"
-                  className="bg-white/60 dark:bg-white/5 border-white/40 dark:border-white/10 text-foreground placeholder:text-muted-foreground"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="emergencyContactPhone" className="text-muted-foreground">Phone</Label>
-                <Input
-                  id="emergencyContactPhone"
-                  {...register("emergencyContactPhone")}
-                  placeholder="+1 (555) 123-4569"
-                  className="bg-white/60 dark:bg-white/5 border-white/40 dark:border-white/10 text-foreground placeholder:text-muted-foreground"
-                />
-              </div>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Client Status & Preferences */}
-      <Card className="backdrop-blur-xl bg-white/70 dark:bg-black/20 border-white/20 dark:border-white/10 shadow-xl shadow-gray-200/50 dark:shadow-black/50 relative overflow-hidden">
-        {/* Light theme gradient overlay */}
-        <div className="absolute inset-0 bg-gradient-to-br from-cyan-50/60 via-blue-50/40 to-indigo-50/60 opacity-100 dark:opacity-0 pointer-events-none transition-opacity duration-300"></div>
-        {/* Dark theme gradient overlay */}
-        <div className="absolute inset-0 bg-gradient-to-br from-cyan-500/5 to-blue-500/5 opacity-0 dark:opacity-100 pointer-events-none transition-opacity duration-300"></div>
-
-        <CardHeader className="relative z-10">
-          <CardTitle className="text-foreground">Client Status & Preferences</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4 relative z-10">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="status" className="text-muted-foreground">Status</Label>
-              <Select value={statusValue} onValueChange={(value) => setValue("status", value as "Active" | "Inactive" | "Potential" | "Former")}>
-                <SelectTrigger className="bg-white/60 dark:bg-white/5 border-white/40 dark:border-white/10 text-foreground">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="Potential">Potential</SelectItem>
-                  <SelectItem value="Active">Active</SelectItem>
-                  <SelectItem value="Inactive">Inactive</SelectItem>
-                  <SelectItem value="Former">Former</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="priority" className="text-muted-foreground">Priority</Label>
-              <Select value={priorityValue} onValueChange={(value) => setValue("priority", value as "Low" | "Medium" | "High" | "VIP")}>
-                <SelectTrigger className="bg-white/60 dark:bg-white/5 border-white/40 dark:border-white/10 text-foreground">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="Low">Low</SelectItem>
-                  <SelectItem value="Medium">Medium</SelectItem>
-                  <SelectItem value="High">High</SelectItem>
-                  <SelectItem value="VIP">VIP</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="source" className="text-muted-foreground">Lead Source</Label>
-              <Select value={sourceValue} onValueChange={(value) => setValue("source", value as "Referral" | "Website" | "Social Media" | "Advertisement" | "Cold Call" | "Other")}>
-                <SelectTrigger className="bg-white/60 dark:bg-white/5 border-white/40 dark:border-white/10 text-foreground">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="Website">Website</SelectItem>
-                  <SelectItem value="Referral">Referral</SelectItem>
-                  <SelectItem value="Social Media">Social Media</SelectItem>
-                  <SelectItem value="Advertisement">Advertisement</SelectItem>
-                  <SelectItem value="Cold Call">Cold Call</SelectItem>
-                  <SelectItem value="Other">Other</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="preferredContactMethod" className="text-muted-foreground">Preferred Contact Method</Label>
-              <Select value={preferredContactMethodValue} onValueChange={(value) => setValue("preferredContactMethod", value)}>
-                <SelectTrigger className="bg-white/60 dark:bg-white/5 border-white/40 dark:border-white/10 text-foreground">
-                  <SelectValue placeholder="Select method" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="Phone">Phone</SelectItem>
-                  <SelectItem value="Email">Email</SelectItem>
-                  <SelectItem value="Text">Text</SelectItem>
-                  <SelectItem value="WhatsApp">WhatsApp</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="preferredContactTime" className="text-muted-foreground">Preferred Contact Time</Label>
-              <Input
-                id="preferredContactTime"
-                {...register("preferredContactTime")}
-                placeholder="9 AM - 5 PM, Weekdays"
-                className="bg-white/60 dark:bg-white/5 border-white/40 dark:border-white/10 text-foreground placeholder:text-muted-foreground"
-              />
-            </div>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="architecturalStyle" className="text-muted-foreground">Preferred Architectural Style</Label>
-              <Select value={architecturalStyleValue} onValueChange={(value) => setValue("architecturalStyle", value)}>
-                <SelectTrigger className="bg-white/60 dark:bg-white/5 border-white/40 dark:border-white/10 text-foreground">
-                  <SelectValue placeholder="Select architectural style" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="Modern">Modern</SelectItem>
-                  <SelectItem value="Contemporary">Contemporary</SelectItem>
-                  <SelectItem value="Traditional">Traditional</SelectItem>
-                  <SelectItem value="Victorian">Victorian</SelectItem>
-                  <SelectItem value="Colonial">Colonial</SelectItem>
-                  <SelectItem value="Craftsman">Craftsman</SelectItem>
-                  <SelectItem value="Mediterranean">Mediterranean</SelectItem>
-                  <SelectItem value="Minimalist">Minimalist</SelectItem>
-                  <SelectItem value="Industrial">Industrial</SelectItem>
-                  <SelectItem value="Mid-Century Modern">Mid-Century Modern</SelectItem>
-                  <SelectItem value="Farmhouse">Farmhouse</SelectItem>
-                  <SelectItem value="Ranch">Ranch</SelectItem>
-                  <SelectItem value="Art Deco">Art Deco</SelectItem>
-                  <SelectItem value="Scandinavian">Scandinavian</SelectItem>
-                  <SelectItem value="Eco-Friendly/Sustainable">Eco-Friendly/Sustainable</SelectItem>
-                  <SelectItem value="Mixed/Multiple Styles">Mixed/Multiple Styles</SelectItem>
-                  <SelectItem value="Other">Other</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="budgetRange" className="text-muted-foreground">Budget Range</Label>
-              <Select value={budgetRangeValue} onValueChange={(value) => setValue("budgetRange", value)}>
-                <SelectTrigger className="bg-white/60 dark:bg-white/5 border-white/40 dark:border-white/10 text-foreground">
-                  <SelectValue placeholder="Select budget range" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="Under ₹10 Lakh">Under ₹10 Lakh</SelectItem>
-                  <SelectItem value="₹10 Lakh - ₹25 Lakh">₹10 Lakh - ₹25 Lakh</SelectItem>
-                  <SelectItem value="₹25 Lakh - ₹50 Lakh">₹25 Lakh - ₹50 Lakh</SelectItem>
-                  <SelectItem value="₹50 Lakh - ₹75 Lakh">₹50 Lakh - ₹75 Lakh</SelectItem>
-                  <SelectItem value="₹75 Lakh - ₹1 Crore">₹75 Lakh - ₹1 Crore</SelectItem>
-                  <SelectItem value="₹1 Crore - ₹2 Crore">₹1 Crore - ₹2 Crore</SelectItem>
-                  <SelectItem value="₹2 Crore - ₹5 Crore">₹2 Crore - ₹5 Crore</SelectItem>
-                  <SelectItem value="₹5 Crore - ₹10 Crore">₹5 Crore - ₹10 Crore</SelectItem>
-                  <SelectItem value="₹10 Crore - ₹25 Crore">₹10 Crore - ₹25 Crore</SelectItem>
-                  <SelectItem value="Over ₹25 Crore">Over ₹25 Crore</SelectItem>
-                  <SelectItem value="Flexible">Flexible</SelectItem>
-                  <SelectItem value="To Be Discussed">To Be Discussed</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Additional Information */}
-      <Card className="backdrop-blur-xl bg-white/70 dark:bg-black/20 border-white/20 dark:border-white/10 shadow-xl shadow-gray-200/50 dark:shadow-black/50 relative overflow-hidden">
-        {/* Light theme gradient overlay */}
-        <div className="absolute inset-0 bg-gradient-to-br from-indigo-50/60 via-purple-50/40 to-pink-50/60 opacity-100 dark:opacity-0 pointer-events-none transition-opacity duration-300"></div>
-        {/* Dark theme gradient overlay */}
-        <div className="absolute inset-0 bg-gradient-to-br from-indigo-500/5 to-pink-500/5 opacity-0 dark:opacity-100 pointer-events-none transition-opacity duration-300"></div>
-
-        <CardHeader className="relative z-10">
-          <CardTitle className="text-foreground">Additional Information</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4 relative z-10">
-          <div className="space-y-2">
-            <Label htmlFor="tags" className="text-muted-foreground">Tags</Label>
-            <Input
-              id="tags"
-              {...register("tags")}
-              placeholder="VIP, Luxury, Eco-Friendly (comma-separated)"
-              className="bg-white/60 dark:bg-white/5 border-white/40 dark:border-white/10 text-foreground placeholder:text-muted-foreground"
-            />
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="notes" className="text-muted-foreground">Notes</Label>
-            <Textarea
-              id="notes"
-              {...register("notes")}
-              placeholder="Additional notes about this client..."
-              className="bg-white/60 dark:bg-white/5 border-white/40 dark:border-white/10 text-foreground placeholder:text-muted-foreground min-h-[100px]"
-            />
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Form Actions */}
-      <div className="flex justify-end space-x-4">
-        <Button
-          type="button"
-          variant="outline"
-          onClick={onCancel}
-          disabled={isLoading}
-          className="bg-white/60 dark:bg-white/5 border-white/40 dark:border-white/10 text-foreground hover:bg-white/80 dark:hover:bg-white/10"
-        >
-          Cancel
-        </Button>
-        <Button
-          type="submit"
-          disabled={isLoading}
-          className="bg-gradient-to-r from-purple-500 to-blue-500 hover:from-purple-600 hover:to-blue-600 border-0 shadow-lg shadow-purple-200/50 dark:shadow-purple-500/25"
-        >
-          {isLoading ? (
-            <>
-              <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-              Adding Client...
-            </>
-          ) : (
-            "Add Client"
-          )}
-        </Button>
-      </div>
-    </form>
+            ) : (
+              "Complete Intake"
+            )}
+          </Button>
+        </div>
+      </form>
+    </div>
   );
 }

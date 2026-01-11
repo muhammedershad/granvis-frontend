@@ -1,13 +1,11 @@
 import RoleGuard from "@/components/auth/RoleGuard";
 import { IAuthRoles } from "@/store/slices/authSlice";
-import { Card } from "@/components/ui/card";
-import { Building2 } from "lucide-react";
-import { ProjectsPage } from "@/components/ProjectsPage";
+import { ClientDetailsPage } from "@/components/ClientDetailsPage";
 
-export default function AdminProjectsPage() {
+export default function AdminClientDetailsPage({ params }: { params: { id: string } }) {
   return (
     <RoleGuard allowedRoles={[IAuthRoles.ADMIN, IAuthRoles.SUPER_ADMIN]}>
-      <ProjectsPage />
+      <ClientDetailsPage clientId={params.id} />
     </RoleGuard>
   );
 }
