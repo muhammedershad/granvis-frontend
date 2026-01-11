@@ -1,3 +1,4 @@
+'use client";'
 import { useState, useMemo } from "react";
 import { 
   Search, 
@@ -541,7 +542,6 @@ export function EmployeesPage({ onEmployeeSelect }: EmployeesPageProps) {
               <List className="w-4 h-4" />
             </Button>
           </div>
-
           <Button variant="outline" className="bg-white/60 dark:bg-white/5 border-white/40 dark:border-white/10 text-muted-foreground hover:bg-white/80 dark:hover:bg-white/10 shadow-lg shadow-gray-200/50 dark:shadow-black/20">
             <Download className="w-4 h-4 mr-2" />
             Export

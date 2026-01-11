@@ -1,5 +1,7 @@
 'use client';
 
+import Link from "next/link";
+
 import { 
   Home, 
   Building2, 
@@ -16,7 +18,6 @@ import {
 import { Button } from "./ui/button";
 import { cn } from "./ui/utils";
 import { useSidebar } from "@/components/SidebarProvider";
-import { useRouter } from "next/navigation";
 import { useLogoutMutation } from "@/lib/api/apiSlice";
 import { IAuthRoles, getAuthDetails, logout as logoutAction } from '@/store/slices/authSlice';
 import { useSelector, useDispatch } from "react-redux";
@@ -132,7 +133,6 @@ const bottomItems = [
 
 export function Sidebar({ className, onNavigate, currentPage = "dashboard" }: SidebarProps) {
   const { isCollapsed, toggleSidebar, isMobile, isMobileOpen, setIsMobileOpen } = useSidebar();
-  const route = useRouter()
   const [logout] = useLogoutMutation();
   const dispatch = useDispatch();
   const { user } = useSelector(getAuthDetails);
@@ -177,15 +177,19 @@ export function Sidebar({ className, onNavigate, currentPage = "dashboard" }: Si
       }
     };
 
-  const handleNavClick = (page: string, link: string) => {
+  const handleNavClick = (page: string, link: string, e?: React.MouseEvent) => {
+    console.log('Navigating to:', page, link);
     if(page === 'logout') {
-      handleLogout()
+      e?.preventDefault();
+      handleLogout();
+      return;
     }
     // Close mobile sidebar when clicking a nav item
     if (isMobile && isMobileOpen) {
       setIsMobileOpen(false);
     }
-    route.push(link)
+    // Navigation is handled by Link component
+    // onNavigate callback is called for backward compatibility
     onNavigate?.(page);
   };
 
@@ -268,9 +272,13 @@ export function Sidebar({ className, onNavigate, currentPage = "dashboard" }: Si
                   const Icon = item.icon;
                   const isActive = currentPage === item.page;
                   return (
-                    <button
+                    <Link
                       key={item.page}
-                      onClick={() => handleNavClick(item.page, item?.link)}
+                      href={item.link || '#'}
+                      onClick={(e) => {
+                         // Let Link handle navigation, only prevent for logout
+                         handleNavClick(item.page, item?.link || '', e);
+                      }}
                       className={cn(
                         "w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-all duration-200 group relative overflow-hidden",
                         isActive 
@@ -296,7 +304,7 @@ export function Sidebar({ className, onNavigate, currentPage = "dashboard" }: Si
                           </>
                         )}
                       </div>
-                    </button>
+                    </Link>
                   );
                 })}
               </div>
@@ -311,14 +319,15 @@ export function Sidebar({ className, onNavigate, currentPage = "dashboard" }: Si
                     {projectTypesWithLinks.map((item) => {
                       const Icon = item.icon;
                       return (
-                        <button
+                        <Link
                           key={item.title}
-                          onClick={() => handleNavClick(item.page, item.link)}
+                          href={item.link || '#'}
+                          onClick={(e) => handleNavClick(item.page, item.link, e)}
                           className="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm text-muted-foreground hover:text-foreground hover:bg-muted transition-all duration-200"
                         >
                           <Icon className="w-4 h-4 flex-shrink-0" />
                           <span className="text-left">{item.title}</span>
-                        </button>
+                        </Link>
                       );
                     })}
                   </div>
@@ -333,14 +342,15 @@ export function Sidebar({ className, onNavigate, currentPage = "dashboard" }: Si
               {bottomItems.map((item) => {
                 const Icon = item.icon;
                 return (
-                  <button
+                  <Link
                     key={item.page}
-                    onClick={() => handleNavClick(item.page, item?.link)}
+                    href={item.link || '#'}
+                    onClick={(e) => handleNavClick(item.page, item?.link || '', e)}
                     className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm text-muted-foreground hover:text-foreground hover:bg-muted transition-all duration-200"
                   >
                     <Icon className="w-5 h-5 flex-shrink-0" />
                     {(!isCollapsed || isMobile) && <span className="text-left">{item.title}</span>}
-                  </button>
+                  </Link>
                 );
               })}
             </nav>

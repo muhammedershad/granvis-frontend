@@ -4,7 +4,8 @@
   "private": true,
   "scripts": {
     "dev": "next dev --turbopack",
-    "build": "next build --turbopack",
+    "build": "NEXT_DISABLE_STATIC_IMAGES=1 next build --turbopack",
+    "build:fast": "next build --no-lint",
     "start": "next start",
     "lint": "eslint . --fix"
   },

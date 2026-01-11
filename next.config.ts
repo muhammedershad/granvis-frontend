@@ -11,6 +11,11 @@ const nextConfig: NextConfig = {
       },
     ],
   },
+  experimental: {
+    optimizePackageImports: ['lucide-react'],
+  },
+  // Timeout static generation quickly to prevent hanging
+  staticPageGenerationTimeout: 5,
 };
 
 export default nextConfig;
