@@ -1,4 +1,4 @@
-'use client';
+"use client";
 import RoleGuard from "@/components/auth/RoleGuard";
 import { IAuthRoles } from "@/store/slices/authSlice";
 import { ClientsPage } from "@/components/ClientsPage";

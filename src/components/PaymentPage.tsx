@@ -1,35 +1,54 @@
 import { useState } from "react";
-import { 
-  Calendar, 
-  Circle, 
-  Clock, 
-  DollarSign, 
-  Plus, 
-  TrendingUp, 
-  Users,
-  Target,
-  FileText,
-  CreditCard,
-  Eye,
-  Mail,
-  Download,
+import {
   AlertCircle,
+  ArrowDownRight,
+  ArrowUpRight,
+  Calendar,
   CheckCircle2,
+  Circle,
+  Clock,
+  CreditCard,
+  DollarSign,
+  Download,
+  Eye,
+  FileText,
+  Mail,
+  Plus,
+  Target,
+  TrendingUp,
+  Users,
   XCircle,
   Zap,
-  ArrowUpRight,
-  ArrowDownRight,
 } from "lucide-react";
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "./ui/tabs";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "./ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "./ui/card";
 import { Badge } from "./ui/badge";
 import { Progress } from "./ui/progress";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "./ui/select";
 import { Textarea } from "./ui/textarea";
 import { Label } from "./ui/label";
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "./ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "./ui/dialog";
 import { PaymentScheduleManager } from "./PaymentScheduleManager";
 import { PaymentReports } from "./PaymentReports";
 import { PaymentStatistics } from "./PaymentStatistics";
@@ -55,7 +74,7 @@ const recentPayments = [
     status: "paid",
     paymentDate: "2024-12-14",
     method: "Bank Transfer",
-    invoiceNumber: "INV-2024-001"
+    invoiceNumber: "INV-2024-001",
   },
   {
     id: "2",
@@ -66,7 +85,7 @@ const recentPayments = [
     status: "pending",
     paymentDate: null,
     method: "Check",
-    invoiceNumber: "INV-2024-002"
+    invoiceNumber: "INV-2024-002",
   },
   {
     id: "3",
@@ -77,7 +96,7 @@ const recentPayments = [
     status: "overdue",
     paymentDate: null,
     method: "Wire Transfer",
-    invoiceNumber: "INV-2024-003"
+    invoiceNumber: "INV-2024-003",
   },
   {
     id: "4",
@@ -88,7 +107,7 @@ const recentPayments = [
     status: "pending",
     paymentDate: null,
     method: "ACH Transfer",
-    invoiceNumber: "INV-2024-004"
+    invoiceNumber: "INV-2024-004",
   },
   {
     id: "5",
@@ -99,8 +118,8 @@ const recentPayments = [
     status: "partial",
     paymentDate: "2024-12-17",
     method: "Bank Transfer",
-    invoiceNumber: "INV-2024-005"
-  }
+    invoiceNumber: "INV-2024-005",
+  },
 ];
 
 const paymentTargets: PaymentTarget[] = [
@@ -110,7 +129,7 @@ const paymentTargets: PaymentTarget[] = [
     target: 2500000,
     current: 2150000,
     deadline: "2024-12-31",
-    category: "quarterly"
+    category: "quarterly",
   },
   {
     id: "2",
@@ -118,7 +137,7 @@ const paymentTargets: PaymentTarget[] = [
     target: 850000,
     current: 650000,
     deadline: "2024-12-31",
-    category: "monthly"
+    category: "monthly",
   },
   {
     id: "3",
@@ -126,7 +145,7 @@ const paymentTargets: PaymentTarget[] = [
     target: 8500000,
     current: 7800000,
     deadline: "2024-12-31",
-    category: "annual"
+    category: "annual",
   },
   {
     id: "4",
@@ -134,8 +153,8 @@ const paymentTargets: PaymentTarget[] = [
     target: 150000, // Target is to keep below this amount
     current: 185000,
     deadline: "2024-12-31",
-    category: "receivables"
-  }
+    category: "receivables",
+  },
 ];
 
 const quickStats = {
@@ -144,7 +163,7 @@ const quickStats = {
   overdueAmount: 185000,
   paidThisMonth: 920000,
   averagePaymentTime: 12,
-  collectionRate: 94.5
+  collectionRate: 94.5,
 };
 
 export function PaymentPage() {
@@ -153,28 +172,38 @@ export function PaymentPage() {
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case "paid": return "bg-green-500/20 text-green-400 border-green-500/30";
-      case "pending": return "bg-yellow-500/20 text-yellow-400 border-yellow-500/30";
-      case "overdue": return "bg-red-500/20 text-red-400 border-red-500/30";
-      case "partial": return "bg-blue-500/20 text-blue-400 border-blue-500/30";
-      default: return "bg-gray-500/20 text-gray-400 border-gray-500/30";
+      case "paid":
+        return "bg-green-500/20 text-green-400 border-green-500/30";
+      case "pending":
+        return "bg-yellow-500/20 text-yellow-400 border-yellow-500/30";
+      case "overdue":
+        return "bg-red-500/20 text-red-400 border-red-500/30";
+      case "partial":
+        return "bg-blue-500/20 text-blue-400 border-blue-500/30";
+      default:
+        return "bg-gray-500/20 text-gray-400 border-gray-500/30";
     }
   };
 
   const getStatusIcon = (status: string) => {
     switch (status) {
-      case "paid": return <CheckCircle2 className="w-4 h-4" />;
-      case "pending": return <Clock className="w-4 h-4" />;
-      case "overdue": return <XCircle className="w-4 h-4" />;
-      case "partial": return <AlertCircle className="w-4 h-4" />;
-      default: return <Circle className="w-4 h-4" />;
+      case "paid":
+        return <CheckCircle2 className="w-4 h-4" />;
+      case "pending":
+        return <Clock className="w-4 h-4" />;
+      case "overdue":
+        return <XCircle className="w-4 h-4" />;
+      case "partial":
+        return <AlertCircle className="w-4 h-4" />;
+      default:
+        return <Circle className="w-4 h-4" />;
     }
   };
 
   const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: 'USD',
+    return new Intl.NumberFormat("en-US", {
+      style: "currency",
+      currency: "USD",
       minimumFractionDigits: 0,
       maximumFractionDigits: 0,
     }).format(amount);
@@ -234,9 +263,15 @@ export function PaymentPage() {
                         <SelectValue placeholder="Select client" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="luxury-residential">Luxury Residential Complex</SelectItem>
-                        <SelectItem value="commercial-office">Commercial Office Tower</SelectItem>
-                        <SelectItem value="mixed-use">Mixed-Use Development</SelectItem>
+                        <SelectItem value="luxury-residential">
+                          Luxury Residential Complex
+                        </SelectItem>
+                        <SelectItem value="commercial-office">
+                          Commercial Office Tower
+                        </SelectItem>
+                        <SelectItem value="mixed-use">
+                          Mixed-Use Development
+                        </SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
@@ -247,9 +282,15 @@ export function PaymentPage() {
                         <SelectValue placeholder="Select project" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="villa-dev">Modern Villa Development</SelectItem>
-                        <SelectItem value="business-center">Downtown Business Center</SelectItem>
-                        <SelectItem value="urban-complex">Urban Living Complex</SelectItem>
+                        <SelectItem value="villa-dev">
+                          Modern Villa Development
+                        </SelectItem>
+                        <SelectItem value="business-center">
+                          Downtown Business Center
+                        </SelectItem>
+                        <SelectItem value="urban-complex">
+                          Urban Living Complex
+                        </SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
@@ -266,10 +307,16 @@ export function PaymentPage() {
                 </div>
                 <div>
                   <Label htmlFor="description">Description</Label>
-                  <Textarea id="description" placeholder="Payment description or notes" />
+                  <Textarea
+                    id="description"
+                    placeholder="Payment description or notes"
+                  />
                 </div>
                 <div className="flex justify-end gap-3">
-                  <Button variant="outline" onClick={() => setShowCreatePayment(false)}>
+                  <Button
+                    variant="outline"
+                    onClick={() => setShowCreatePayment(false)}
+                  >
                     Cancel
                   </Button>
                   <Button>Create Payment</Button>
@@ -283,11 +330,21 @@ export function PaymentPage() {
       {/* Tabs */}
       <Tabs value={activeTab} onValueChange={setActiveTab}>
         <TabsList className="grid w-full grid-cols-2 lg:grid-cols-5 gap-1">
-          <TabsTrigger value="overview" className="text-xs sm:text-sm">Overview</TabsTrigger>
-          <TabsTrigger value="schedules" className="text-xs sm:text-sm">Schedules</TabsTrigger>
-          <TabsTrigger value="reports" className="text-xs sm:text-sm">Reports</TabsTrigger>
-          <TabsTrigger value="statistics" className="text-xs sm:text-sm">Statistics</TabsTrigger>
-          <TabsTrigger value="targets" className="text-xs sm:text-sm">Targets</TabsTrigger>
+          <TabsTrigger value="overview" className="text-xs sm:text-sm">
+            Overview
+          </TabsTrigger>
+          <TabsTrigger value="schedules" className="text-xs sm:text-sm">
+            Schedules
+          </TabsTrigger>
+          <TabsTrigger value="reports" className="text-xs sm:text-sm">
+            Reports
+          </TabsTrigger>
+          <TabsTrigger value="statistics" className="text-xs sm:text-sm">
+            Statistics
+          </TabsTrigger>
+          <TabsTrigger value="targets" className="text-xs sm:text-sm">
+            Targets
+          </TabsTrigger>
         </TabsList>
 
         {/* Overview Tab */}
@@ -298,8 +355,12 @@ export function PaymentPage() {
               <CardContent className="p-6">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-sm text-muted-foreground">Total Revenue</p>
-                    <p className="text-2xl text-foreground">{formatCurrency(quickStats.totalRevenue)}</p>
+                    <p className="text-sm text-muted-foreground">
+                      Total Revenue
+                    </p>
+                    <p className="text-2xl text-foreground">
+                      {formatCurrency(quickStats.totalRevenue)}
+                    </p>
                   </div>
                   <DollarSign className="w-8 h-8 text-green-500" />
                 </div>
@@ -314,8 +375,12 @@ export function PaymentPage() {
               <CardContent className="p-6">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-sm text-muted-foreground">Pending Payments</p>
-                    <p className="text-2xl text-foreground">{formatCurrency(quickStats.pendingPayments)}</p>
+                    <p className="text-sm text-muted-foreground">
+                      Pending Payments
+                    </p>
+                    <p className="text-2xl text-foreground">
+                      {formatCurrency(quickStats.pendingPayments)}
+                    </p>
                   </div>
                   <Clock className="w-8 h-8 text-yellow-500" />
                 </div>
@@ -330,8 +395,12 @@ export function PaymentPage() {
               <CardContent className="p-6">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-sm text-muted-foreground">Overdue Amount</p>
-                    <p className="text-2xl text-foreground">{formatCurrency(quickStats.overdueAmount)}</p>
+                    <p className="text-sm text-muted-foreground">
+                      Overdue Amount
+                    </p>
+                    <p className="text-2xl text-foreground">
+                      {formatCurrency(quickStats.overdueAmount)}
+                    </p>
                   </div>
                   <XCircle className="w-8 h-8 text-red-500" />
                 </div>
@@ -346,8 +415,12 @@ export function PaymentPage() {
               <CardContent className="p-6">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-sm text-muted-foreground">Collection Rate</p>
-                    <p className="text-2xl text-foreground">{quickStats.collectionRate}%</p>
+                    <p className="text-sm text-muted-foreground">
+                      Collection Rate
+                    </p>
+                    <p className="text-2xl text-foreground">
+                      {quickStats.collectionRate}%
+                    </p>
                   </div>
                   <Target className="w-8 h-8 text-blue-500" />
                 </div>
@@ -366,7 +439,9 @@ export function PaymentPage() {
               <Card className="relative bg-gradient-to-br from-white/50 to-gray-50/50 dark:from-gray-900/50 dark:to-gray-800/50 backdrop-blur-sm border border-white/20 dark:border-gray-700/50 shadow-lg shadow-gray-500/5 dark:shadow-gray-500/10">
                 <CardHeader>
                   <div className="flex items-center justify-between">
-                    <CardTitle className="text-foreground">Recent Payments</CardTitle>
+                    <CardTitle className="text-foreground">
+                      Recent Payments
+                    </CardTitle>
                     <Button variant="outline" size="sm">
                       <Eye className="w-4 h-4 mr-2" />
                       View All
@@ -376,18 +451,27 @@ export function PaymentPage() {
                 <CardContent>
                   <div className="space-y-4">
                     {recentPayments.slice(0, 5).map((payment) => (
-                      <div key={payment.id} className="flex items-center justify-between p-4 rounded-lg bg-muted/20 hover:bg-muted/30 transition-colors">
+                      <div
+                        key={payment.id}
+                        className="flex items-center justify-between p-4 rounded-lg bg-muted/20 hover:bg-muted/30 transition-colors"
+                      >
                         <div className="flex items-center gap-3">
                           <div className="flex items-center justify-center w-10 h-10 rounded-lg bg-gradient-to-br from-purple-500 to-blue-500 shadow-lg shadow-purple-500/25">
                             {getStatusIcon(payment.status)}
                           </div>
                           <div>
-                            <h4 className="text-foreground">{payment.clientName}</h4>
-                            <p className="text-sm text-muted-foreground">{payment.invoiceNumber}</p>
+                            <h4 className="text-foreground">
+                              {payment.clientName}
+                            </h4>
+                            <p className="text-sm text-muted-foreground">
+                              {payment.invoiceNumber}
+                            </p>
                           </div>
                         </div>
                         <div className="text-right">
-                          <p className="text-foreground">{formatCurrency(payment.amount)}</p>
+                          <p className="text-foreground">
+                            {formatCurrency(payment.amount)}
+                          </p>
                           <Badge className={getStatusColor(payment.status)}>
                             {payment.status}
                           </Badge>
@@ -434,8 +518,12 @@ export function PaymentPage() {
             <Card className="relative bg-gradient-to-br from-white/50 to-purple-50/50 dark:from-gray-900/50 dark:to-purple-900/20 backdrop-blur-sm border border-white/20 dark:border-gray-700/50 shadow-lg shadow-purple-500/5 dark:shadow-purple-500/10">
               <CardContent className="p-6 text-center">
                 <Zap className="w-8 h-8 text-purple-500 mx-auto mb-2" />
-                <p className="text-sm text-muted-foreground mb-2">Avg Payment Time</p>
-                <p className="text-2xl text-foreground">{quickStats.averagePaymentTime} days</p>
+                <p className="text-sm text-muted-foreground mb-2">
+                  Avg Payment Time
+                </p>
+                <p className="text-2xl text-foreground">
+                  {quickStats.averagePaymentTime} days
+                </p>
               </CardContent>
             </Card>
 
@@ -443,14 +531,18 @@ export function PaymentPage() {
               <CardContent className="p-6 text-center">
                 <TrendingUp className="w-8 h-8 text-cyan-500 mx-auto mb-2" />
                 <p className="text-sm text-muted-foreground mb-2">This Month</p>
-                <p className="text-2xl text-foreground">{formatCurrency(quickStats.paidThisMonth)}</p>
+                <p className="text-2xl text-foreground">
+                  {formatCurrency(quickStats.paidThisMonth)}
+                </p>
               </CardContent>
             </Card>
 
             <Card className="relative bg-gradient-to-br from-white/50 to-orange-50/50 dark:from-gray-900/50 dark:to-orange-900/20 backdrop-blur-sm border border-white/20 dark:border-gray-700/50 shadow-lg shadow-orange-500/5 dark:shadow-orange-500/10">
               <CardContent className="p-6 text-center">
                 <Users className="w-8 h-8 text-orange-500 mx-auto mb-2" />
-                <p className="text-sm text-muted-foreground mb-2">Active Clients</p>
+                <p className="text-sm text-muted-foreground mb-2">
+                  Active Clients
+                </p>
                 <p className="text-2xl text-foreground">24</p>
               </CardContent>
             </Card>
@@ -479,39 +571,50 @@ export function PaymentPage() {
             {paymentTargets.map((target) => {
               const progress = getTargetProgress(target);
               const status = getTargetStatus(target);
-              
+
               return (
-                <Card key={target.id} className="relative bg-gradient-to-br from-white/50 to-gray-50/50 dark:from-gray-900/50 dark:to-gray-800/50 backdrop-blur-sm border border-white/20 dark:border-gray-700/50 shadow-lg shadow-gray-500/5 dark:shadow-gray-500/10">
+                <Card
+                  key={target.id}
+                  className="relative bg-gradient-to-br from-white/50 to-gray-50/50 dark:from-gray-900/50 dark:to-gray-800/50 backdrop-blur-sm border border-white/20 dark:border-gray-700/50 shadow-lg shadow-gray-500/5 dark:shadow-gray-500/10"
+                >
                   <CardContent className="p-6">
                     <div className="flex items-center justify-between mb-4">
                       <h3 className="text-foreground">{target.title}</h3>
-                      <Badge 
+                      <Badge
                         className={
-                          status === "good" ? "bg-green-500/20 text-green-400 border-green-500/30" :
-                          status === "warning" ? "bg-yellow-500/20 text-yellow-400 border-yellow-500/30" :
-                          "bg-red-500/20 text-red-400 border-red-500/30"
+                          status === "good"
+                            ? "bg-green-500/20 text-green-400 border-green-500/30"
+                            : status === "warning"
+                              ? "bg-yellow-500/20 text-yellow-400 border-yellow-500/30"
+                              : "bg-red-500/20 text-red-400 border-red-500/30"
                         }
                       >
                         {status}
                       </Badge>
                     </div>
-                    
+
                     <div className="space-y-3">
                       <div className="flex justify-between text-sm">
                         <span className="text-muted-foreground">Current</span>
-                        <span className="text-foreground">{formatCurrency(target.current)}</span>
+                        <span className="text-foreground">
+                          {formatCurrency(target.current)}
+                        </span>
                       </div>
                       <div className="flex justify-between text-sm">
                         <span className="text-muted-foreground">Target</span>
-                        <span className="text-foreground">{formatCurrency(target.target)}</span>
+                        <span className="text-foreground">
+                          {formatCurrency(target.target)}
+                        </span>
                       </div>
-                      <Progress 
-                        value={Math.min(100, progress)} 
+                      <Progress
+                        value={Math.min(100, progress)}
                         className={`h-2 ${target.category === "receivables" && progress > 100 ? "bg-red-500/20" : ""}`}
                       />
                       <div className="flex justify-between text-sm">
                         <span className="text-muted-foreground">Progress</span>
-                        <span className="text-foreground">{progress.toFixed(1)}%</span>
+                        <span className="text-foreground">
+                          {progress.toFixed(1)}%
+                        </span>
                       </div>
                       <div className="text-xs text-muted-foreground">
                         Due: {target.deadline}
@@ -527,7 +630,9 @@ export function PaymentPage() {
           <Card className="relative bg-gradient-to-br from-white/50 to-gray-50/50 dark:from-gray-900/50 dark:to-gray-800/50 backdrop-blur-sm border border-white/20 dark:border-gray-700/50 shadow-lg shadow-gray-500/5 dark:shadow-gray-500/10">
             <CardHeader>
               <CardTitle className="text-foreground">Set New Target</CardTitle>
-              <CardDescription>Create financial goals and track performance</CardDescription>
+              <CardDescription>
+                Create financial goals and track performance
+              </CardDescription>
             </CardHeader>
             <CardContent>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">

@@ -26,17 +26,21 @@ const educationSchema = z.object({
 // Form input schema (accepts string inputs for numbers)
 export const createEmployeeFormSchema = z.object({
   // Basic Information
-  firstName: z.string()
+  firstName: z
+    .string()
     .min(2, "First name must be at least 2 characters")
     .max(50, "First name must not exceed 50 characters"),
-  middleName: z.string()
+  middleName: z
+    .string()
     .max(50, "Middle name must not exceed 50 characters")
     .optional(),
-  lastName: z.string()
+  lastName: z
+    .string()
     .min(2, "Last name must be at least 2 characters")
     .max(50, "Last name must not exceed 50 characters"),
   email: z.string().email("Invalid email address"),
-  phone: z.string()
+  phone: z
+    .string()
     .min(1, "Phone number is required")
     .regex(/^[\d\s\+\-\(\)]+$/, "Invalid phone number format"),
   avatar: z.string().optional(),

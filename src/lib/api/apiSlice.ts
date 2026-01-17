@@ -1,10 +1,18 @@
-import { createApi } from '@reduxjs/toolkit/query/react';
-import { baseQueryWithReauth } from './baseQuery';
+import { createApi } from "@reduxjs/toolkit/query/react";
+import { baseQueryWithReauth } from "./baseQuery";
 
 export const apiSlice = createApi({
-  reducerPath: 'api',
+  reducerPath: "api",
   baseQuery: baseQueryWithReauth,
-  tagTypes: ['User', 'Post', 'Profile', 'Notification', 'Client', 'Project', 'Employee'],
+  tagTypes: [
+    "User",
+    "Post",
+    "Profile",
+    "Notification",
+    "Client",
+    "Project",
+    "Employee",
+  ],
   // Configure caching behavior
   keepUnusedDataFor: 60, // Keep unused data for 60 seconds
   refetchOnMountOrArgChange: 30, // Refetch if data is older than 30 seconds
@@ -13,29 +21,29 @@ export const apiSlice = createApi({
   endpoints: (builder) => ({
     login: builder.mutation({
       query: (credentials) => ({
-        url: '/auth/login',
-        method: 'POST',
+        url: "/auth/login",
+        method: "POST",
         body: credentials,
       }),
       // Invalidate user data on successful login
-      invalidatesTags: ['User', 'Profile'],
+      invalidatesTags: ["User", "Profile"],
     }),
 
     logout: builder.mutation({
       query: () => ({
-        url: '/auth/logout',
-        method: 'POST',
+        url: "/auth/logout",
+        method: "POST",
       }),
       // Clear all cached data on logout
-      invalidatesTags: ['User', 'Post', 'Profile', 'Notification'],
+      invalidatesTags: ["User", "Post", "Profile", "Notification"],
     }),
 
     getCurrentUser: builder.query({
       query: () => ({
-        url: '/user/me',
-        method: 'GET',
+        url: "/user/me",
+        method: "GET",
       }),
-      providesTags: ['User'],
+      providesTags: ["User"],
       // Keep this data for 5 minutes
       keepUnusedDataFor: 300,
     }),
@@ -44,9 +52,11 @@ export const apiSlice = createApi({
     getUserProfile: builder.query({
       query: (userId) => ({
         url: `/user/${userId}/profile`,
-        method: 'GET',
+        method: "GET",
       }),
-      providesTags: (result, error, userId) => [{ type: 'Profile', id: userId }],
+      providesTags: (result, error, userId) => [
+        { type: "Profile", id: userId },
+      ],
       keepUnusedDataFor: 120, // Cache for 2 minutes
     }),
 
@@ -54,13 +64,13 @@ export const apiSlice = createApi({
     updateUserProfile: builder.mutation({
       query: ({ userId, data }) => ({
         url: `/user/${userId}/profile`,
-        method: 'PUT',
+        method: "PUT",
         body: data,
       }),
       // Invalidate specific user's profile
       invalidatesTags: (result, error, { userId }) => [
-        { type: 'Profile', id: userId },
-        'User',
+        { type: "Profile", id: userId },
+        "User",
       ],
     }),
   }),
@@ -71,5 +81,5 @@ export const {
   useLogoutMutation,
   useGetCurrentUserQuery,
   useGetUserProfileQuery,
-  useUpdateUserProfileMutation
+  useUpdateUserProfileMutation,
 } = apiSlice;

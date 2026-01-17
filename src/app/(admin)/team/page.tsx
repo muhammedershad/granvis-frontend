@@ -1,10 +1,8 @@
-'use client'
+"use client";
 import { EmployeesPage } from "@/components/EmployeesPage";
 
- 
-
 const Page = () => {
-    return <EmployeesPage  />;
-}
+  return <EmployeesPage />;
+};
 
 export default Page;

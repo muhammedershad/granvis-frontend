@@ -8,7 +8,13 @@ import { cn } from "./utils";
 import { Button } from "./button";
 import { Calendar } from "./calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "./popover";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "./select";
 
 interface DatePickerProps {
   date?: Date;
@@ -32,8 +38,18 @@ export function DatePicker({
   const [month, setMonth] = React.useState<Date>(date || new Date());
 
   const months = [
-    "January", "February", "March", "April", "May", "June",
-    "July", "August", "September", "October", "November", "December"
+    "January",
+    "February",
+    "March",
+    "April",
+    "May",
+    "June",
+    "July",
+    "August",
+    "September",
+    "October",
+    "November",
+    "December",
   ];
 
   const years = Array.from(
@@ -75,7 +91,7 @@ export function DatePicker({
           className={cn(
             "h-10 w-full justify-start text-left font-normal",
             !date && "text-muted-foreground",
-            className,
+            className
           )}
         >
           <CalendarIcon className="mr-2 size-4" />
@@ -95,7 +111,10 @@ export function DatePicker({
             </Button>
 
             <div className="flex gap-2 flex-1">
-              <Select value={months[month.getMonth()]} onValueChange={handleMonthChange}>
+              <Select
+                value={months[month.getMonth()]}
+                onValueChange={handleMonthChange}
+              >
                 <SelectTrigger className="h-8 text-sm">
                   <SelectValue />
                 </SelectTrigger>
@@ -108,13 +127,20 @@ export function DatePicker({
                 </SelectContent>
               </Select>
 
-              <Select value={month.getFullYear().toString()} onValueChange={handleYearChange}>
+              <Select
+                value={month.getFullYear().toString()}
+                onValueChange={handleYearChange}
+              >
                 <SelectTrigger className="h-8 w-24 text-sm">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
                   {years.map((y) => (
-                    <SelectItem key={y} value={y.toString()} className="text-sm">
+                    <SelectItem
+                      key={y}
+                      value={y.toString()}
+                      className="text-sm"
+                    >
                       {y}
                     </SelectItem>
                   ))}

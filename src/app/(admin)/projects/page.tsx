@@ -1,7 +1,7 @@
-import { ProjectsPage } from "@/components/ProjectsPage"
+import { ProjectsPage } from "@/components/ProjectsPage";
 
 const Page = () => {
-    return <ProjectsPage />
-}
+  return <ProjectsPage />;
+};
 
-export default Page
+export default Page;

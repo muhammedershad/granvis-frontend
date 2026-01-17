@@ -1,7 +1,5 @@
-'use client' 
+"use client";
 
-const Page = () => {
-    
-}
+const Page = () => {};
 
 export default Page;

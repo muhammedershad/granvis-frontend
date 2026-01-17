@@ -5,7 +5,7 @@ import { AdminDashboard } from "@/components/AdminDashboard";
 export default function AdminDashboardPage() {
   return (
     <RoleGuard allowedRoles={[IAuthRoles.ADMIN, IAuthRoles.SUPER_ADMIN]}>
-        <AdminDashboard />
+      <AdminDashboard />
     </RoleGuard>
   );
 }

@@ -1,9 +1,9 @@
-'use client'
+"use client";
 
-import { CRMPage } from "@/components/CRMPage"
+import { CRMPage } from "@/components/CRMPage";
 
 const Page = () => {
-    return <CRMPage />
-}
+  return <CRMPage />;
+};
 
-export default Page
+export default Page;

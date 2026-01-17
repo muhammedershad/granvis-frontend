@@ -9,10 +9,10 @@ export interface Project {
   clientPhone?: string;
 
   // Project Details
-  type: 'Villa' | 'Commercial' | 'Interior' | 'Landscape';
+  type: "Villa" | "Commercial" | "Interior" | "Landscape";
   category?: string; // subcategory like "Residential Villa", "Office Complex", etc.
-  status: 'Planning' | 'In Progress' | 'On Hold' | 'Completed' | 'Cancelled';
-  priority: 'Low' | 'Medium' | 'High' | 'Critical';
+  status: "Planning" | "In Progress" | "On Hold" | "Completed" | "Cancelled";
+  priority: "Low" | "Medium" | "High" | "Critical";
 
   // Timeline
   startDate: string;
@@ -87,7 +87,7 @@ export interface ProjectFilters {
 
 export interface ProjectSort {
   field: keyof Project;
-  direction: 'asc' | 'desc';
+  direction: "asc" | "desc";
 }
 
-export type ProjectViewType = 'cards' | 'table';
+export type ProjectViewType = "cards" | "table";

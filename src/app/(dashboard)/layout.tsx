@@ -1,4 +1,4 @@
-'use client';
+"use client";
 import MainLayout from "@/components/MainLayout";
 
 export default function DashboardLayout({
@@ -6,9 +6,5 @@ export default function DashboardLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  return (
-    <MainLayout>
-      {children}
-    </MainLayout>
-  );
+  return <MainLayout>{children}</MainLayout>;
 }

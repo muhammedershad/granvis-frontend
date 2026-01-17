@@ -1,45 +1,48 @@
-import { apiSlice } from './apiSlice';
-import { Client } from '@/types/client';
+import { apiSlice } from "./apiSlice";
+import { Client } from "@/types/client";
 
 // Extend the main API slice with client endpoints
 export const clientsApi = apiSlice.injectEndpoints({
   endpoints: (builder) => ({
     // Get all clients with optional filters and pagination
-    getClients: builder.query<{
-      data: Client[];
-      total: number;
-      page: number;
-      limit: number;
-      totalPages: number;
-    }, {
-      status?: string;
-      priority?: string;
-      industry?: string;
-      search?: string;
-      companyType?: string;
-      source?: string;
-      page?: number;
-      limit?: number;
-    }>({
+    getClients: builder.query<
+      {
+        data: Client[];
+        total: number;
+        page: number;
+        limit: number;
+        totalPages: number;
+      },
+      {
+        status?: string;
+        priority?: string;
+        industry?: string;
+        search?: string;
+        companyType?: string;
+        source?: string;
+        page?: number;
+        limit?: number;
+      }
+    >({
       query: (filters) => {
         const params = new URLSearchParams();
         Object.entries(filters || {}).forEach(([key, value]) => {
-          if (value !== undefined && value !== null && value !== '') {
+          if (value !== undefined && value !== null && value !== "") {
             params.append(key, String(value));
           }
         });
         return {
           url: `/clients?${params.toString()}`,
-          method: 'GET',
+          method: "GET",
         };
       },
       providesTags: (result) =>
         result?.data
           ? [
-              ...result.data.map(({ id }) => ({ type: 'Client' as const, id })),
-              { type: 'Client' as const, id: 'LIST' },
+              ...result.data.map(({ id }) => ({ type: "Client" as const, id })),
+              { type: "Client" as const, id: "LIST" },
             ]
-          : [{ type: 'Client' as const, id: 'LIST' }],
+          : [{ type: "Client" as const, id: "LIST" }],
       keepUnusedDataFor: 300, // Cache for 5 minutes
     }),
 
@@ -47,35 +50,38 @@ export const clientsApi = apiSlice.injectEndpoints({
     getClientById: builder.query<Client, string>({
       query: (id) => ({
         url: `/clients/${id}`,
-        method: 'GET',
+        method: "GET",
       }),
-      providesTags: (result, error, id) => [{ type: 'Client' as const, id }],
+      providesTags: (result, error, id) => [{ type: "Client" as const, id }],
       keepUnusedDataFor: 300,
     }),
 
     // Get client statistics
-    getClientStatistics: builder.query<{
-      totalClients: number;
-      activeClients: number;
-      inactiveClients: number;
-      potentialClients: number;
-      formerClients: number;
-      vipClients: number;
-      totalValue: number;
-      avgValue: number;
-      totalProjects: number;
-      activeProjects: number;
-      completedProjects: number;
-      byIndustry: Record<string, number>;
-      byStatus: Record<string, number>;
-      byPriority: Record<string, number>;
-      byArchitecturalStyle: Record<string, number>;
-    }, void>({
+    getClientStatistics: builder.query<
+      {
+        totalClients: number;
+        activeClients: number;
+        inactiveClients: number;
+        potentialClients: number;
+        formerClients: number;
+        vipClients: number;
+        totalValue: number;
+        avgValue: number;
+        totalProjects: number;
+        activeProjects: number;
+        completedProjects: number;
+        byIndustry: Record<string, number>;
+        byStatus: Record<string, number>;
+        byPriority: Record<string, number>;
+        byArchitecturalStyle: Record<string, number>;
+      },
+      void
+    >({
       query: () => ({
-        url: '/clients/statistics',
-        method: 'GET',
+        url: "/clients/statistics",
+        method: "GET",
       }),
-      providesTags: [{ type: 'Client' as const, id: 'STATS' }],
+      providesTags: [{ type: "Client" as const, id: "STATS" }],
       keepUnusedDataFor: 120, // Cache for 2 minutes
     }),
 
@@ -83,62 +89,71 @@ export const clientsApi = apiSlice.injectEndpoints({
     searchClients: builder.query<Client[], string>({
       query: (query) => ({
         url: `/clients/search/${query}`,
-        method: 'GET',
+        method: "GET",
       }),
-      providesTags: [{ type: 'Client' as const, id: 'SEARCH' }],
+      providesTags: [{ type: "Client" as const, id: "SEARCH" }],
       keepUnusedDataFor: 180, // Cache for 3 minutes
     }),
 
     // Create a new client
-    createClient: builder.mutation<Client, Omit<Client, 'id' | 'createdAt' | 'updatedAt'>>({
+    createClient: builder.mutation<
+      Client,
+      Omit<Client, "id" | "createdAt" | "updatedAt">
+    >({
       query: (client) => ({
-        url: '/clients',
-        method: 'POST',
+        url: "/clients",
+        method: "POST",
         body: client,
       }),
       invalidatesTags: [
-        { type: 'Client' as const, id: 'LIST' },
-        { type: 'Client' as const, id: 'STATS' },
+        { type: "Client" as const, id: "LIST" },
+        { type: "Client" as const, id: "STATS" },
       ],
     }),
 
     // Update an existing client
-    updateClient: builder.mutation<Client, { id: string; data: Partial<Client> }>({
+    updateClient: builder.mutation<
+      Client,
+      { id: string; data: Partial<Client> }
+    >({
       query: ({ id, data }) => ({
         url: `/clients/${id}`,
-        method: 'PATCH',
+        method: "PATCH",
         body: data,
       }),
       invalidatesTags: (result, error, { id }) => [
-        { type: 'Client' as const, id },
-        { type: 'Client' as const, id: 'LIST' },
-        { type: 'Client' as const, id: 'STATS' },
+        { type: "Client" as const, id },
+        { type: "Client" as const, id: "LIST" },
+        { type: "Client" as const, id: "STATS" },
       ],
     }),
 
     // Delete a client
-    deleteClient: builder.mutation<{ deleted: boolean; message: string }, string>({
+    deleteClient: builder.mutation<
+      { deleted: boolean; message: string },
+      string
+    >({
       query: (id) => ({
         url: `/clients/${id}`,
-        method: 'DELETE',
+        method: "DELETE",
       }),
       invalidatesTags: (result, error, id) => [
-        { type: 'Client' as const, id },
-        { type: 'Client' as const, id: 'LIST' },
-        { type: 'Client' as const, id: 'STATS' },
+        { type: "Client" as const, id },
+        { type: "Client" as const, id: "LIST" },
+        { type: "Client" as const, id: "STATS" },
       ],
     }),
 
     // Bulk delete clients
     bulkDeleteClients: builder.mutation<{ deletedCount: number }, string[]>({
       query: (ids) => ({
-        url: '/clients/bulk-delete',
-        method: 'POST',
+        url: "/clients/bulk-delete",
+        method: "POST",
         body: { ids },
       }),
       invalidatesTags: [
-        { type: 'Client' as const, id: 'LIST' },
-        { type: 'Client' as const, id: 'STATS' },
+        { type: "Client" as const, id: "LIST" },
+        { type: "Client" as const, id: "STATS" },
       ],
     }),
 
@@ -158,13 +173,13 @@ export const clientsApi = apiSlice.injectEndpoints({
     >({
       query: ({ id, projectCounts }) => ({
         url: `/clients/${id}/projects`,
-        method: 'PATCH',
+        method: "PATCH",
         body: projectCounts,
       }),
       invalidatesTags: (result, error, { id }) => [
-        { type: 'Client' as const, id },
-        { type: 'Client' as const, id: 'LIST' },
-        { type: 'Client' as const, id: 'STATS' },
+        { type: "Client" as const, id },
+        { type: "Client" as const, id: "LIST" },
+        { type: "Client" as const, id: "STATS" },
       ],
     }),
   }),

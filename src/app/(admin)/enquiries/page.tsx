@@ -1,7 +1,7 @@
 import { EnquiryPage } from "@/components/EnquiryPage";
 
 const Page = () => {
-    return <EnquiryPage />;
-}
+  return <EnquiryPage />;
+};
 
 export default Page;

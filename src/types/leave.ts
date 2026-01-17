@@ -15,7 +15,7 @@ export interface LeaveRequest {
   rejectedReason?: string;
   documents: LeaveDocument[];
   isHalfDay: boolean;
-  halfDaySession?: 'morning' | 'afternoon';
+  halfDaySession?: "morning" | "afternoon";
   emergencyContact?: {
     name: string;
     phone: string;
@@ -39,12 +39,12 @@ export interface LeaveType {
   icon: string;
 }
 
-export type LeaveStatus = 
-  | 'pending' 
-  | 'approved' 
-  | 'rejected' 
-  | 'cancelled' 
-  | 'withdrawn';
+export type LeaveStatus =
+  | "pending"
+  | "approved"
+  | "rejected"
+  | "cancelled"
+  | "withdrawn";
 
 export interface LeaveBalance {
   employeeId: string;

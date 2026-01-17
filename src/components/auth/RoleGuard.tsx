@@ -1,10 +1,10 @@
-'use client';
+"use client";
 
-import { useEffect } from 'react';
-import { useRouter } from 'next/navigation';
-import { useSelector } from 'react-redux';
-import { getAuthDetails, IAuthRoles } from '@/store/slices/authSlice';
-import { Loader2 } from 'lucide-react';
+import { useEffect } from "react";
+import { useRouter } from "next/navigation";
+import { useSelector } from "react-redux";
+import { IAuthRoles, getAuthDetails } from "@/store/slices/authSlice";
+import { Loader2 } from "lucide-react";
 
 interface RoleGuardProps {
   children: React.ReactNode;
@@ -25,22 +25,22 @@ export default function RoleGuard({ children, allowedRoles }: RoleGuardProps) {
       // Redirect based on role
       switch (user.role) {
         case IAuthRoles.SUPER_ADMIN:
-          router.push('/super-admin/dashboard');
+          router.push("/super-admin/dashboard");
           break;
         case IAuthRoles.ADMIN:
-          router.push('/admin/dashboard');
+          router.push("/admin/dashboard");
           break;
         case IAuthRoles.MANAGER:
-          router.push('/manager/dashboard');
+          router.push("/manager/dashboard");
           break;
         case IAuthRoles.ACCOUNTANT:
-          router.push('/accountant/dashboard');
+          router.push("/accountant/dashboard");
           break;
         case IAuthRoles.EMPLOYEE:
-          router.push('/employee/dashboard');
+          router.push("/employee/dashboard");
           break;
         default:
-          router.push('/');
+          router.push("/");
       }
     }
   }, [isAuthenticated, user, router, allowedRoles]);
@@ -50,9 +50,9 @@ export default function RoleGuard({ children, allowedRoles }: RoleGuardProps) {
   // if (!isAuthenticated || (user && !allowedRoles.includes(user.role as IAuthRoles))) {
   if (user && !allowedRoles.includes(user.role as IAuthRoles)) {
     return (
-        <div className="min-h-screen flex items-center justify-center">
-            <Loader2 className="w-8 h-8 animate-spin" />
-        </div>
+      <div className="min-h-screen flex items-center justify-center">
+        <Loader2 className="w-8 h-8 animate-spin" />
+      </div>
     );
   }
 

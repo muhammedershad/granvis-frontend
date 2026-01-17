@@ -1,7 +1,7 @@
-'use client';
-import React, { createContext, useContext, useEffect, useState } from 'react';
+"use client";
+import React, { createContext, useContext, useEffect, useState } from "react";
 
-type Theme = 'light' | 'dark';
+type Theme = "light" | "dark";
 
 interface ThemeContextType {
   theme: Theme;
@@ -14,7 +14,7 @@ const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 export function useTheme() {
   const context = useContext(ThemeContext);
   if (context === undefined) {
-    throw new Error('useTheme must be used within a ThemeProvider');
+    throw new Error("useTheme must be used within a ThemeProvider");
   }
   return context;
 }
@@ -24,33 +24,35 @@ interface ThemeProviderProps {
 }
 
 export function ThemeProvider({ children }: ThemeProviderProps) {
-  const [theme, setThemeState] = useState<Theme>('dark'); // Default to dark theme
+  const [theme, setThemeState] = useState<Theme>("dark"); // Default to dark theme
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
     // Get theme from localStorage or default to dark
-    const savedTheme = localStorage.getItem('theme') as Theme || 'dark';
+    const savedTheme = (localStorage.getItem("theme") as Theme) || "dark";
     setThemeState(savedTheme);
     setMounted(true);
   }, []);
 
   useEffect(() => {
-    if (!mounted) return;
+    if (!mounted) {
+      return;
+    }
 
     // Apply theme to document
     const root = document.documentElement;
-    if (theme === 'dark') {
-      root.classList.add('dark');
+    if (theme === "dark") {
+      root.classList.add("dark");
     } else {
-      root.classList.remove('dark');
+      root.classList.remove("dark");
     }
 
     // Save to localStorage
-    localStorage.setItem('theme', theme);
+    localStorage.setItem("theme", theme);
   }, [theme, mounted]);
 
   const toggleTheme = () => {
-    setThemeState(prev => prev === 'dark' ? 'light' : 'dark');
+    setThemeState((prev) => (prev === "dark" ? "light" : "dark"));
   };
 
   const setTheme = (newTheme: Theme) => {
@@ -60,7 +62,7 @@ export function ThemeProvider({ children }: ThemeProviderProps) {
   // Prevent flash of wrong theme by rendering with default theme until mounted
   if (!mounted) {
     return (
-      <ThemeContext.Provider value={{ theme: 'dark', toggleTheme, setTheme }}>
+      <ThemeContext.Provider value={{ theme: "dark", toggleTheme, setTheme }}>
         {children}
       </ThemeContext.Provider>
     );

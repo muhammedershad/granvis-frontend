@@ -1,9 +1,9 @@
-'use client'
+"use client";
 
-import { ClientsPage } from "@/components/ClientsPage"
+import { ClientsPage } from "@/components/ClientsPage";
 
 const Page = () => {
-    return <ClientsPage />
-}
+  return <ClientsPage />;
+};
 
-export default Page
+export default Page;

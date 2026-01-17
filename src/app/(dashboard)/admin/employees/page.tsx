@@ -1,4 +1,4 @@
-'use client';
+"use client";
 
 import RoleGuard from "@/components/auth/RoleGuard";
 import { EmployeesPage } from "@/components/EmployeesPage";

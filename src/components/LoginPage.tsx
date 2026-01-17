@@ -1,32 +1,32 @@
-'use client';
+"use client";
 
 import { useState } from "react";
-import { useRouter } from 'next/navigation';
-import { useDispatch } from 'react-redux';
-import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
+import { useRouter } from "next/navigation";
+import { useDispatch } from "react-redux";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";
 import { Label } from "./ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "./ui/card";
-import { 
-  Eye, 
-  EyeOff, 
-  Mail, 
-  Lock, 
-  Building2, 
+import {
+  AlertCircle,
   ArrowRight,
+  Building2,
+  Eye,
+  EyeOff,
+  Lock,
+  Mail,
   Shield,
-  Zap,
   Sparkles,
-  AlertCircle
+  Zap,
 } from "lucide-react";
 import { ThemeToggle } from "./ThemeToggle";
-import { useLoginMutation } from '@/lib/api/apiSlice';
-import { setCredentials } from '@/store/slices/authSlice';
-import { setCookie } from '@/lib/cookies';
-import { loginSchema, type LoginFormData } from '@/lib/validations/auth';
-import { Alert, AlertDescription } from './ui/alert';
+import { useLoginMutation } from "@/lib/api/apiSlice";
+import { setCredentials } from "@/store/slices/authSlice";
+import { setCookie } from "@/lib/cookies";
+import { type LoginFormData, loginSchema } from "@/lib/validations/auth";
+import { Alert, AlertDescription } from "./ui/alert";
 
 export function LoginPage() {
   const [showPassword, setShowPassword] = useState(false);
@@ -42,8 +42,8 @@ export function LoginPage() {
   } = useForm<LoginFormData>({
     resolver: zodResolver(loginSchema),
     defaultValues: {
-      email: '',
-      password: '',
+      email: "",
+      password: "",
     },
   });
 
@@ -51,60 +51,62 @@ export function LoginPage() {
     try {
       const response = await login(data).unwrap();
 
-      console.log('Login successful:', response);
+      console.warn("Login successful:", response);
 
       // Store tokens in cookies
-      setCookie('accessToken', response?.tokens?.accessToken, 1); // 1 day
-      setCookie('refreshToken', response?.tokens?.refreshToken, 7); // 7 days
+      setCookie("accessToken", response?.tokens?.accessToken, 1); // 1 day
+      setCookie("refreshToken", response?.tokens?.refreshToken, 7); // 7 days
 
       // Store user in Redux
-      dispatch(setCredentials({
-        user: response.user,
-      }));
+      dispatch(
+        setCredentials({
+          user: response.user,
+        })
+      );
 
       // Small delay to ensure Redux persist saves the state before navigation
-      await new Promise(resolve => setTimeout(resolve, 150));
+      await new Promise((resolve) => setTimeout(resolve, 150));
 
       // Role-based navigation
       const userRole = response.user?.role;
-      let dashboardRoute = '/dashboard';
+      let dashboardRoute = "/dashboard";
 
       switch (userRole) {
-        case 'super_admin':
-          dashboardRoute = '/super-admin/dashboard';
+        case "super_admin":
+          dashboardRoute = "/super-admin/dashboard";
           break;
-        case 'admin':
-          dashboardRoute = '/admin/dashboard';
+        case "admin":
+          dashboardRoute = "/admin/dashboard";
           break;
-        case 'manager':
-          dashboardRoute = '/manager/dashboard';
+        case "manager":
+          dashboardRoute = "/manager/dashboard";
           break;
-        case 'accountant':
-          dashboardRoute = '/accountant/dashboard';
+        case "accountant":
+          dashboardRoute = "/accountant/dashboard";
           break;
-        case 'employee':
-          dashboardRoute = '/employee/dashboard';
+        case "employee":
+          dashboardRoute = "/employee/dashboard";
           break;
         default:
-          dashboardRoute = '/dashboard';
+          dashboardRoute = "/dashboard";
       }
 
       // Navigate to role-specific dashboard
       router.push(dashboardRoute);
     } catch (err: unknown) {
-      console.error('Login failed:', err);
+      console.error("Login failed:", err);
 
       // Handle specific error messages from backend
       const error = err as { data?: { message?: string } };
       if (error?.data?.message) {
-        setError('root', {
-          type: 'manual',
+        setError("root", {
+          type: "manual",
           message: error.data.message,
         });
       } else {
-        setError('root', {
-          type: 'manual',
-          message: 'Login failed. Please check your credentials and try again.',
+        setError("root", {
+          type: "manual",
+          message: "Login failed. Please check your credentials and try again.",
         });
       }
     }
@@ -120,21 +122,30 @@ export function LoginPage() {
       {/* Animated background elements - only show in dark theme */}
       <div className="fixed inset-0 overflow-hidden pointer-events-none opacity-0 dark:opacity-100 transition-opacity duration-500">
         <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-purple-500/10 rounded-full blur-3xl animate-pulse"></div>
-        <div className="absolute top-3/4 right-1/4 w-96 h-96 bg-blue-500/10 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '1s' }}></div>
-        <div className="absolute bottom-1/4 left-1/3 w-96 h-96 bg-cyan-500/10 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '2s' }}></div>
+        <div
+          className="absolute top-3/4 right-1/4 w-96 h-96 bg-blue-500/10 rounded-full blur-3xl animate-pulse"
+          style={{ animationDelay: "1s" }}
+        ></div>
+        <div
+          className="absolute bottom-1/4 left-1/3 w-96 h-96 bg-cyan-500/10 rounded-full blur-3xl animate-pulse"
+          style={{ animationDelay: "2s" }}
+        ></div>
       </div>
 
       {/* Light theme background pattern */}
       <div className="fixed inset-0 overflow-hidden pointer-events-none opacity-100 dark:opacity-0 transition-opacity duration-500 bg-gradient-to-br from-blue-50/50 via-indigo-50/30 to-purple-50/50"></div>
 
       {/* Subtle grid overlay */}
-      <div className="fixed inset-0 opacity-5 dark:opacity-5 pointer-events-none" style={{
-        backgroundImage: `
+      <div
+        className="fixed inset-0 opacity-5 dark:opacity-5 pointer-events-none"
+        style={{
+          backgroundImage: `
           linear-gradient(rgba(0, 0, 0, 0.1) 1px, transparent 1px),
           linear-gradient(90deg, rgba(0, 0, 0, 0.1) 1px, transparent 1px)
         `,
-        backgroundSize: '50px 50px'
-      }}></div>
+          backgroundSize: "50px 50px",
+        }}
+      ></div>
 
       {/* Main Content */}
       <div className="w-full max-w-md relative z-10">
@@ -145,16 +156,22 @@ export function LoginPage() {
             <div className="absolute inset-0 bg-gradient-to-br from-purple-400/20 to-blue-400/20 rounded-2xl blur-lg"></div>
           </div>
           <h1 className="text-3xl text-foreground mb-2">Griha Architects</h1>
-          <p className="text-muted-foreground">Welcome back to your application</p>
+          <p className="text-muted-foreground">
+            Welcome back to your application
+          </p>
         </div>
 
         {/* Login Card */}
         <Card className="bg-card/20 dark:bg-black/20 border-border backdrop-blur-xl relative overflow-hidden">
           <div className="absolute inset-0 bg-gradient-to-br from-purple-500/5 to-blue-500/5"></div>
-          
+
           <CardHeader className="relative z-10 text-center pb-6">
-            <CardTitle className="text-card-foreground text-xl">Sign In</CardTitle>
-            <p className="text-muted-foreground text-sm">Enter your credentials to access your account</p>
+            <CardTitle className="text-card-foreground text-xl">
+              Sign In
+            </CardTitle>
+            <p className="text-muted-foreground text-sm">
+              Enter your credentials to access your account
+            </p>
           </CardHeader>
 
           <CardContent className="relative z-10 space-y-6">
@@ -177,10 +194,12 @@ export function LoginPage() {
                   <Input
                     id="email"
                     type="email"
-                    {...register('email')}
+                    {...register("email")}
                     placeholder="john@architecturalpro.com"
                     className={`pl-10 bg-card/50 border-border text-foreground placeholder:text-muted-foreground focus:ring-2 focus:ring-purple-500/50 focus:border-purple-500/50 ${
-                      errors.email ? 'border-red-500 focus:ring-red-500/50 focus:border-red-500/50' : ''
+                      errors.email
+                        ? "border-red-500 focus:ring-red-500/50 focus:border-red-500/50"
+                        : ""
                     }`}
                   />
                 </div>
@@ -202,10 +221,12 @@ export function LoginPage() {
                   <Input
                     id="password"
                     type={showPassword ? "text" : "password"}
-                    {...register('password')}
+                    {...register("password")}
                     placeholder="Enter your password"
                     className={`pl-10 pr-10 bg-card/50 border-border text-foreground placeholder:text-muted-foreground focus:ring-2 focus:ring-purple-500/50 focus:border-purple-500/50 ${
-                      errors.password ? 'border-red-500 focus:ring-red-500/50 focus:border-red-500/50' : ''
+                      errors.password
+                        ? "border-red-500 focus:ring-red-500/50 focus:border-red-500/50"
+                        : ""
                     }`}
                   />
                   <Button
@@ -215,7 +236,11 @@ export function LoginPage() {
                     className="absolute right-1 top-1/2 transform -translate-y-1/2 text-muted-foreground hover:text-foreground h-8 w-8"
                     onClick={() => setShowPassword(!showPassword)}
                   >
-                    {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                    {showPassword ? (
+                      <EyeOff className="w-4 h-4" />
+                    ) : (
+                      <Eye className="w-4 h-4" />
+                    )}
                   </Button>
                 </div>
                 {errors.password && (

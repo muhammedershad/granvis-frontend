@@ -1,9 +1,9 @@
-'use client';
-import React from 'react';
-import { Provider } from 'react-redux';
-import { store, persistor } from './store';
-import { PersistGate } from 'redux-persist/es/integration/react';
-import { Loader2 } from 'lucide-react';
+"use client";
+import React from "react";
+import { Provider } from "react-redux";
+import { persistor, store } from "./store";
+import { PersistGate } from "redux-persist/es/integration/react";
+import { Loader2 } from "lucide-react";
 
 const LoadingScreen = () => (
   <div className="min-h-screen bg-gradient-to-br from-background via-background to-background dark:from-gray-900 dark:via-black dark:to-gray-900 flex items-center justify-center">
@@ -19,10 +19,11 @@ export default function StoreProvider({
 }: {
   children: React.ReactNode;
 }) {
-
-  return <Provider store={store}>
-     <PersistGate loading={<LoadingScreen />} persistor={persistor}>
-    {children}
-    </PersistGate>
-    </Provider>;
+  return (
+    <Provider store={store}>
+      <PersistGate loading={<LoadingScreen />} persistor={persistor}>
+        {children}
+      </PersistGate>
+    </Provider>
+  );
 }

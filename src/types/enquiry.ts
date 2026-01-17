@@ -4,7 +4,7 @@ export interface Enquiry {
   email?: string;
   phone: string;
   careOf: {
-    type: 'existing' | 'new';
+    type: "existing" | "new";
     clientId?: string;
     clientName?: string;
     name?: string;
@@ -12,9 +12,15 @@ export interface Enquiry {
   };
   projectDetails: string;
   customFields: { [key: string]: string };
-  status: 'new' | 'follow-up' | 'converted' | 'dead-lead';
-  priority: 'low' | 'medium' | 'high' | 'urgent';
-  source: 'website' | 'referral' | 'social-media' | 'advertisement' | 'walk-in' | 'other';
+  status: "new" | "follow-up" | "converted" | "dead-lead";
+  priority: "low" | "medium" | "high" | "urgent";
+  source:
+    | "website"
+    | "referral"
+    | "social-media"
+    | "advertisement"
+    | "walk-in"
+    | "other";
   estimatedBudget?: string;
   estimatedTimeline?: string;
   dateCreated: string;
@@ -30,7 +36,7 @@ export interface EnquiryFormData {
   email: string;
   phone: string;
   careOf: {
-    type: 'existing' | 'new';
+    type: "existing" | "new";
     clientId?: string;
     clientName?: string;
     name?: string;
@@ -38,8 +44,14 @@ export interface EnquiryFormData {
   };
   projectDetails: string;
   customFields: { [key: string]: string };
-  priority: 'low' | 'medium' | 'high' | 'urgent';
-  source: 'website' | 'referral' | 'social-media' | 'advertisement' | 'walk-in' | 'other';
+  priority: "low" | "medium" | "high" | "urgent";
+  source:
+    | "website"
+    | "referral"
+    | "social-media"
+    | "advertisement"
+    | "walk-in"
+    | "other";
   estimatedBudget?: string;
   estimatedTimeline?: string;
   assignedTo?: string;
@@ -49,9 +61,14 @@ export interface FollowUp {
   id: string;
   enquiryId: string;
   date: string;
-  method: 'call' | 'email' | 'meeting' | 'site-visit';
+  method: "call" | "email" | "meeting" | "site-visit";
   notes: string;
   nextFollowUpDate?: string;
-  outcome: 'interested' | 'not-interested' | 'needs-more-info' | 'converted' | 'postponed';
+  outcome:
+    | "interested"
+    | "not-interested"
+    | "needs-more-info"
+    | "converted"
+    | "postponed";
   createdBy: string;
 }

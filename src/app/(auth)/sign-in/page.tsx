@@ -1,7 +1,7 @@
 import { LoginPage } from "@/components/LoginPage";
 
 const Page = () => {
-  return <LoginPage/>
-}
+  return <LoginPage />;
+};
 
 export default Page;
