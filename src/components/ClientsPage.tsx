@@ -5,7 +5,6 @@ import {
   Search,
   Plus,
   Filter,
-  Download,
   MoreHorizontal,
   Edit,
   Eye,

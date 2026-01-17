@@ -84,16 +84,17 @@ const mockEmployeeDetails: Employee & {
   name: "Sarah Chen",
   firstName: "Sarah",
   lastName: "Chen",
+  gender: "Female",
   email: "sarah.chen@company.com",
   phone: "+1 (555) 123-4567",
   position: "Senior Software Architect",
-  department: "Engineering",
+  department: "architecture",
+  role: "employee",
   status: "Active",
   avatar: "",
   joinDate: "2021-03-15",
   employeeId: "EMP001",
   salary: 120000,
-  team: "Platform Architecture",
   manager: "James Wilson",
   hireDate: "2021-03-15",
   employmentStatus: "Active",
@@ -103,11 +104,15 @@ const mockEmployeeDetails: Employee & {
     street: "123 Main St",
     city: "San Francisco",
     state: "CA",
-    zipCode: "94102",
+    pinCode: "94102",
     country: "USA"
   },
   experience: 8,
-  education: "Master's in Computer Science",
+  education: {
+    degree: "Master's in Computer Science",
+    university: "Stanford University",
+    dateOfPassing: "2016-06-15"
+  },
   createdAt: "2021-03-15",
   updatedAt: "2024-01-15",
   location: "San Francisco, CA",
@@ -156,7 +161,7 @@ const mockEmployeeDetails: Employee & {
     {
       id: "1",
       position: "Senior Software Architect",
-      department: "Engineering",
+      department: "architecture",
       startDate: "2023-01-01",
       description: "Lead technical architecture for core platform, mentoring team of 8 developers",
       achievements: [
@@ -168,7 +173,7 @@ const mockEmployeeDetails: Employee & {
     {
       id: "2",
       position: "Senior Software Engineer",
-      department: "Engineering",
+      department: "architecture",
       startDate: "2021-03-15",
       endDate: "2022-12-31",
       description: "Full-stack development on core product features",
@@ -185,7 +190,8 @@ const mockEmployeeDetails: Employee & {
       name: "Alex Thompson",
       email: "alex.thompson@company.com",
       position: "Software Engineer",
-      department: "Engineering",
+      department: "architecture",
+      role: "employee",
       status: "Active",
       avatar: "",
       joinDate: "2022-06-01",
@@ -194,16 +200,16 @@ const mockEmployeeDetails: Employee & {
       salary: 0,
       firstName: "Alex",
       lastName: "Thompson",
+      gender: "Male",
       employmentStatus: "Active",
       employmentType: "Full-time",
       dateOfBirth: "",
-      address: { street: "", city: "", state: "", zipCode: "", country: "" },
+      address: { street: "", city: "", state: "", pinCode: "", country: "" },
       emergencyContact: { name: "", relationship: "", phone: "" },
       skills: [],
       experience: 0,
-      education: "",
+      education: { degree: "", university: "", dateOfPassing: "" },
       certifications: [],
-      team: "",
       manager: "",
       hireDate: "2022-06-01",
       createdAt: "2022-06-01",
@@ -214,7 +220,8 @@ const mockEmployeeDetails: Employee & {
       name: "Maria Rodriguez",
       email: "maria.rodriguez@company.com",
       position: "Frontend Developer",
-      department: "Engineering",
+      department: "architecture",
+      role: "employee",
       status: "Active",
       avatar: "",
       joinDate: "2023-02-15",
@@ -223,16 +230,16 @@ const mockEmployeeDetails: Employee & {
       salary: 0,
       firstName: "Maria",
       lastName: "Rodriguez",
+      gender: "Female",
       employmentStatus: "Active",
       employmentType: "Full-time",
       dateOfBirth: "",
-      address: { street: "", city: "", state: "", zipCode: "", country: "" },
+      address: { street: "", city: "", state: "", pinCode: "", country: "" },
       emergencyContact: { name: "", relationship: "", phone: "" },
       skills: [],
       experience: 0,
-      education: "",
+      education: { degree: "", university: "", dateOfPassing: "" },
       certifications: [],
-      team: "",
       manager: "",
       hireDate: "2023-02-15",
       createdAt: "2023-02-15",
@@ -244,7 +251,8 @@ const mockEmployeeDetails: Employee & {
     name: "James Wilson",
     email: "james.wilson@company.com",
     position: "Engineering Director",
-    department: "Engineering",
+    department: "architecture",
+    role: "manager",
     status: "Active",
     avatar: "",
     joinDate: "2020-01-10",
@@ -253,16 +261,16 @@ const mockEmployeeDetails: Employee & {
     salary: 0,
     firstName: "James",
     lastName: "Wilson",
+    gender: "Male",
     employmentStatus: "Active",
     employmentType: "Full-time",
     dateOfBirth: "",
-    address: { street: "", city: "", state: "", zipCode: "", country: "" },
+    address: { street: "", city: "", state: "", pinCode: "", country: "" },
     emergencyContact: { name: "", relationship: "", phone: "" },
     skills: [],
     experience: 0,
-    education: "",
+    education: { degree: "", university: "", dateOfPassing: "" },
     certifications: [],
-    team: "",
     manager: "",
     hireDate: "2020-01-10",
     createdAt: "2020-01-10",
@@ -293,10 +301,13 @@ export function EmployeeDetailsPage({ employeeId, onBack }: EmployeeDetailsPageP
   };
 
   const getStatusColor = (status: string) => {
-    switch (status) {
+    switch (status.toLowerCase()) {
       case "active": return "bg-green-500/20 text-green-400 border-green-500/30";
       case "completed": return "bg-blue-500/20 text-blue-400 border-blue-500/30";
       case "paused": return "bg-yellow-500/20 text-yellow-400 border-yellow-500/30";
+      case "inactive": return "bg-gray-500/20 text-gray-400 border-gray-500/30";
+      case "on leave": return "bg-orange-500/20 text-orange-400 border-orange-500/30";
+      case "terminated": return "bg-red-500/20 text-red-400 border-red-500/30";
       default: return "bg-gray-500/20 text-gray-400 border-gray-500/30";
     }
   };
@@ -431,7 +442,7 @@ export function EmployeeDetailsPage({ employeeId, onBack }: EmployeeDetailsPageP
                       {isEditing ? (
                         <Select
                           value={editedEmployee.department}
-                          onValueChange={(value) => setEditedEmployee(prev => ({ ...prev, department: value }))}
+                          onValueChange={(value) => setEditedEmployee(prev => ({ ...prev, department: value as Employee['department'] }))}
                         >
                           <SelectTrigger className="mt-1 bg-white/5 border-white/10 text-white">
                             <SelectValue />
@@ -593,15 +604,15 @@ export function EmployeeDetailsPage({ employeeId, onBack }: EmployeeDetailsPageP
               <CardContent className="space-y-3">
                 <div className="flex items-center justify-between">
                   <span className="text-white/70">Name</span>
-                  <span className="text-white/90">{employee.emergencyContact.name}</span>
+                  <span className="text-white/90">{employee.emergencyContact?.name || 'N/A'}</span>
                 </div>
                 <div className="flex items-center justify-between">
                   <span className="text-white/70">Relationship</span>
-                  <span className="text-white/90">{employee.emergencyContact.relationship}</span>
+                  <span className="text-white/90">{employee.emergencyContact?.relationship || 'N/A'}</span>
                 </div>
                 <div className="flex items-center justify-between">
                   <span className="text-white/70">Phone</span>
-                  <span className="text-white/90">{employee.emergencyContact.phone}</span>
+                  <span className="text-white/90">{employee.emergencyContact?.phone || 'N/A'}</span>
                 </div>
               </CardContent>
             </Card>

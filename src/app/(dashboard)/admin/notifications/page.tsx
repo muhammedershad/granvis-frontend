@@ -2,8 +2,6 @@
 
 import RoleGuard from "@/components/auth/RoleGuard";
 import { IAuthRoles } from "@/store/slices/authSlice";
-import { Card } from "@/components/ui/card";
-import { Bell } from "lucide-react";
 import { NotificationPage } from "@/components/NotificationPage";
 
 export default function AdminNotificationsPage() {

@@ -49,12 +49,13 @@ const mockEmployees: Employee[] = [
     name: "John Doe",
     firstName: "John",
     lastName: "Doe",
+    gender: "Male",
     email: "john.doe@architecturalpro.com",
     phone: "+1 (555) 123-4567",
     employeeId: "EMP001",
     position: "Senior Architect",
-    department: "Design",
-    team: "Residential Projects",
+    department: "architecture",
+    role: "employee",
     manager: "Jane Smith",
     hireDate: "2022-03-15",
     joinDate: "2022-03-15",
@@ -67,7 +68,7 @@ const mockEmployees: Employee[] = [
       street: "123 Main St",
       city: "New York",
       state: "NY",
-      zipCode: "10001",
+      pinCode: "10001",
       country: "USA"
     },
     emergencyContact: {
@@ -77,7 +78,11 @@ const mockEmployees: Employee[] = [
     },
     skills: ["AutoCAD", "Revit", "3D Modeling", "Project Management"],
     experience: 8,
-    education: "Master's in Architecture",
+    education: {
+      degree: "Master's in Architecture",
+      university: "MIT",
+      dateOfPassing: "2016-05-20"
+    },
     certifications: ["LEED AP", "NCARB"],
     createdAt: "2022-03-15",
     updatedAt: "2024-01-15"
@@ -86,13 +91,14 @@ const mockEmployees: Employee[] = [
     id: "2",
     name: "Sarah Johnson",
     firstName: "Sarah",
+    gender: "Female",
     lastName: "Johnson",
     email: "sarah.johnson@architecturalpro.com",
     phone: "+1 (555) 234-5678",
     employeeId: "EMP002",
     position: "Interior Designer",
-    department: "Interior Design",
-    team: "Commercial Projects",
+    department: "interior",
+    role: "employee",
     manager: "Mike Wilson",
     hireDate: "2023-01-10",
     joinDate: "2023-01-10",
@@ -105,7 +111,7 @@ const mockEmployees: Employee[] = [
       street: "456 Oak Ave",
       city: "Los Angeles",
       state: "CA",
-      zipCode: "90210",
+      pinCode: "90210",
       country: "USA"
     },
     emergencyContact: {
@@ -115,7 +121,11 @@ const mockEmployees: Employee[] = [
     },
     skills: ["Interior Design", "Space Planning", "3D Visualization", "Color Theory"],
     experience: 5,
-    education: "Bachelor's in Interior Design",
+    education: {
+      degree: "Bachelor's in Interior Design",
+      university: "Rhode Island School of Design",
+      dateOfPassing: "2020-05-15"
+    },
     certifications: ["NCIDQ", "LEED Green Associate"],
     createdAt: "2023-01-10",
     updatedAt: "2024-01-15"
@@ -124,13 +134,14 @@ const mockEmployees: Employee[] = [
     id: "3",
     name: "Michael Chen",
     firstName: "Michael",
+    gender: "Male",
     lastName: "Chen",
     email: "michael.chen@architecturalpro.com",
     phone: "+1 (555) 345-6789",
     employeeId: "EMP003",
     position: "Landscape Architect",
-    department: "Landscape",
-    team: "Urban Planning",
+    department: "landscape",
+    role: "employee",
     manager: "Lisa Brown",
     hireDate: "2021-08-20",
     joinDate: "2021-08-20",
@@ -143,7 +154,7 @@ const mockEmployees: Employee[] = [
       street: "789 Pine St",
       city: "Seattle",
       state: "WA",
-      zipCode: "98101",
+      pinCode: "98101",
       country: "USA"
     },
     emergencyContact: {
@@ -153,7 +164,11 @@ const mockEmployees: Employee[] = [
     },
     skills: ["Landscape Design", "Site Planning", "Sustainability", "GIS"],
     experience: 6,
-    education: "Master's in Landscape Architecture",
+    education: {
+      degree: "Master's in Landscape Architecture",
+      university: "Harvard GSD",
+      dateOfPassing: "2018-05-20"
+    },
     certifications: ["PLA", "LEED AP"],
     createdAt: "2021-08-20",
     updatedAt: "2024-01-15"
@@ -162,13 +177,14 @@ const mockEmployees: Employee[] = [
     id: "4",
     name: "Emily Rodriguez",
     firstName: "Emily",
+    gender: "Female",
     lastName: "Rodriguez",
     email: "emily.rodriguez@architecturalpro.com",
     phone: "+1 (555) 456-7890",
     employeeId: "EMP004",
     position: "Project Manager",
-    department: "Project Management",
-    team: "Large Scale Projects",
+    department: "admin",
+    role: "admin",
     manager: "David Lee",
     hireDate: "2023-06-01",
     joinDate: "2023-06-01",
@@ -181,7 +197,7 @@ const mockEmployees: Employee[] = [
       street: "321 Elm St",
       city: "Chicago",
       state: "IL",
-      zipCode: "60601",
+      pinCode: "60601",
       country: "USA"
     },
     emergencyContact: {
@@ -191,7 +207,11 @@ const mockEmployees: Employee[] = [
     },
     skills: ["Project Management", "Agile", "Risk Management", "Team Leadership"],
     experience: 7,
-    education: "Master's in Project Management",
+    education: {
+      degree: "Master's in Project Management",
+      university: "Columbia University",
+      dateOfPassing: "2017-05-15"
+    },
     certifications: ["PMP", "PRINCE2"],
     createdAt: "2023-06-01",
     updatedAt: "2024-01-15"
@@ -200,13 +220,14 @@ const mockEmployees: Employee[] = [
     id: "5",
     name: "James Wilson",
     firstName: "James",
+    gender: "Male",
     lastName: "Wilson",
     email: "james.wilson@architecturalpro.com",
     phone: "+1 (555) 567-8901",
     employeeId: "EMP005",
     position: "Structural Engineer",
-    department: "Engineering",
-    team: "Structural Analysis",
+    department: "architecture",
+    role: "employee",
     manager: "Angela Davis",
     hireDate: "2022-09-12",
     joinDate: "2022-09-12",
@@ -219,7 +240,7 @@ const mockEmployees: Employee[] = [
       street: "654 Maple Ave",
       city: "Boston",
       state: "MA",
-      zipCode: "02101",
+      pinCode: "02101",
       country: "USA"
     },
     emergencyContact: {
@@ -229,7 +250,11 @@ const mockEmployees: Employee[] = [
     },
     skills: ["Structural Analysis", "AutoCAD", "SAP2000", "Steel Design"],
     experience: 9,
-    education: "Master's in Structural Engineering",
+    education: {
+      degree: "Master's in Structural Engineering",
+      university: "UC Berkeley",
+      dateOfPassing: "2019-05-20"
+    },
     certifications: ["PE", "SE"],
     createdAt: "2022-09-12",
     updatedAt: "2024-01-15"
@@ -238,13 +263,14 @@ const mockEmployees: Employee[] = [
     id: "6",
     name: "Lisa Thompson",
     firstName: "Lisa",
+    gender: "Female",
     lastName: "Thompson",
     email: "lisa.thompson@architecturalpro.com",
     phone: "+1 (555) 678-9012",
     employeeId: "EMP006",
     position: "Junior Architect",
-    department: "Design",
-    team: "Residential Projects",
+    department: "architecture",
+    role: "employee",
     manager: "John Doe",
     hireDate: "2024-01-08",
     joinDate: "2024-01-08",
@@ -257,7 +283,7 @@ const mockEmployees: Employee[] = [
       street: "987 Cedar Ln",
       city: "Austin",
       state: "TX",
-      zipCode: "73301",
+      pinCode: "73301",
       country: "USA"
     },
     emergencyContact: {
@@ -267,7 +293,11 @@ const mockEmployees: Employee[] = [
     },
     skills: ["AutoCAD", "SketchUp", "Adobe Creative Suite", "3D Modeling"],
     experience: 2,
-    education: "Bachelor's in Architecture",
+    education: {
+      degree: "Bachelor's in Architecture",
+      university: "Cornell University",
+      dateOfPassing: "2021-05-15"
+    },
     certifications: [],
     createdAt: "2024-01-08",
     updatedAt: "2024-01-15"
@@ -276,13 +306,14 @@ const mockEmployees: Employee[] = [
     id: "7",
     name: "David Martinez",
     firstName: "David",
+    gender: "Male",
     lastName: "Martinez",
     email: "david.martinez@architecturalpro.com",
     phone: "+1 (555) 789-0123",
     employeeId: "EMP007",
     position: "CAD Technician",
-    department: "Design",
-    team: "Technical Support",
+    department: "architecture",
+    role: "employee",
     manager: "John Doe",
     hireDate: "2023-11-20",
     joinDate: "2023-11-20",
@@ -295,7 +326,7 @@ const mockEmployees: Employee[] = [
       street: "147 Birch St",
       city: "Denver",
       state: "CO",
-      zipCode: "80201",
+      pinCode: "80201",
       country: "USA"
     },
     emergencyContact: {
@@ -305,7 +336,11 @@ const mockEmployees: Employee[] = [
     },
     skills: ["AutoCAD", "Revit", "Technical Drawing", "BIM"],
     experience: 4,
-    education: "Associate's in CAD Technology",
+    education: {
+      degree: "Associate's in CAD Technology",
+      university: "Denver Technical College",
+      dateOfPassing: "2015-05-15"
+    },
     certifications: ["AutoCAD Certified User"],
     createdAt: "2023-11-20",
     updatedAt: "2024-01-15"
@@ -314,13 +349,14 @@ const mockEmployees: Employee[] = [
     id: "8",
     name: "Amanda Lee",
     firstName: "Amanda",
+    gender: "Female",
     lastName: "Lee",
     email: "amanda.lee@architecturalpro.com",
     phone: "+1 (555) 890-1234",
     employeeId: "EMP008",
     position: "Design Consultant",
-    department: "Interior Design",
-    team: "Luxury Projects",
+    department: "interior",
+    role: "employee",
     manager: "Sarah Johnson",
     hireDate: "2023-04-03",
     joinDate: "2023-04-03",
@@ -333,7 +369,7 @@ const mockEmployees: Employee[] = [
       street: "258 Spruce Way",
       city: "Miami",
       state: "FL",
-      zipCode: "33101",
+      pinCode: "33101",
       country: "USA"
     },
     emergencyContact: {
@@ -343,7 +379,11 @@ const mockEmployees: Employee[] = [
     },
     skills: ["Interior Design", "Color Consultation", "Space Planning", "Client Relations"],
     experience: 6,
-    education: "Bachelor's in Interior Design",
+    education: {
+      degree: "Bachelor's in Interior Design",
+      university: "Parsons School of Design",
+      dateOfPassing: "2022-05-15"
+    },
     certifications: ["NCIDQ"],
     createdAt: "2023-04-03",
     updatedAt: "2024-01-15"
@@ -448,31 +488,31 @@ export function EmployeesPage({ onEmployeeSelect }: EmployeesPageProps) {
   };
 
   const getStatusBadgeVariant = (status: string) => {
-    switch (status) {
-      case "Active": return "default";
-      case "Inactive": return "secondary";
-      case "On Leave": return "outline";
-      case "Terminated": return "destructive";
+    switch (status.toLowerCase()) {
+      case "active": return "default";
+      case "inactive": return "secondary";
+      case "on leave": return "outline";
+      case "terminated": return "destructive";
       default: return "secondary";
     }
   };
 
   const getStatusIcon = (status: string) => {
-    switch (status) {
-      case "Active": return <CheckCircle className="w-3 h-3" />;
-      case "On Leave": return <Clock className="w-3 h-3" />;
-      case "Inactive": return <AlertCircle className="w-3 h-3" />;
-      case "Terminated": return <AlertCircle className="w-3 h-3" />;
+    switch (status.toLowerCase()) {
+      case "active": return <CheckCircle className="w-3 h-3" />;
+      case "on leave": return <Clock className="w-3 h-3" />;
+      case "inactive": return <AlertCircle className="w-3 h-3" />;
+      case "terminated": return <AlertCircle className="w-3 h-3" />;
       default: return <CheckCircle className="w-3 h-3" />;
     }
   };
 
   const getStatusColor = (status: string) => {
-    switch (status) {
-      case "Active": return "bg-green-500/20 text-green-400 border-green-500/30";
-      case "On Leave": return "bg-yellow-500/20 text-yellow-400 border-yellow-500/30";
-      case "Inactive": return "bg-gray-500/20 text-gray-400 border-gray-500/30";
-      case "Terminated": return "bg-red-500/20 text-red-400 border-red-500/30";
+    switch (status.toLowerCase()) {
+      case "active": return "bg-green-500/20 text-green-400 border-green-500/30";
+      case "on leave": return "bg-yellow-500/20 text-yellow-400 border-yellow-500/30";
+      case "inactive": return "bg-gray-500/20 text-gray-400 border-gray-500/30";
+      case "terminated": return "bg-red-500/20 text-red-400 border-red-500/30";
       default: return "bg-gray-500/20 text-gray-400 border-gray-500/30";
     }
   };
@@ -771,10 +811,7 @@ export function EmployeesPage({ onEmployeeSelect }: EmployeesPageProps) {
                     <span className="text-muted-foreground text-sm">{employee.department}</span>
                   </div>
 
-                  <div className="flex items-center space-x-2">
-                    <Users className="w-4 h-4 text-muted-foreground" />
-                    <span className="text-muted-foreground text-sm">{employee.team}</span>
-                  </div>
+
                   
                   <div className="grid grid-cols-2 gap-4 text-sm pt-2 border-t border-white/40 dark:border-white/10">
                     <div className="flex items-center space-x-2">
@@ -849,10 +886,10 @@ export function EmployeesPage({ onEmployeeSelect }: EmployeesPageProps) {
                   <TableHead className="text-muted-foreground">
                     <Button 
                       variant="ghost" 
-                      onClick={() => handleSort("hireDate")}
+                      onClick={() => handleSort("joinDate")}
                       className="h-auto p-0 text-muted-foreground hover:text-foreground transition-colors"
                     >
-                      Hire Date {getSortIcon("hireDate")}
+                      Starting Date {getSortIcon("joinDate")}
                     </Button>
                   </TableHead>
                   <TableHead className="text-muted-foreground">Actions</TableHead>
@@ -884,7 +921,7 @@ export function EmployeesPage({ onEmployeeSelect }: EmployeesPageProps) {
                     <TableCell>
                       <div>
                         <p className="text-foreground">{employee.department}</p>
-                        <p className="text-muted-foreground text-sm">{employee.team}</p>
+                        <p className="text-muted-foreground text-sm">{employee.manager}</p>
                       </div>
                     </TableCell>
                     <TableCell>
@@ -907,7 +944,7 @@ export function EmployeesPage({ onEmployeeSelect }: EmployeesPageProps) {
                     </TableCell>
                     <TableCell className="text-muted-foreground">
                       <div>
-                        <p>{new Date(employee.hireDate).toLocaleDateString()}</p>
+                        <p>{new Date(employee.joinDate || employee.hireDate).toLocaleDateString()}</p>
                         <p className="text-muted-foreground text-xs">{employee.employmentType}</p>
                       </div>
                     </TableCell>

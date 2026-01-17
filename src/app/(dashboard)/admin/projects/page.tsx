@@ -1,7 +1,5 @@
 import RoleGuard from "@/components/auth/RoleGuard";
 import { IAuthRoles } from "@/store/slices/authSlice";
-import { Card } from "@/components/ui/card";
-import { Building2 } from "lucide-react";
 import { ProjectsPage } from "@/components/ProjectsPage";
 
 export default function AdminProjectsPage() {
