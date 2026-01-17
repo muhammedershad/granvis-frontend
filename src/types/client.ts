@@ -40,7 +40,7 @@ export interface Client {
   };
   
   // Business Information
-  status: 'Active' | 'Inactive' | 'Potential' | 'Former';
+  status: 'Potential Lead' | 'On Hold' | 'Active';
   source: 'Referral' | 'Website' | 'Social Media' | 'Advertisement' | 'Cold Call' | 'Other';
   priority: 'Low' | 'Medium' | 'High' | 'VIP';
   
@@ -69,7 +69,7 @@ export interface ClientFilters {
   companyType: string;
   status: string;
   priority: string;
-  industry: string;
+  architecturalStyle: string;
   source: string;
 }
 

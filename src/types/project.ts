@@ -1,56 +1,57 @@
 export interface Project {
   id: string;
-  
+
   // Basic Information
   name: string;
   description: string;
   client: string;
-  clientEmail: string;
-  clientPhone: string;
-  
+  clientEmail?: string;
+  clientPhone?: string;
+
   // Project Details
   type: 'Villa' | 'Commercial' | 'Interior' | 'Landscape';
-  category: string; // subcategory like "Residential Villa", "Office Complex", etc.
+  category?: string; // subcategory like "Residential Villa", "Office Complex", etc.
   status: 'Planning' | 'In Progress' | 'On Hold' | 'Completed' | 'Cancelled';
   priority: 'Low' | 'Medium' | 'High' | 'Critical';
-  
+
   // Timeline
   startDate: string;
-  endDate: string;
-  deadline: string;
-  estimatedDuration: number; // in days
-  
+  endDate?: string;
+  deadline?: string;
+  estimatedDuration?: number; // in days
+
   // Budget
   totalBudget: number;
-  spentAmount: number;
-  remainingBudget: number;
-  
+  spentAmount?: number;
+  remainingBudget?: number;
+
   // Progress
-  progressPercentage: number;
-  currentPhase: string;
+  progressPercentage?: number;
+  currentPhase?: string;
   milestones: ProjectMilestone[];
-  
+
   // Team
   projectManager: string;
   teamMembers: string[];
-  
+
   // Location
-  location: {
-    address: string;
-    city: string;
-    state: string;
-    country: string;
+  location?: {
+    address?: string;
+    city?: string;
+    state?: string;
+    country?: string;
     coordinates?: {
       lat: number;
       lng: number;
     };
   };
-  
+
   // Additional Details
   tags: string[];
   documents: ProjectDocument[];
   images: string[];
-  
+  coverImage?: string;
+
   // System fields
   createdAt: string;
   updatedAt: string;

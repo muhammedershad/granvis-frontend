@@ -1,10 +1,12 @@
 'use client';
-import { useState, useMemo } from "react";
-import { 
-  Search, 
-  Plus, 
-  Filter, 
-  Download, 
+import { useState, useMemo, useEffect } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+
+import {
+  Search,
+  Plus,
+  Filter,
+
   MoreHorizontal,
   Edit,
   Eye,
@@ -27,8 +29,7 @@ import {
   ArrowUpDown,
   ArrowUp,
   ArrowDown,
-  ChevronLeft,
-  ChevronRight
+  Loader2
 } from "lucide-react";
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";
@@ -38,195 +39,34 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from ".
 import { Badge } from "./ui/badge";
 import { Progress } from "./ui/progress";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from "./ui/dropdown-menu";
-import { Dialog, DialogContent, DialogTrigger } from "./ui/dialog";
-import { AddProjectForm } from "./AddProjectForm";
+
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "./ui/alert-dialog";
+
 import { Project, ProjectFilters, ProjectSort, ProjectViewType } from "../types/project";
 import { cn } from "./ui/utils";
 import { ImageWithFallback } from "./figma/ImageWithFallback";
-
-// Mock project data
-const mockProjects: Project[] = [
-  {
-    id: "1",
-    name: "Modern Villa Residence",
-    description: "Luxury 4-bedroom villa with contemporary design and sustainable features",
-    client: "John & Sarah Williams",
-    clientEmail: "williams@email.com",
-    clientPhone: "+1 (555) 123-4567",
-    type: "Villa",
-    category: "Luxury Residential",
-    status: "In Progress",
-    priority: "High",
-    startDate: "2024-01-15",
-    endDate: "2024-08-30",
-    deadline: "2024-09-15",
-    estimatedDuration: 240,
-    totalBudget: 850000,
-    spentAmount: 420000,
-    remainingBudget: 430000,
-    progressPercentage: 65,
-    currentPhase: "Interior Construction",
-    milestones: [],
-    projectManager: "John Doe",
-    teamMembers: ["Sarah Johnson", "Michael Chen"],
-    location: {
-      address: "123 Hillcrest Drive",
-      city: "Beverly Hills",
-      state: "CA",
-      country: "USA"
-    },
-    tags: ["Luxury", "Sustainable", "Contemporary"],
-    documents: [],
-    images: ["https://images.unsplash.com/photo-1622015663381-d2e05ae91b72?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxtb2Rlcm4lMjBsdXh1cnklMjB2aWxsYSUyMGFyY2hpdGVjdHVyZXxlbnwxfHx8fDE3NTgwNDI4OTd8MA&ixlib=rb-4.1.0&q=80&w=1080"],
-    createdAt: "2024-01-10",
-    updatedAt: "2024-01-20",
-    createdBy: "John Doe"
-  },
-  {
-    id: "2",
-    name: "Downtown Office Complex",
-    description: "15-story commercial building with mixed-use spaces",
-    client: "Metro Development Corp",
-    clientEmail: "contact@metrodev.com",
-    clientPhone: "+1 (555) 234-5678",
-    type: "Commercial",
-    category: "Office Building",
-    status: "Planning",
-    priority: "Critical",
-    startDate: "2024-03-01",
-    endDate: "2025-12-31",
-    deadline: "2026-01-31",
-    estimatedDuration: 670,
-    totalBudget: 15000000,
-    spentAmount: 1200000,
-    remainingBudget: 13800000,
-    progressPercentage: 15,
-    currentPhase: "Design Development",
-    milestones: [],
-    projectManager: "Emily Rodriguez",
-    teamMembers: ["James Wilson", "Lisa Thompson"],
-    location: {
-      address: "456 Main Street",
-      city: "New York",
-      state: "NY",
-      country: "USA"
-    },
-    tags: ["Commercial", "High-rise", "Mixed-use"],
-    documents: [],
-    images: ["https://images.unsplash.com/photo-1742156524915-f72d6332f38f?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxjb21tZXJjaWFsJTIwb2ZmaWNlJTIwYnVpbGRpbmclMjBtb2Rlcm58ZW58MXx8fHwxNzU3OTk2NDAwfDA&ixlib=rb-4.1.0&q=80&w=1080"],
-    createdAt: "2024-02-20",
-    updatedAt: "2024-02-25",
-    createdBy: "Emily Rodriguez"
-  },
-  {
-    id: "3",
-    name: "Boutique Hotel Interior",
-    description: "Complete interior design for 50-room boutique hotel",
-    client: "Luxury Hospitality Group",
-    clientEmail: "projects@luxuryhotels.com",
-    clientPhone: "+1 (555) 345-6789",
-    type: "Interior",
-    category: "Hospitality Design",
-    status: "Completed",
-    priority: "Medium",
-    startDate: "2023-06-01",
-    endDate: "2023-12-15",
-    deadline: "2023-12-31",
-    estimatedDuration: 195,
-    totalBudget: 2500000,
-    spentAmount: 2450000,
-    remainingBudget: 50000,
-    progressPercentage: 100,
-    currentPhase: "Project Completed",
-    milestones: [],
-    projectManager: "Sarah Johnson",
-    teamMembers: ["Amanda Lee", "David Martinez"],
-    location: {
-      address: "789 Ocean Avenue",
-      city: "Miami",
-      state: "FL",
-      country: "USA"
-    },
-    tags: ["Hospitality", "Luxury", "Coastal"],
-    documents: [],
-    images: ["https://images.unsplash.com/photo-1728488448472-16a259c6ba7c?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxsdXh1cnklMjBob3RlbCUyMGludGVyaW9yJTIwZGVzaWduJTIwYm91dGlxdWV8ZW58MXx8fHwxNzU4MDQyOTA0fDA&ixlib=rb-4.1.0&q=80&w=1080"],
-    createdAt: "2023-05-15",
-    updatedAt: "2023-12-20",
-    createdBy: "Sarah Johnson"
-  },
-  {
-    id: "4",
-    name: "University Campus Landscape",
-    description: "Master landscape plan for 200-acre university campus",
-    client: "State University",
-    clientEmail: "facilities@stateuniv.edu",
-    clientPhone: "+1 (555) 456-7890",
-    type: "Landscape",
-    category: "Educational Campus",
-    status: "On Hold",
-    priority: "Low",
-    startDate: "2024-04-01",
-    endDate: "2025-03-31",
-    deadline: "2025-04-15",
-    estimatedDuration: 365,
-    totalBudget: 5500000,
-    spentAmount: 800000,
-    remainingBudget: 4700000,
-    progressPercentage: 25,
-    currentPhase: "Phase 1 - Master Planning",
-    milestones: [],
-    projectManager: "Michael Chen",
-    teamMembers: ["Lisa Thompson", "James Wilson"],
-    location: {
-      address: "University Campus",
-      city: "Austin",
-      state: "TX",
-      country: "USA"
-    },
-    tags: ["Educational", "Landscape", "Sustainable"],
-    documents: [],
-    images: ["https://images.unsplash.com/photo-1679147704390-63bb246ba3b0?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHx1bml2ZXJzaXR5JTIwY2FtcHVzJTIwbGFuZHNjYXBlJTIwYXJjaGl0ZWN0dXJlfGVufDF8fHx8MTc1ODA0MjkwOHww&ixlib=rb-4.1.0&q=80&w=1080"],
-    createdAt: "2024-03-15",
-    updatedAt: "2024-03-20",
-    createdBy: "Michael Chen"
-  },
-  {
-    id: "5",
-    name: "Eco-Friendly Townhomes",
-    description: "Sustainable residential development with 12 townhomes",
-    client: "Green Living Communities",
-    clientEmail: "info@greenliving.com",
-    clientPhone: "+1 (555) 567-8901",
-    type: "Villa",
-    category: "Sustainable Housing",
-    status: "In Progress",
-    priority: "Medium",
-    startDate: "2024-02-01",
-    endDate: "2024-10-31",
-    deadline: "2024-11-30",
-    estimatedDuration: 270,
-    totalBudget: 3200000,
-    spentAmount: 1400000,
-    remainingBudget: 1800000,
-    progressPercentage: 45,
-    currentPhase: "Foundation & Structure",
-    milestones: [],
-    projectManager: "Lisa Thompson",
-    teamMembers: ["John Doe", "Amanda Lee"],
-    location: {
-      address: "555 Green Valley Road",
-      city: "Portland",
-      state: "OR",
-      country: "USA"
-    },
-    tags: ["Sustainable", "Residential", "Community"],
-    documents: [],
-    images: ["https://images.unsplash.com/photo-1710507375069-0ff4e9ccb7ca?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxlY28lMjBmcmllbmRseSUyMHN1c3RhaW5hYmxlJTIwdG93bmhvdXNlc3xlbnwxfHx8fDE3NTgwNDI5MTJ8MA&ixlib=rb-4.1.0&q=80&w=1080"],
-    createdAt: "2024-01-20",
-    updatedAt: "2024-01-25",
-    createdBy: "Lisa Thompson"
-  }
-];
+import {
+  Pagination,
+  PaginationContent,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+} from "./ui/pagination";
+import {
+  useGetProjectsQuery,
+  useDeleteProjectMutation
+} from "@/lib/api/projectsApi";
+import { useDebounce } from "@/hooks/useDebounce";
 
 const ITEMS_PER_PAGE = 8;
 
@@ -235,7 +75,9 @@ interface ProjectsPageProps {
 }
 
 export function ProjectsPage({ onProjectSelect }: ProjectsPageProps) {
-  const [projects, setProjects] = useState<Project[]>(mockProjects);
+  const router = useRouter();
+  const searchParams = useSearchParams();
+
   const [currentPage, setCurrentPage] = useState(1);
   const [viewType, setViewType] = useState<ProjectViewType>("cards");
   const [filters, setFilters] = useState<ProjectFilters>({
@@ -247,65 +89,124 @@ export function ProjectsPage({ onProjectSelect }: ProjectsPageProps) {
     projectManager: ""
   });
   const [sort, setSort] = useState<ProjectSort>({
-    field: "name",
-    direction: "asc"
+    field: "createdAt",
+    direction: "desc"
   });
-  const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
 
-  // Get unique values for filter options
-  const types = [...new Set(projects.map(proj => proj.type))];
-  const statuses = [...new Set(projects.map(proj => proj.status))];
-  const priorities = [...new Set(projects.map(proj => proj.priority))];
+  const [deleteConfirmation, setDeleteConfirmation] = useState<{
+    isOpen: boolean;
+    projectId: string | null;
+    projectName: string | null;
+  }>({
+    isOpen: false,
+    projectId: null,
+    projectName: null
+  });
 
-  // Calculate statistics
+  // Debounce search term to reduce API calls
+  const debouncedSearchTerm = useDebounce(filters.search, 500);
+  const [isInitialMount, setIsInitialMount] = useState(true);
+
+  // Initialize filters from URL params on mount
+  useEffect(() => {
+    const urlFilters: ProjectFilters = {
+      search: searchParams.get('search') || "",
+      type: searchParams.get('type') || "all",
+      status: searchParams.get('status') || "all",
+      priority: searchParams.get('priority') || "all",
+      client: "",
+      projectManager: searchParams.get('projectManager') || ""
+    };
+    setFilters(urlFilters);
+
+    const page = searchParams.get('page');
+    if (page) {
+      setCurrentPage(parseInt(page, 10));
+    }
+
+    const sortField = searchParams.get('sortBy');
+    const sortDir = searchParams.get('sortOrder');
+    if (sortField) {
+      setSort({
+        field: sortField as keyof Project,
+        direction: (sortDir as 'asc' | 'desc') || 'desc'
+      });
+    }
+
+    setIsInitialMount(false);
+  }, [searchParams]);
+
+  // Reset to page 1 and update URL when debounced search term changes
+  useEffect(() => {
+    if (!isInitialMount) {
+      setCurrentPage(1);
+      const updatedFilters = { ...filters, search: debouncedSearchTerm };
+      updateURLParams(updatedFilters, 1);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [debouncedSearchTerm]);
+
+  // Function to update URL params
+  const updateURLParams = (newFilters: ProjectFilters, page: number = 1, newSort?: ProjectSort) => {
+    const params = new URLSearchParams();
+
+    // Add filters to URL only if they're not default values
+    if (newFilters.search) params.set('search', newFilters.search);
+    if (newFilters.type !== "all") params.set('type', newFilters.type);
+    if (newFilters.status !== "all") params.set('status', newFilters.status);
+    if (newFilters.priority !== "all") params.set('priority', newFilters.priority);
+    if (newFilters.projectManager) params.set('projectManager', newFilters.projectManager);
+
+    // Add page if not first page
+    if (page > 1) params.set('page', page.toString());
+
+    // Add sort if not default
+    const sortToUse = newSort || sort;
+    if (sortToUse.field !== 'createdAt') params.set('sortBy', sortToUse.field);
+    if (sortToUse.direction !== 'desc') params.set('sortOrder', sortToUse.direction);
+
+    const queryString = params.toString();
+    router.push(queryString ? `/projects?${queryString}` : '/projects');
+  };
+
+  // RTK Query hooks - use debounced search term
+  const { data, isLoading, isFetching, error } = useGetProjectsQuery({
+    page: currentPage,
+    limit: ITEMS_PER_PAGE,
+    search: debouncedSearchTerm || undefined,
+    type: filters.type !== "all" ? filters.type : undefined,
+    status: filters.status !== "all" ? filters.status : undefined,
+    priority: filters.priority !== "all" ? filters.priority : undefined,
+    projectManager: filters.projectManager || undefined,
+    sortBy: sort.field as 'createdAt' | 'name' | 'startDate' | 'totalBudget' | 'progressPercentage' | 'priority' | 'status',
+    sortOrder: sort.direction,
+  });
+
+
+  const [deleteProject] = useDeleteProjectMutation();
+
+  const projects = useMemo(() => data?.data || [], [data?.data]);
+  const pagination = data?.pagination;
+  const totalPages = pagination?.totalPages || 1;
+
+  // Filter options - using hardcoded values since we're filtering server-side
+  const types = ["Villa", "Commercial", "Interior", "Landscape"];
+  const statuses = ["Planning", "In Progress", "On Hold", "Completed", "Cancelled"];
+  const priorities = ["Low", "Medium", "High", "Critical"];
+
+  // Calculate statistics from server data
   const stats = useMemo(() => {
-    const total = projects.length;
+    const total = pagination?.total || 0;
     const inProgress = projects.filter(p => p.status === "In Progress").length;
     const completed = projects.filter(p => p.status === "Completed").length;
     const onHold = projects.filter(p => p.status === "On Hold").length;
-    const totalBudget = projects.reduce((sum, p) => sum + p.totalBudget, 0);
-    const avgProgress = Math.round(projects.reduce((sum, p) => sum + p.progressPercentage, 0) / total);
+    const totalBudget = projects.reduce((sum, p) => sum + (p.totalBudget || 0), 0);
+    const avgProgress = projects.length > 0
+      ? Math.round(projects.reduce((sum, p) => sum + (p.progressPercentage || 0), 0) / projects.length)
+      : 0;
 
     return { total, inProgress, completed, onHold, totalBudget, avgProgress };
-  }, [projects]);
-
-  // Filter and sort projects
-  const filteredAndSortedProjects = useMemo(() => {
-    const filtered = projects.filter(project => {
-      const searchTerm = filters.search.toLowerCase();
-      const matchesSearch = !filters.search || 
-        project.name.toLowerCase().includes(searchTerm) ||
-        project.client.toLowerCase().includes(searchTerm) ||
-        project.description.toLowerCase().includes(searchTerm);
-
-      const matchesType = filters.type === "all" || project.type === filters.type;
-      const matchesStatus = filters.status === "all" || project.status === filters.status;
-      const matchesPriority = filters.priority === "all" || project.priority === filters.priority;
-      const matchesClient = !filters.client || project.client === filters.client;
-      const matchesProjectManager = !filters.projectManager || project.projectManager === filters.projectManager;
-
-      return matchesSearch && matchesType && matchesStatus && matchesPriority && matchesClient && matchesProjectManager;
-    });
-
-    // Sort
-    filtered.sort((a, b) => {
-      const aValue = a[sort.field];
-      const bValue = b[sort.field];
-      
-      if (aValue < bValue) return sort.direction === "asc" ? -1 : 1;
-      if (aValue > bValue) return sort.direction === "asc" ? 1 : -1;
-      return 0;
-    });
-
-    return filtered;
-  }, [projects, filters, sort]);
-
-  // Pagination
-  const totalPages = Math.ceil(filteredAndSortedProjects.length / ITEMS_PER_PAGE);
-  const paginatedProjects = filteredAndSortedProjects.slice(
-    (currentPage - 1) * ITEMS_PER_PAGE,
-    currentPage * ITEMS_PER_PAGE
-  );
+  }, [projects, pagination]);
 
   const getTypeIcon = (type: string) => {
     switch (type) {
@@ -349,31 +250,63 @@ export function ProjectsPage({ onProjectSelect }: ProjectsPageProps) {
     }
   };
 
-  const handleSort = (field: keyof Project) => {
-    setSort(prev => ({
-      field,
-      direction: prev.field === field && prev.direction === "asc" ? "desc" : "asc"
-    }));
-  };
-
   const getSortIcon = (field: keyof Project) => {
     if (sort.field !== field) return <ArrowUpDown className="w-4 h-4" />;
     return sort.direction === "asc" ? <ArrowUp className="w-4 h-4" /> : <ArrowDown className="w-4 h-4" />;
   };
 
-  const handleAddProject = (newProject: Omit<Project, "id" | "createdAt" | "updatedAt">) => {
-    const project: Project = {
-      ...newProject,
-      id: Date.now().toString(),
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString()
-    };
-    setProjects(prev => [...prev, project]);
-    setIsAddDialogOpen(false);
+
+
+  const openDeleteConfirmation = (projectId: string, projectName: string) => {
+    setDeleteConfirmation({
+      isOpen: true,
+      projectId,
+      projectName
+    });
   };
 
-  const handleDeleteProject = (projectId: string) => {
-    setProjects(prev => prev.filter(proj => proj.id !== projectId));
+  const closeDeleteConfirmation = () => {
+    setDeleteConfirmation({
+      isOpen: false,
+      projectId: null,
+      projectName: null
+    });
+  };
+
+  const handleDeleteProject = async () => {
+    if (!deleteConfirmation.projectId) return;
+
+    try {
+      await deleteProject(deleteConfirmation.projectId).unwrap();
+      closeDeleteConfirmation();
+    } catch (err) {
+      console.error("Failed to delete project:", err);
+    }
+  };
+
+  // Reset to first page when filters change
+  const handleFilterChange = (newFilters: Partial<ProjectFilters>) => {
+    const updatedFilters = { ...filters, ...newFilters };
+    setFilters(updatedFilters);
+    setCurrentPage(1);
+    updateURLParams(updatedFilters, 1);
+  };
+
+  // Reset to first page when sort changes
+  const handleSort = (field: keyof Project) => {
+    const newSort = {
+      field,
+      direction: (sort.field === field && sort.direction === "asc" ? "desc" : "asc") as 'asc' | 'desc'
+    };
+    setSort(newSort);
+    setCurrentPage(1);
+    updateURLParams(filters, 1, newSort);
+  };
+
+  // Handle page change
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
+    updateURLParams(filters, page);
   };
 
   return (
@@ -415,22 +348,18 @@ export function ProjectsPage({ onProjectSelect }: ProjectsPageProps) {
             </Button>
           </div>
           
-          <Button variant="outline" className="bg-white/60 dark:bg-white/5 border-white/40 dark:border-white/10 text-muted-foreground hover:bg-white/80 dark:hover:bg-white/10 shadow-lg shadow-gray-200/50 dark:shadow-black/20">
+          {/* <Button variant="outline" className="bg-white/60 dark:bg-white/5 border-white/40 dark:border-white/10 text-muted-foreground hover:bg-white/80 dark:hover:bg-white/10 shadow-lg shadow-gray-200/50 dark:shadow-black/20">
             <Download className="w-4 h-4 mr-2" />
             Export
-          </Button>
+          </Button> */}
           
-          <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
-            <DialogTrigger asChild>
-              <Button className="bg-gradient-to-r from-purple-500 to-blue-500 hover:from-purple-600 hover:to-blue-600 border-0 shadow-lg shadow-purple-200/50 dark:shadow-purple-500/25">
-                <Plus className="w-4 h-4 mr-2" />
-                New Project
-              </Button>
-            </DialogTrigger>
-            <DialogContent className="max-w-7xl max-h-[95vh] overflow-y-auto backdrop-blur-xl bg-card/95 dark:bg-card/95 border-border/50 shadow-2xl">
-              <AddProjectForm onSubmit={handleAddProject} onCancel={() => setIsAddDialogOpen(false)} />
-            </DialogContent>
-          </Dialog>
+        <Button 
+            onClick={() => router.push('/admin/projects/new')}
+            className="bg-gradient-to-r from-purple-500 to-blue-500 hover:from-purple-600 hover:to-blue-600 border-0 shadow-lg shadow-purple-200/50 dark:shadow-purple-500/25"
+          >
+            <Plus className="w-4 h-4 mr-2" />
+            New Project
+          </Button>
         </div>
       </div>
 
@@ -525,7 +454,15 @@ export function ProjectsPage({ onProjectSelect }: ProjectsPageProps) {
       <Card className="p-6 backdrop-blur-xl bg-white/70 dark:bg-black/20 border-white/20 dark:border-white/10 shadow-xl shadow-gray-200/50 dark:shadow-black/50">
         <div className="absolute inset-0 bg-gradient-to-br from-blue-50/60 via-indigo-50/40 to-purple-50/60 opacity-100 dark:opacity-0 transition-opacity duration-300"></div>
         <div className="relative space-y-4">
-          <h3 className="text-foreground text-lg">Search & Filter Projects</h3>
+          <div className="flex items-center justify-between">
+            <h3 className="text-foreground text-lg">Search & Filter Projects</h3>
+            {isFetching && !isLoading && (
+              <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                <Loader2 className="w-4 h-4 animate-spin" />
+                <span>Updating...</span>
+              </div>
+            )}
+          </div>
           
           <div className="grid grid-cols-1 md:grid-cols-6 gap-4">
             <div className="md:col-span-2">
@@ -540,7 +477,7 @@ export function ProjectsPage({ onProjectSelect }: ProjectsPageProps) {
               </div>
             </div>
             
-            <Select value={filters.type} onValueChange={(value) => setFilters(prev => ({ ...prev, type: value }))}>
+            <Select value={filters.type} onValueChange={(value) => handleFilterChange({ type: value })}>
               <SelectTrigger className="bg-white/60 dark:bg-white/5 border-white/40 dark:border-white/10 text-foreground shadow-sm">
                 <SelectValue placeholder="Project Type" />
               </SelectTrigger>
@@ -552,7 +489,7 @@ export function ProjectsPage({ onProjectSelect }: ProjectsPageProps) {
               </SelectContent>
             </Select>
             
-            <Select value={filters.status} onValueChange={(value) => setFilters(prev => ({ ...prev, status: value }))}>
+            <Select value={filters.status} onValueChange={(value) => handleFilterChange({ status: value })}>
               <SelectTrigger className="bg-white/60 dark:bg-white/5 border-white/40 dark:border-white/10 text-foreground shadow-sm">
                 <SelectValue placeholder="Status" />
               </SelectTrigger>
@@ -564,7 +501,7 @@ export function ProjectsPage({ onProjectSelect }: ProjectsPageProps) {
               </SelectContent>
             </Select>
             
-            <Select value={filters.priority} onValueChange={(value) => setFilters(prev => ({ ...prev, priority: value }))}>
+            <Select value={filters.priority} onValueChange={(value) => handleFilterChange({ priority: value })}>
               <SelectTrigger className="bg-white/60 dark:bg-white/5 border-white/40 dark:border-white/10 text-foreground shadow-sm">
                 <SelectValue placeholder="Priority" />
               </SelectTrigger>
@@ -576,9 +513,14 @@ export function ProjectsPage({ onProjectSelect }: ProjectsPageProps) {
               </SelectContent>
             </Select>
             
-            <Button 
-              variant="outline" 
-              onClick={() => setFilters({ search: "", type: "all", status: "all", priority: "all", client: "", projectManager: "" })}
+            <Button
+              variant="outline"
+              onClick={() => {
+                const clearedFilters = { search: "", type: "all", status: "all", priority: "all", client: "", projectManager: "" };
+                setFilters(clearedFilters);
+                setCurrentPage(1);
+                updateURLParams(clearedFilters, 1);
+              }}
               className="bg-white/60 dark:bg-white/5 border-white/40 dark:border-white/10 text-muted-foreground hover:bg-white/80 dark:hover:bg-white/10 shadow-sm"
             >
               <Filter className="w-4 h-4 mr-2" />
@@ -586,18 +528,49 @@ export function ProjectsPage({ onProjectSelect }: ProjectsPageProps) {
             </Button>
           </div>
           
-          {filteredAndSortedProjects.length !== projects.length && (
+          {pagination && (
             <div className="text-muted-foreground text-sm">
-              Showing {filteredAndSortedProjects.length} of {projects.length} projects
+              Showing {projects.length} of {pagination.total} projects
             </div>
           )}
         </div>
       </Card>
 
+      {/* Loading State */}
+      {isLoading && (
+        <div className="flex items-center justify-center py-16">
+          <Loader2 className="w-8 h-8 animate-spin text-purple-500" />
+          <span className="ml-3 text-lg text-muted-foreground">Loading projects...</span>
+        </div>
+      )}
+
+      {/* Error State */}
+      {error && (
+        <Card className="backdrop-blur-xl bg-red-50/70 dark:bg-red-900/20 border-red-200 dark:border-red-800 p-8">
+          <div className="flex items-center justify-center gap-3 text-red-600 dark:text-red-400">
+            <AlertCircle className="w-6 h-6" />
+            <p className="text-lg font-medium">Failed to load projects. Please try again later.</p>
+          </div>
+        </Card>
+      )}
+
+      {/* Empty State */}
+      {!isLoading && !error && projects.length === 0 && (
+        <Card className="backdrop-blur-xl bg-white/70 dark:bg-black/20 border-white/20 dark:border-white/10 p-16">
+          <div className="flex flex-col items-center justify-center gap-4 text-muted-foreground">
+            <Building2 className="w-16 h-16 opacity-50" />
+            <h3 className="text-xl font-semibold">No projects found</h3>
+            <p>Try adjusting your filters or create a new project</p>
+          </div>
+        </Card>
+      )}
+
       {/* Projects Display */}
+      {!isLoading && !error && projects.length > 0 && (
+        <>
       {viewType === "cards" ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-          {paginatedProjects.map((project) => {
+          {projects.map((project) => {
             const TypeIcon = getTypeIcon(project.type);
             return (
               <Card 
@@ -606,8 +579,8 @@ export function ProjectsPage({ onProjectSelect }: ProjectsPageProps) {
                 onClick={() => onProjectSelect?.(project.id)}
               >
                 {/* Project Image */}
-                {project.images && project.images.length > 0 && (
-                  <div className="relative h-48 w-full overflow-hidden">
+                <div className="relative h-48 w-full overflow-hidden bg-gradient-to-br from-gray-100 to-gray-200 dark:from-gray-800 dark:to-gray-900">
+                  {project.images && project.images.length > 0 ? (
                     <ImageWithFallback
                       src={project.images[0]}
                       alt={project.name}
@@ -615,19 +588,23 @@ export function ProjectsPage({ onProjectSelect }: ProjectsPageProps) {
                       height={192}
                       className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
                     />
-                    {/* Image overlay with project type icon */}
-                    <div className="absolute top-3 left-3 p-2 bg-white/90 dark:bg-black/60 rounded-lg backdrop-blur-sm border border-white/40 dark:border-white/10 shadow-lg">
-                      <TypeIcon className="w-4 h-4 text-muted-foreground" />
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center">
+                      <TypeIcon className="w-16 h-16 text-gray-400 dark:text-gray-600 opacity-50" />
                     </div>
-                    {/* Status badge on image */}
-                    <div className="absolute top-3 right-3">
-                      <Badge className={cn("shadow-lg backdrop-blur-sm border", getStatusColor(project.status))}>
-                        {getStatusIcon(project.status)}
-                        <span className="ml-1">{project.status}</span>
-                      </Badge>
-                    </div>
+                  )}
+                  {/* Image overlay with project type icon */}
+                  <div className="absolute top-3 left-3 p-2 bg-white/90 dark:bg-black/60 rounded-lg backdrop-blur-sm border border-white/40 dark:border-white/10 shadow-lg">
+                    <TypeIcon className="w-4 h-4 text-muted-foreground" />
                   </div>
-                )}
+                  {/* Status badge on image */}
+                  <div className="absolute top-3 right-3">
+                    <Badge className={cn("shadow-lg backdrop-blur-sm border", getStatusColor(project.status))}>
+                      {getStatusIcon(project.status)}
+                      <span className="ml-1">{project.status}</span>
+                    </Badge>
+                  </div>
+                </div>
 
                 {/* Light theme gradient overlay */}
                 <div className="absolute inset-0 bg-gradient-to-br from-purple-50/60 via-blue-50/40 to-cyan-50/60 opacity-100 dark:opacity-0 transition-opacity duration-300"></div>
@@ -658,11 +635,11 @@ export function ProjectsPage({ onProjectSelect }: ProjectsPageProps) {
                           Edit
                         </DropdownMenuItem>
                         <DropdownMenuSeparator />
-                        <DropdownMenuItem 
+                        <DropdownMenuItem
                           className="text-red-600 dark:text-red-400"
                           onClick={(e) => {
                             e.stopPropagation();
-                            handleDeleteProject(project.id);
+                            openDeleteConfirmation(project.id, project.name);
                           }}
                         >
                           <Trash2 className="w-4 h-4 mr-2" />
@@ -696,7 +673,7 @@ export function ProjectsPage({ onProjectSelect }: ProjectsPageProps) {
                     </div>
                     <div className="flex items-center gap-2">
                       <Calendar className="w-3 h-3 text-muted-foreground" />
-                      <span className="text-foreground">{new Date(project.deadline).toLocaleDateString()}</span>
+                      <span className="text-foreground">{project.deadline ? new Date(project.deadline).toLocaleDateString() : 'N/A'}</span>
                     </div>
                   </div>
 
@@ -745,7 +722,7 @@ export function ProjectsPage({ onProjectSelect }: ProjectsPageProps) {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {paginatedProjects.map((project) => {
+                {projects.map((project) => {
                   const TypeIcon = getTypeIcon(project.type);
                   return (
                     <TableRow 
@@ -795,7 +772,7 @@ export function ProjectsPage({ onProjectSelect }: ProjectsPageProps) {
                         </div>
                       </TableCell>
                       <TableCell className="text-foreground">${(project.totalBudget / 1000000).toFixed(1)}M</TableCell>
-                      <TableCell className="text-foreground">{new Date(project.deadline).toLocaleDateString()}</TableCell>
+                      <TableCell className="text-foreground">{project.deadline ? new Date(project.deadline).toLocaleDateString() : 'N/A'}</TableCell>
                       <TableCell>
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
@@ -813,11 +790,11 @@ export function ProjectsPage({ onProjectSelect }: ProjectsPageProps) {
                               Edit
                             </DropdownMenuItem>
                             <DropdownMenuSeparator />
-                            <DropdownMenuItem 
+                            <DropdownMenuItem
                               className="text-red-600 dark:text-red-400"
                               onClick={(e) => {
                                 e.stopPropagation();
-                                handleDeleteProject(project.id);
+                                openDeleteConfirmation(project.id, project.name);
                               }}
                             >
                               <Trash2 className="w-4 h-4 mr-2" />
@@ -837,43 +814,151 @@ export function ProjectsPage({ onProjectSelect }: ProjectsPageProps) {
 
       {/* Pagination */}
       {totalPages > 1 && (
-        <div className="flex items-center justify-center space-x-2">
-          <Button
-            variant="outline"
-            size="icon"
-            onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
-            disabled={currentPage === 1}
-            className="bg-white/60 dark:bg-white/5 border-white/40 dark:border-white/10"
-          >
-            <ChevronLeft className="w-4 h-4" />
-          </Button>
-          
-          {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
-            <Button
-              key={page}
-              variant={currentPage === page ? "default" : "outline"}
-              size="icon"
-              onClick={() => setCurrentPage(page)}
-              className={cn(
-                "bg-white/60 dark:bg-white/5 border-white/40 dark:border-white/10",
-                currentPage === page && "bg-gradient-to-r from-purple-500 to-blue-500 text-white border-0"
-              )}
-            >
-              {page}
-            </Button>
-          ))}
-          
-          <Button
-            variant="outline"
-            size="icon"
-            onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
-            disabled={currentPage === totalPages}
-            className="bg-white/60 dark:bg-white/5 border-white/40 dark:border-white/10"
-          >
-            <ChevronRight className="w-4 h-4" />
-          </Button>
-        </div>
+        <Card className="backdrop-blur-xl bg-white/70 dark:bg-black/20 border-white/20 dark:border-white/10 shadow-xl shadow-gray-200/50 dark:shadow-black/50">
+          {/* Light theme gradient overlay */}
+          <div className="absolute inset-0 bg-gradient-to-br from-blue-50/60 via-indigo-50/40 to-purple-50/60 opacity-100 dark:opacity-0 transition-opacity duration-300"></div>
+
+          <div className="relative px-6 py-4">
+            <Pagination>
+              <PaginationContent>
+                <PaginationItem>
+                  <PaginationPrevious
+                    href="#"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      if (currentPage > 1) handlePageChange(currentPage - 1);
+                    }}
+                    aria-disabled={currentPage === 1}
+                    className={currentPage === 1 ? "pointer-events-none opacity-50" : ""}
+                  />
+                </PaginationItem>
+
+                {/* Show page numbers with smart truncation */}
+                {(() => {
+                  const pages = [];
+                  const showPages = 5; // Number of page buttons to show
+                  let startPage = Math.max(1, currentPage - Math.floor(showPages / 2));
+                  const endPage = Math.min(totalPages, startPage + showPages - 1);
+
+                  // Adjust if we're near the end
+                  if (endPage - startPage < showPages - 1) {
+                    startPage = Math.max(1, endPage - showPages + 1);
+                  }
+
+                  // First page
+                  if (startPage > 1) {
+                    pages.push(
+                      <PaginationItem key={1}>
+                        <PaginationLink
+                          href="#"
+                          onClick={(e) => {
+                            e.preventDefault();
+                            handlePageChange(1);
+                          }}
+                          isActive={currentPage === 1}
+                        >
+                          1
+                        </PaginationLink>
+                      </PaginationItem>
+                    );
+                    if (startPage > 2) {
+                      pages.push(
+                        <PaginationItem key="ellipsis-start">
+                          <span className="px-3 py-2 text-muted-foreground">...</span>
+                        </PaginationItem>
+                      );
+                    }
+                  }
+
+                  // Page numbers
+                  for (let i = startPage; i <= endPage; i++) {
+                    pages.push(
+                      <PaginationItem key={i}>
+                        <PaginationLink
+                          href="#"
+                          onClick={(e) => {
+                            e.preventDefault();
+                            handlePageChange(i);
+                          }}
+                          isActive={currentPage === i}
+                        >
+                          {i}
+                        </PaginationLink>
+                      </PaginationItem>
+                    );
+                  }
+
+                  // Last page
+                  if (endPage < totalPages) {
+                    if (endPage < totalPages - 1) {
+                      pages.push(
+                        <PaginationItem key="ellipsis-end">
+                          <span className="px-3 py-2 text-muted-foreground">...</span>
+                        </PaginationItem>
+                      );
+                    }
+                    pages.push(
+                      <PaginationItem key={totalPages}>
+                        <PaginationLink
+                          href="#"
+                          onClick={(e) => {
+                            e.preventDefault();
+                            handlePageChange(totalPages);
+                          }}
+                          isActive={currentPage === totalPages}
+                        >
+                          {totalPages}
+                        </PaginationLink>
+                      </PaginationItem>
+                    );
+                  }
+
+                  return pages;
+                })()}
+
+                <PaginationItem>
+                  <PaginationNext
+                    href="#"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      if (currentPage < totalPages) handlePageChange(currentPage + 1);
+                    }}
+                    aria-disabled={currentPage === totalPages}
+                    className={currentPage === totalPages ? "pointer-events-none opacity-50" : ""}
+                  />
+                </PaginationItem>
+              </PaginationContent>
+            </Pagination>
+          </div>
+        </Card>
       )}
+        </>
+      )}
+
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog open={deleteConfirmation.isOpen} onOpenChange={closeDeleteConfirmation}>
+        <AlertDialogContent className="backdrop-blur-xl bg-white/95 dark:bg-black/95 border-white/20 dark:border-white/10">
+          <AlertDialogHeader>
+            <AlertDialogTitle className="text-foreground">Delete Project</AlertDialogTitle>
+            <AlertDialogDescription className="text-muted-foreground">
+              Are you sure you want to delete <span className="font-semibold text-foreground">{deleteConfirmation.projectName}</span>?
+              <br />
+              This action cannot be undone. This will permanently delete the project and all associated data.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel className="bg-white/60 dark:bg-white/5 border-white/40 dark:border-white/10 text-foreground hover:bg-white/80 dark:hover:bg-white/10">
+              Cancel
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDeleteProject}
+              className="bg-red-600 hover:bg-red-700 text-white"
+            >
+              Delete Project
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

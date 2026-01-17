@@ -1,3 +1,7 @@
+'use client';
+
+import Link from "next/link";
+
 import { 
   Home, 
   Building2, 
@@ -13,13 +17,11 @@ import {
 } from "lucide-react";
 import { Button } from "./ui/button";
 import { cn } from "./ui/utils";
-import { useSidebar } from "./SidebarProvider";
-import { useRouter } from "next/navigation";
+import { useSidebar } from "@/components/SidebarProvider";
 import { useLogoutMutation } from "@/lib/api/apiSlice";
-import { useDispatch } from "react-redux";
+import { IAuthRoles, getAuthDetails, logout as logoutAction } from '@/store/slices/authSlice';
+import { useSelector, useDispatch } from "react-redux";
 import { deleteCookie } from "@/lib/cookies";
-import { logout as logoutAction } from '@/store/slices/authSlice';
-
 
 interface SidebarProps {
   className?: string;
@@ -27,102 +29,84 @@ interface SidebarProps {
   currentPage?: string;
 }
 
-const navigationItems = [
+// Define items with generic access or specific roles
+// Links will be dynamically generated based on user role
+const bgNavigationItems = [
   {
     title: "Dashboard",
     icon: Home,
     page: "dashboard",
-    link: "/dashboard"
+    roles: [IAuthRoles.SUPER_ADMIN, IAuthRoles.ADMIN, IAuthRoles.MANAGER, IAuthRoles.ACCOUNTANT, IAuthRoles.EMPLOYEE]
   },
-  // {
-  //   title: "Enquiries",
-  //   icon: MessageSquare,
-  //   page: "enquiries",
-  //   badge: "New",
-  //   link: "/enquiries"
-  // },
   {
     title: "Notifications",
     icon: Bell,
     page: "notifications",
     badge: "5",
-    link: "/notifications"
+    roles: [IAuthRoles.SUPER_ADMIN, IAuthRoles.ADMIN, IAuthRoles.MANAGER]
   },
   {
     title: "Projects",
     icon: Building2,
     page: "projects",
     badge: "24",
-    link: "/projects"
+    roles: [IAuthRoles.SUPER_ADMIN, IAuthRoles.ADMIN, IAuthRoles.MANAGER, IAuthRoles.EMPLOYEE]
   },
-  // {
-  //   title: "Team",
-  //   icon: Users,
-  //   page: "team",
-  //   badge: "7",
-  //   link: "/team"
-  // },
   {
     title: "Clients",
     icon: UserCheck,
     page: "clients",
     badge: "3",
-    link: "/clients"
+    roles: [IAuthRoles.SUPER_ADMIN, IAuthRoles.ADMIN, IAuthRoles.MANAGER]
   },
-  // {
-  //   title: "CRM",
-  //   icon: Clock,
-  //   page: "crm",
-  //   badge: "New",
-  //   link: "/crm"
-  // },
-  // {
-  //   title: "Marketing",
-  //   icon: Megaphone,
-  //   page: "marketing",
-  //   badge: "12",
-  //   link: "/marketing"
-  // },
   {
     title: "Payments",
     icon: CreditCard,
     page: "payments",
     badge: "8",
-    link: "/payments"
+    roles: [IAuthRoles.SUPER_ADMIN, IAuthRoles.ADMIN, IAuthRoles.ACCOUNTANT]
   },
-  // {
-  //   title: "Calendar",
-  //   icon: Calendar,
-  //   page: "calendar",
-  //   badge: "3",
-  //   link: "/calendar"
-  // },
-  // {
-  //   title: "Finance",
-  //   icon: DollarSign,
-  //   page: "budget",
-  //   link: "/finance"
-  // }
+  {
+    title: "Employees",
+    icon: UserCheck,
+    page: "employees",
+    roles: [IAuthRoles.SUPER_ADMIN, IAuthRoles.ADMIN]
+  }
 ];
+
+// Helper function to get role-based route prefix
+const getRolePrefix = (role: IAuthRoles): string => {
+  switch (role) {
+    case IAuthRoles.SUPER_ADMIN:
+      return '/super-admin';
+    case IAuthRoles.ADMIN:
+      return '/admin';
+    case IAuthRoles.MANAGER:
+      return '/manager';
+    case IAuthRoles.ACCOUNTANT:
+      return '/accountant';
+    case IAuthRoles.EMPLOYEE:
+      return '/employee';
+    default:
+      return '';
+  }
+};
 
 const projectTypes = [
   {
     title: "Architecture",
     icon: Building2,
-    page: "projects",
-    link: "/projects"
+    page: "projects"
   },
   {
     title: "Interior Design",
     icon: Palette,
-    page: "projects",
-    link: "/projects"
+    page: "projects"
   },
   {
     title: "Landscape",
     icon: TreePine,
-    page: "projects",
-    link: "/projects"
+    page: "projects"
   }
 ];
 
@@ -149,9 +133,30 @@ const bottomItems = [
 
 export function Sidebar({ className, onNavigate, currentPage = "dashboard" }: SidebarProps) {
   const { isCollapsed, toggleSidebar, isMobile, isMobileOpen, setIsMobileOpen } = useSidebar();
-  const route = useRouter()
   const [logout] = useLogoutMutation();
-    const dispatch = useDispatch();
+  const dispatch = useDispatch();
+  const { user } = useSelector(getAuthDetails);
+
+  const userRole = user?.role as IAuthRoles;
+
+  // Get the role-based route prefix
+  const rolePrefix = userRole ? getRolePrefix(userRole) : '';
+
+  // Filter navigation items based on user role and add dynamic links
+  const navigationItems = userRole
+    ? bgNavigationItems
+        .filter(item => !item.roles || item.roles.includes(userRole))
+        .map(item => ({
+          ...item,
+          link: `${rolePrefix}/${item.page}`
+        }))
+    : [];
+
+  // Generate dynamic links for project types
+  const projectTypesWithLinks = projectTypes.map(item => ({
+    ...item,
+    link: `${rolePrefix}/${item.page}`
+  }));
   
     const handleLogout = async () => {
       try {
@@ -172,15 +177,19 @@ export function Sidebar({ className, onNavigate, currentPage = "dashboard" }: Si
       }
     };
 
-  const handleNavClick = (page: string, link: string) => {
+  const handleNavClick = (page: string, link: string, e?: React.MouseEvent) => {
+    console.log('Navigating to:', page, link);
     if(page === 'logout') {
-      handleLogout()
+      e?.preventDefault();
+      handleLogout();
+      return;
     }
     // Close mobile sidebar when clicking a nav item
     if (isMobile && isMobileOpen) {
       setIsMobileOpen(false);
     }
-    route.push(link)
+    // Navigation is handled by Link component
+    // onNavigate callback is called for backward compatibility
     onNavigate?.(page);
   };
 
@@ -263,9 +272,13 @@ export function Sidebar({ className, onNavigate, currentPage = "dashboard" }: Si
                   const Icon = item.icon;
                   const isActive = currentPage === item.page;
                   return (
-                    <button
+                    <Link
                       key={item.page}
-                      onClick={() => handleNavClick(item.page, item?.link)}
+                      href={item.link || '#'}
+                      onClick={(e) => {
+                         // Let Link handle navigation, only prevent for logout
+                         handleNavClick(item.page, item?.link || '', e);
+                      }}
                       className={cn(
                         "w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-all duration-200 group relative overflow-hidden",
                         isActive 
@@ -291,29 +304,30 @@ export function Sidebar({ className, onNavigate, currentPage = "dashboard" }: Si
                           </>
                         )}
                       </div>
-                    </button>
+                    </Link>
                   );
                 })}
               </div>
 
               {/* Project Types Section */}
-              {(!isCollapsed || isMobile) && (
+              {(!isCollapsed || isMobile) && userRole && (
                 <div className="pt-6">
                   <div className="px-3 pb-2">
                     <h3 className="text-xs text-muted-foreground/70 uppercase tracking-wide">Project Types</h3>
                   </div>
                   <div className="space-y-1">
-                    {projectTypes.map((item) => {
+                    {projectTypesWithLinks.map((item) => {
                       const Icon = item.icon;
                       return (
-                        <button
+                        <Link
                           key={item.title}
-                          onClick={() => handleNavClick(item.page, item?.link)}
+                          href={item.link || '#'}
+                          onClick={(e) => handleNavClick(item.page, item.link, e)}
                           className="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm text-muted-foreground hover:text-foreground hover:bg-muted transition-all duration-200"
                         >
                           <Icon className="w-4 h-4 flex-shrink-0" />
                           <span className="text-left">{item.title}</span>
-                        </button>
+                        </Link>
                       );
                     })}
                   </div>
@@ -328,33 +342,42 @@ export function Sidebar({ className, onNavigate, currentPage = "dashboard" }: Si
               {bottomItems.map((item) => {
                 const Icon = item.icon;
                 return (
-                  <button
+                  <Link
                     key={item.page}
-                    onClick={() => handleNavClick(item.page, item?.link)}
+                    href={item.link || '#'}
+                    onClick={(e) => handleNavClick(item.page, item?.link || '', e)}
                     className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm text-muted-foreground hover:text-foreground hover:bg-muted transition-all duration-200"
                   >
                     <Icon className="w-5 h-5 flex-shrink-0" />
                     {(!isCollapsed || isMobile) && <span className="text-left">{item.title}</span>}
-                  </button>
+                  </Link>
                 );
               })}
             </nav>
           </div>
 
           {/* User Profile */}
-          <div className="border-t border-border p-3">
-            <div className="flex items-center gap-3 px-3 py-2">
-              <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-purple-500 rounded-full flex items-center justify-center shadow-lg shadow-blue-500/25">
-                <span className="text-xs text-white">JD</span>
-              </div>
-              {(!isCollapsed || isMobile) && (
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm text-foreground truncate">John Doe</p>
-                  <p className="text-xs text-muted-foreground truncate">Lead Architect</p>
+          {user && (
+            <div className="border-t border-border p-3">
+              <div className="flex items-center gap-3 px-3 py-2">
+                <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-purple-500 rounded-full flex items-center justify-center shadow-lg shadow-blue-500/25">
+                  <span className="text-xs text-white">
+                    {user.firstName?.charAt(0)}{user.lastName?.charAt(0)}
+                  </span>
                 </div>
-              )}
+                {(!isCollapsed || isMobile) && (
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm text-foreground truncate">
+                      {user.firstName} {user.lastName}
+                    </p>
+                    <p className="text-xs text-muted-foreground truncate capitalize">
+                      {user.role?.replace('_', ' ')}
+                    </p>
+                  </div>
+                )}
+              </div>
             </div>
-          </div>
+          )}
         </div>
       </div>
     </>

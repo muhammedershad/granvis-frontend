@@ -1175,3 +1175,5 @@ export function ProjectDetailsPage({ onBack }: ProjectDetailsPageProps) {
     </div>
   );
 }
+
+export default ProjectDetailsPage;
