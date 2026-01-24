@@ -1,3 +1,4 @@
+import { LucideIcon } from "lucide-react";
 import { IAuthRoles } from "@/store/slices/authSlice";
 import { NavigationItem } from "./types";
 
@@ -32,7 +33,7 @@ export function filterNavigationByRole(
 }
 
 export function addLinksToProjectTypes(
-  projectTypes: Array<{ title: string; icon: any; page: string }>,
+  projectTypes: Array<{ title: string; icon: LucideIcon; page: string }>,
   rolePrefix: string
 ) {
   return projectTypes.map((item) => ({

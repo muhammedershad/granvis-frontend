@@ -24,6 +24,7 @@ interface DatePickerProps {
   disabled?: boolean;
   fromYear?: number;
   toYear?: number;
+  onBlur?: () => void;
 }
 
 export function DatePicker({
@@ -34,8 +35,10 @@ export function DatePicker({
   disabled = false,
   fromYear = 1950,
   toYear = new Date().getFullYear() + 10,
+  onBlur,
 }: DatePickerProps) {
   const [month, setMonth] = React.useState<Date>(date || new Date());
+  const [open, setOpen] = React.useState(false);
 
   const months = [
     "January",
@@ -82,8 +85,14 @@ export function DatePicker({
     setMonth(newDate);
   };
 
+  const handleDateSelect = (selectedDate: Date | undefined) => {
+    onDateChange?.(selectedDate);
+    setOpen(false);
+    onBlur?.();
+  };
+
   return (
-    <Popover>
+    <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
         <Button
           variant="outline"
@@ -161,7 +170,7 @@ export function DatePicker({
         <Calendar
           mode="single"
           selected={date}
-          onSelect={onDateChange}
+          onSelect={handleDateSelect}
           month={month}
           onMonthChange={setMonth}
           fromYear={fromYear}

@@ -60,6 +60,7 @@ import {
 
 import { Employee, EmployeeFilters, EmployeeSort } from "../../types/employee";
 import { cn } from "../ui/utils";
+import { getAvatarUrl } from "@/lib/utils/cloudfront";
 
 // Enhanced mock data with more employees
 const mockEmployees: Employee[] = [
@@ -884,7 +885,12 @@ export function EmployeesPage({ onEmployeeSelect }: EmployeesPageProps) {
                   <div className="flex items-start justify-between">
                     <div className="flex items-center space-x-3">
                       <Avatar className="w-12 h-12 border-2 border-white/40 dark:border-white/10 shadow-lg shadow-gray-200/50 dark:shadow-black/30">
-                        <AvatarImage src={employee.avatar} />
+                        <AvatarImage
+                          src={
+                            getAvatarUrl(employee.avatarKey, employee.avatar) ||
+                            undefined
+                          }
+                        />
                         <AvatarFallback className="bg-gradient-to-br from-purple-500 to-blue-500 text-white">
                           {employee.firstName[0]}
                           {employee.lastName[0]}
@@ -1068,7 +1074,12 @@ export function EmployeesPage({ onEmployeeSelect }: EmployeesPageProps) {
                       <div className="flex items-center space-x-3">
                         <Avatar className="w-11 h-11 border-2 border-white/40 dark:border-white/10 shadow-sm">
                           <AvatarImage
-                            src={employee.avatar}
+                            src={
+                              getAvatarUrl(
+                                employee.avatarKey,
+                                employee.avatar
+                              ) || undefined
+                            }
                             alt={`${employee.firstName} ${employee.lastName}`}
                           />
                           <AvatarFallback className="bg-gradient-to-br from-purple-500 to-blue-500 text-white">

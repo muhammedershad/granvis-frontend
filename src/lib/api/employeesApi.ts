@@ -37,6 +37,30 @@ export const employeesApi = apiSlice.injectEndpoints({
       keepUnusedDataFor: 300, // Cache for 5 minutes
     }),
 
+    // Check if email is available
+    checkEmailAvailability: builder.query<
+      { available: boolean; message?: string },
+      string
+    >({
+      query: (email) => ({
+        url: `/employees/check-email?email=${encodeURIComponent(email)}`,
+        method: "GET",
+      }),
+      keepUnusedDataFor: 0, // Don't cache email checks
+    }),
+
+    // Check if phone is available
+    checkPhoneAvailability: builder.query<
+      { available: boolean; message?: string },
+      string
+    >({
+      query: (phone) => ({
+        url: `/employees/check-phone?phone=${encodeURIComponent(phone)}`,
+        method: "GET",
+      }),
+      keepUnusedDataFor: 0, // Don't cache phone checks
+    }),
+
     // Get potential managers (employees with manager or admin role)
     getManagers: builder.query<Employee[], void>({
       query: () => ({
@@ -119,6 +143,8 @@ export const employeesApi = apiSlice.injectEndpoints({
 // Export hooks for usage in functional components
 export const {
   useGetEmployeesQuery,
+  useCheckEmailAvailabilityQuery,
+  useCheckPhoneAvailabilityQuery,
   useGetManagersQuery,
   useGetEmployeeByIdQuery,
   useGetEmployeesByManagerQuery,

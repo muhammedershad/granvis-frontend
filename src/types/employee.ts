@@ -7,6 +7,7 @@ export interface Employee {
   email: string;
   phone: string;
   avatar?: string;
+  avatarKey?: string;
   name: string;
   gender: string;
   status: "Active" | "Inactive" | "On Leave" | "Terminated";

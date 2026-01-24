@@ -105,6 +105,17 @@ const MainLayout = ({ children }: { children: React.ReactNode }) => {
     }
   };
 
+  // Compute margin class based on sidebar state
+  const getMainMarginClass = () => {
+    if (isMobile) {
+      return "ml-0";
+    }
+    if (isCollapsed) {
+      return "ml-16";
+    }
+    return "ml-64";
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 via-blue-50/30 to-indigo-50/50 dark:from-gray-900 dark:via-black dark:to-gray-900 relative overflow-x-hidden">
       {/* Animated background elements - only show in dark theme */}
@@ -141,13 +152,7 @@ const MainLayout = ({ children }: { children: React.ReactNode }) => {
 
       {/* Main content with responsive margin based on sidebar state and screen size */}
       <div
-        className={`min-h-screen transition-all duration-300 ease-in-out ${
-          isMobile
-            ? "ml-0" // No margin on mobile (sidebar overlays)
-            : isCollapsed
-              ? "ml-16" // Collapsed sidebar margin on desktop
-              : "ml-64" // Expanded sidebar margin on desktop
-        }`}
+        className={`min-h-screen transition-all duration-300 ease-in-out ${getMainMarginClass()}`}
       >
         <DashboardHeader
           title={getPageTitle()}

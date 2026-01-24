@@ -97,7 +97,12 @@ export function IdentitySection({
               </Label>
               <Select
                 value={formData.type}
-                onValueChange={(value) => setValue("type", value as any)}
+                onValueChange={(value) =>
+                  setValue(
+                    "type",
+                    value as "Villa" | "Commercial" | "Interior" | "Landscape"
+                  )
+                }
               >
                 <SelectTrigger className="bg-background">
                   <SelectValue />
@@ -194,7 +199,12 @@ export function IdentitySection({
           </Label>
           <Select
             value={formData.priority}
-            onValueChange={(value) => setValue("priority", value as any)}
+            onValueChange={(value) =>
+              setValue(
+                "priority",
+                value as "Low" | "Medium" | "High" | "Critical"
+              )
+            }
           >
             <SelectTrigger className="bg-background">
               <SelectValue />
@@ -216,7 +226,17 @@ export function IdentitySection({
           </Label>
           <Select
             value={formData.status}
-            onValueChange={(value) => setValue("status", value as any)}
+            onValueChange={(value) =>
+              setValue(
+                "status",
+                value as
+                  | "Planning"
+                  | "In Progress"
+                  | "On Hold"
+                  | "Completed"
+                  | "Cancelled"
+              )
+            }
           >
             <SelectTrigger className="bg-background">
               <SelectValue />

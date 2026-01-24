@@ -1,4 +1,5 @@
 import {
+  BaseQueryApi,
   BaseQueryFn,
   FetchArgs,
   FetchBaseQueryError,
@@ -36,7 +37,29 @@ function getUrlFromArgs(args: string | FetchArgs) {
  */
 const AUTH_ENDPOINTS = ["/auth/login", "/auth/refresh", "/auth/logout"];
 
-const handleLogout = (api: any) => {
+const handleLogout = async (api: BaseQueryApi) => {
+  // Try to call backend logout endpoint to invalidate session
+  try {
+    const accessToken = getCookie("accessToken");
+    if (accessToken) {
+      await fetch(
+        `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000/api/v1"}/auth/logout`,
+        {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+            "Content-Type": "application/json",
+          },
+          credentials: "include",
+        }
+      );
+    }
+  } catch (error) {
+    // Silently fail - we still want to clear local state even if backend logout fails
+    console.error("Backend logout failed:", error);
+  }
+
+  // Clear local state regardless of backend logout result
   deleteCookie("accessToken");
   deleteCookie("refreshToken");
   api.dispatch(logout());
@@ -57,15 +80,15 @@ const persistTokens = (data: {
 
 const attemptTokenRefresh = async (
   args: string | FetchArgs,
-  api: any,
-  extraOptions: any
+  api: BaseQueryApi,
+  extraOptions: Record<string, unknown>
 ) => {
   const state = api.getState() as RootState;
   const userId = state.auth.user?._id;
   const refreshToken = getCookie("refreshToken");
 
   if (!userId || !refreshToken) {
-    handleLogout(api);
+    await handleLogout(api);
     return null;
   }
 
@@ -80,7 +103,7 @@ const attemptTokenRefresh = async (
   );
 
   if (!refreshResult.data) {
-    handleLogout(api);
+    await handleLogout(api);
     return null;
   }
 
@@ -126,7 +149,7 @@ export const baseQueryWithReauth: BaseQueryFn<
       }
     } catch (err) {
       console.error("Token refresh error:", err);
-      handleLogout(api);
+      await handleLogout(api);
     } finally {
       release();
     }

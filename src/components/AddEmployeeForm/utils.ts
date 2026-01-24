@@ -1,9 +1,10 @@
 import { CreateEmployeeFormInput } from "@/lib/validations/employee";
+import { Employee } from "@/types/employee";
 
 export function transformEmployeeFormData(
   data: CreateEmployeeFormInput,
   managers: Array<{ id: string; name: string }>
-) {
+): Omit<Employee, "id" | "createdAt" | "updatedAt"> {
   return {
     firstName: data.firstName,
     middleName: data.middleName,

@@ -162,15 +162,7 @@ export function ClientsPageContent({ onClientSelect }: ClientsPageProps) {
 
   const apiFilters = useMemo(
     () => buildApiFilters(filters, debouncedSearchTerm, currentPage),
-    [
-      debouncedSearchTerm,
-      filters.status,
-      filters.priority,
-      filters.architecturalStyle,
-      filters.companyType,
-      filters.source,
-      currentPage,
-    ]
+    [filters, debouncedSearchTerm, currentPage]
   );
 
   const {

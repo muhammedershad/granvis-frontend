@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import {
   AlertCircle,
@@ -141,24 +141,23 @@ export function ProjectsPageContent({ onProjectSelect }: ProjectsPageProps) {
     setIsInitialMount(false);
   }, [searchParams]);
 
+  const updateURLParams = useCallback(
+    (newFilters: ProjectFilters, page: number = 1, newSort?: ProjectSort) => {
+      const sortToUse = newSort || sort;
+      const params = buildURLParams(newFilters, page, sortToUse);
+      const queryString = params.toString();
+      router.push(queryString ? `/projects?${queryString}` : "/projects");
+    },
+    [sort, router]
+  );
+
   useEffect(() => {
     if (!isInitialMount) {
       setCurrentPage(1);
       const updatedFilters = { ...filters, search: debouncedSearchTerm };
       updateURLParams(updatedFilters, 1);
     }
-  }, [debouncedSearchTerm]);
-
-  const updateURLParams = (
-    newFilters: ProjectFilters,
-    page: number = 1,
-    newSort?: ProjectSort
-  ) => {
-    const sortToUse = newSort || sort;
-    const params = buildURLParams(newFilters, page, sortToUse);
-    const queryString = params.toString();
-    router.push(queryString ? `/projects?${queryString}` : "/projects");
-  };
+  }, [debouncedSearchTerm, filters, isInitialMount, updateURLParams]);
 
   const { data, isLoading, isFetching, error } = useGetProjectsQuery({
     page: currentPage,

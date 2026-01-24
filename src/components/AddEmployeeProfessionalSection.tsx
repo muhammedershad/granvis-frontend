@@ -4,6 +4,7 @@ import { Label } from "./ui/label";
 import { Textarea } from "./ui/textarea";
 import { DatePicker } from "./ui/date-picker";
 import { type CreateEmployeeFormInput } from "@/lib/validations/employee";
+import { dateToUTC } from "@/lib/utils/date";
 
 interface ProfessionalSectionProps {
   register: UseFormRegister<CreateEmployeeFormInput>;
@@ -64,10 +65,7 @@ export function AddEmployeeProfessionalSection({
                 : undefined
             }
             onDateChange={(date) => {
-              setValue(
-                "education.dateOfPassing",
-                date ? date.toISOString().split("T")[0] : ""
-              );
+              setValue("education.dateOfPassing", dateToUTC(date));
             }}
             placeholder="Select date of passing"
             fromYear={1970}

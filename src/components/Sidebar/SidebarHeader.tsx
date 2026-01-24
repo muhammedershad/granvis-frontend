@@ -31,13 +31,9 @@ export function SidebarHeader({
         onClick={onToggle}
         className="text-muted-foreground hover:text-foreground hover:bg-muted transition-all duration-300 ml-auto"
       >
-        {isMobile ? (
-          <X className="w-4 h-4" />
-        ) : isCollapsed ? (
-          <ChevronRight className="w-4 h-4" />
-        ) : (
-          <ChevronLeft className="w-4 h-4" />
-        )}
+        {isMobile && <X className="w-4 h-4" />}
+        {!isMobile && isCollapsed && <ChevronRight className="w-4 h-4" />}
+        {!isMobile && !isCollapsed && <ChevronLeft className="w-4 h-4" />}
       </Button>
     </div>
   );

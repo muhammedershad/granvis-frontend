@@ -1,5 +1,10 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { FieldErrors, UseFormRegister, UseFormSetValue } from "react-hook-form";
+import {
+  FieldErrors,
+  UseFormRegister,
+  UseFormSetValue,
+  UseFormTrigger,
+} from "react-hook-form";
 import { Input } from "./ui/input";
 import { Label } from "./ui/label";
 import {
@@ -23,6 +28,10 @@ import {
   CommandList,
 } from "./ui/command";
 import { Popover, PopoverContent, PopoverTrigger } from "./ui/popover";
+import { useSelector } from "react-redux";
+import { IAuthRoles, getAuthDetails } from "@/store/slices/authSlice";
+import { getRoleOptions } from "@/lib/rbac";
+import { dateToUTC } from "@/lib/utils/date";
 
 interface Manager {
   id: string;
@@ -34,6 +43,7 @@ interface Manager {
 interface EmploymentSectionProps {
   register: UseFormRegister<CreateEmployeeFormInput>;
   setValue: UseFormSetValue<CreateEmployeeFormInput>;
+  trigger: UseFormTrigger<CreateEmployeeFormInput>;
   errors: FieldErrors<CreateEmployeeFormInput>;
   formData: CreateEmployeeFormInput;
   managers: Manager[];
@@ -44,31 +54,23 @@ interface EmploymentSectionProps {
 export function AddEmployeeEmploymentSection({
   register,
   setValue,
+  trigger,
   errors,
   formData,
   managers,
   managerOpen,
   setManagerOpen,
 }: EmploymentSectionProps) {
+  // Get current user's role from auth state
+  const { user } = useSelector(getAuthDetails);
+  const currentUserRole = user?.role as IAuthRoles | undefined;
+
+  // Get allowed roles based on current user's role
+  const allowedRoles = getRoleOptions(currentUserRole);
+
   return (
     <div className="p-4 pt-2 space-y-6 animate-in fade-in slide-in-from-top-2 duration-300">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div className="space-y-1.5">
-          <Label className="text-xs font-medium text-muted-foreground">
-            Employee ID *
-          </Label>
-          <Input
-            {...register("employeeId")}
-            placeholder="EMP-XXXX"
-            className="h-10"
-            readOnly
-          />
-          {errors.employeeId && (
-            <p className="text-[10px] text-red-500">
-              {errors.employeeId.message}
-            </p>
-          )}
-        </div>
         <div className="space-y-1.5">
           <Label className="text-xs font-medium text-muted-foreground">
             Position *
@@ -77,10 +79,35 @@ export function AddEmployeeEmploymentSection({
             {...register("position")}
             placeholder="e.g. Senior Architect"
             className="h-10"
+            onBlur={() => trigger("position")}
           />
           {errors.position && (
             <p className="text-[10px] text-red-500">
               {errors.position.message}
+            </p>
+          )}
+        </div>
+        <div className="space-y-1.5">
+          <Label className="text-xs font-medium text-muted-foreground">
+            Employment Type *
+          </Label>
+          <Select
+            value={formData.employmentType}
+            onValueChange={(val) => setValue("employmentType", val as any)}
+          >
+            <SelectTrigger className="h-10">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="Full-time">Full-time</SelectItem>
+              <SelectItem value="Part-time">Part-time</SelectItem>
+              <SelectItem value="Contract">Contract</SelectItem>
+              <SelectItem value="Intern">Intern</SelectItem>
+            </SelectContent>
+          </Select>
+          {errors.employmentType && (
+            <p className="text-[10px] text-red-500">
+              {errors.employmentType.message}
             </p>
           )}
         </div>
@@ -127,11 +154,17 @@ export function AddEmployeeEmploymentSection({
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="employee">Employee</SelectItem>
-              <SelectItem value="admin">Admin</SelectItem>
-              <SelectItem value="manager">Manager</SelectItem>
-              <SelectItem value="super_admin">Super Admin</SelectItem>
-              <SelectItem value="accountant">Accountant</SelectItem>
+              {allowedRoles.length > 0 ? (
+                allowedRoles.map((role) => (
+                  <SelectItem key={role.value} value={role.value}>
+                    {role.label}
+                  </SelectItem>
+                ))
+              ) : (
+                <SelectItem value="employee" disabled>
+                  No roles available
+                </SelectItem>
+              )}
             </SelectContent>
           </Select>
           {errors.role && (
@@ -218,6 +251,7 @@ export function AddEmployeeEmploymentSection({
             {...register("salary")}
             placeholder="0"
             className="h-10"
+            onBlur={() => trigger("salary")}
           />
         </div>
       </div>
@@ -230,11 +264,9 @@ export function AddEmployeeEmploymentSection({
           <DatePicker
             date={formData.hireDate ? new Date(formData.hireDate) : undefined}
             onDateChange={(date) => {
-              setValue(
-                "hireDate",
-                date ? date.toISOString().split("T")[0] : ""
-              );
+              setValue("hireDate", dateToUTC(date));
             }}
+            onBlur={() => trigger("hireDate")}
             placeholder="Select hire date"
           />
           {errors.hireDate && (
@@ -250,11 +282,9 @@ export function AddEmployeeEmploymentSection({
           <DatePicker
             date={formData.joinDate ? new Date(formData.joinDate) : undefined}
             onDateChange={(date) => {
-              setValue(
-                "joinDate",
-                date ? date.toISOString().split("T")[0] : ""
-              );
+              setValue("joinDate", dateToUTC(date));
             }}
+            onBlur={() => trigger("joinDate")}
             placeholder="Select join date"
           />
           {errors.joinDate && (
@@ -284,30 +314,6 @@ export function AddEmployeeEmploymentSection({
           {errors.employmentStatus && (
             <p className="text-[10px] text-red-500">
               {errors.employmentStatus.message}
-            </p>
-          )}
-        </div>
-        <div className="space-y-1.5">
-          <Label className="text-xs font-medium text-muted-foreground">
-            Type *
-          </Label>
-          <Select
-            value={formData.employmentType}
-            onValueChange={(val) => setValue("employmentType", val as any)}
-          >
-            <SelectTrigger className="h-10">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="Full-time">Full-time</SelectItem>
-              <SelectItem value="Part-time">Part-time</SelectItem>
-              <SelectItem value="Contract">Contract</SelectItem>
-              <SelectItem value="Intern">Intern</SelectItem>
-            </SelectContent>
-          </Select>
-          {errors.employmentType && (
-            <p className="text-[10px] text-red-500">
-              {errors.employmentType.message}
             </p>
           )}
         </div>

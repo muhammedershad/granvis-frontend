@@ -1,5 +1,6 @@
 "use client";
 import { useState } from "react";
+import { dateToUTC } from "@/lib/utils/date";
 import {
   AlertCircle,
   Building2,
@@ -158,8 +159,8 @@ export function EnquiryPage() {
       id: Date.now().toString(),
       ...formData,
       status: "new",
-      dateCreated: new Date().toISOString().split("T")[0],
-      lastUpdated: new Date().toISOString().split("T")[0],
+      dateCreated: dateToUTC(new Date()),
+      lastUpdated: dateToUTC(new Date()),
       notes: [],
     };
 
@@ -229,7 +230,7 @@ export function EnquiryPage() {
           ? {
               ...enquiry,
               status: newStatus,
-              lastUpdated: new Date().toISOString().split("T")[0],
+              lastUpdated: dateToUTC(new Date()),
             }
           : enquiry
       )

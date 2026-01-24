@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
 import { useState } from "react";
@@ -14,7 +13,10 @@ import {
   useCreateEmployeeMutation,
   useGetManagersQuery,
 } from "@/lib/api/employeesApi";
+import { useGetPresignedUrlMutation } from "@/lib/api/uploadApi";
+import { uploadToS3 } from "@/lib/utils/uploadToS3";
 import { toast } from "sonner";
+import { dateToUTC } from "@/lib/utils/date";
 import {
   AlertCircle,
   Briefcase,
@@ -25,7 +27,7 @@ import {
 } from "lucide-react";
 import { AddEmployeeFormHeader } from "./AddEmployeeFormHeader";
 import { AddEmployeeFormSectionHeader } from "./AddEmployeeFormSectionHeader";
-import { AddEmployeePersonalSection } from "./AddEmployeePersonalSection";
+import { AddEmployeePersonalSection } from "./AddEmployeePersonalSectionWithCrop";
 import { AddEmployeeEmploymentSection } from "./AddEmployeeEmploymentSection";
 import { AddEmployeeAddressSection } from "./AddEmployeeAddressSection";
 import { AddEmployeeEmergencySection } from "./AddEmployeeEmergencySection";
@@ -51,13 +53,18 @@ interface AddEmployeeFormProps {
 
 export function AddEmployeeForm({ onSuccess, onCancel }: AddEmployeeFormProps) {
   const [createEmployee, { isLoading }] = useCreateEmployeeMutation();
-  const { data: managers = [] } = useGetManagersQuery();
+  const [getPresignedUrl] = useGetPresignedUrlMutation();
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [expandedSection, setExpandedSection] = useState<string>("personal");
-  const [imagePreview, setImagePreview] = useState<string | null>(null);
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const [imageFile, setImageFile] = useState<File | null>(null);
+  const [shouldFetchManagers, setShouldFetchManagers] = useState(false);
+  const [imageBlobToUpload, setImageBlobToUpload] = useState<Blob | null>(null);
   const [managerOpen, setManagerOpen] = useState(false);
+  const [isUploadingImage, setIsUploadingImage] = useState(false);
+
+  // Only fetch managers when employment section is opened
+  const { data: managers = [] } = useGetManagersQuery(undefined, {
+    skip: !shouldFetchManagers,
+  });
 
   const {
     register,
@@ -66,6 +73,8 @@ export function AddEmployeeForm({ onSuccess, onCancel }: AddEmployeeFormProps) {
     setValue,
     watch,
     trigger,
+    setError,
+    clearErrors,
   } = useForm<CreateEmployeeFormInput>({
     resolver: zodResolver(createEmployeeFormSchema),
     defaultValues: {
@@ -82,7 +91,7 @@ export function AddEmployeeForm({ onSuccess, onCancel }: AddEmployeeFormProps) {
       department: "architecture",
       managerId: "",
       hireDate: "",
-      joinDate: new Date().toISOString().split("T")[0],
+      joinDate: dateToUTC(new Date()),
       employmentStatus: "Active",
       employmentType: "Full-time",
       role: "employee",
@@ -112,30 +121,72 @@ export function AddEmployeeForm({ onSuccess, onCancel }: AddEmployeeFormProps) {
 
   const formData = watch();
 
-  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      setImageFile(file);
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setImagePreview(reader.result as string);
-        setValue("avatar", reader.result as string);
-      };
-      reader.readAsDataURL(file);
-    }
-  };
-
-  const handleRemoveImage = () => {
-    setImagePreview(null);
-    setImageFile(null);
-    setValue("avatar", "");
+  const handleImageChange = (
+    file: File | null,
+    preview: string | null,
+    blob: Blob | null
+  ) => {
+    setImageBlobToUpload(blob);
+    setValue("avatar", preview || "");
   };
 
   const onSubmit = async (data: CreateEmployeeFormInput) => {
     setSubmitError(null);
+
     try {
+      let avatarKey: string | undefined;
+
+      // Step 1: Upload image to S3 if blob exists
+      if (imageBlobToUpload) {
+        setIsUploadingImage(true);
+        try {
+          // Get presigned URL from backend
+          const presignedResponse = await getPresignedUrl({
+            fileName: `avatar-${Date.now()}.jpg`,
+            contentType: "image/jpeg",
+            folder: "griha-local/employee-avatars",
+          }).unwrap();
+
+          // Upload blob to S3 using presigned URL
+          await uploadToS3(
+            presignedResponse.uploadUrl,
+            imageBlobToUpload,
+            "image/jpeg"
+          );
+
+          // Store the object key for the employee record
+          avatarKey = presignedResponse.objectKey;
+
+          toast.success("Image uploaded successfully!");
+        } catch (uploadError) {
+          console.error("Failed to upload image:", uploadError);
+          const uploadErrorMessage =
+            uploadError instanceof Error
+              ? uploadError.message
+              : "Failed to upload image. Please check your connection and try again.";
+
+          setSubmitError(uploadErrorMessage);
+          toast.error("Failed to upload image", {
+            description: uploadErrorMessage,
+          });
+
+          // Stop submission if image upload fails
+          return;
+        } finally {
+          setIsUploadingImage(false);
+        }
+      }
+
+      // Step 2: Create employee with avatarKey
       const employeeData = transformEmployeeFormData(data, managers);
-      await createEmployee(employeeData as any).unwrap();
+
+      // Add avatarKey to employee data if image was uploaded
+      if (avatarKey) {
+        employeeData.avatarKey = avatarKey;
+      }
+
+      await createEmployee(employeeData).unwrap();
+
       const displayName = [data.firstName, data.middleName, data.lastName]
         .filter(Boolean)
         .join(" ");
@@ -174,6 +225,12 @@ export function AddEmployeeForm({ onSuccess, onCancel }: AddEmployeeFormProps) {
         }
       }
     }
+
+    // Fetch managers when employment section is opened for the first time
+    if (sectionId === "employment" && !shouldFetchManagers) {
+      setShouldFetchManagers(true);
+    }
+
     setExpandedSection(expandedSection === sectionId ? "" : sectionId);
   };
 
@@ -228,11 +285,12 @@ export function AddEmployeeForm({ onSuccess, onCancel }: AddEmployeeFormProps) {
               <AddEmployeePersonalSection
                 register={register}
                 setValue={setValue}
+                trigger={trigger}
+                setError={setError}
+                clearErrors={clearErrors}
                 errors={errors}
                 formData={formData}
-                imagePreview={imagePreview}
                 onImageChange={handleImageChange}
-                onRemoveImage={handleRemoveImage}
               />
             )}
           </div>
@@ -256,6 +314,7 @@ export function AddEmployeeForm({ onSuccess, onCancel }: AddEmployeeFormProps) {
               <AddEmployeeEmploymentSection
                 register={register}
                 setValue={setValue}
+                trigger={trigger}
                 errors={errors}
                 formData={formData}
                 managers={managers}
@@ -281,7 +340,11 @@ export function AddEmployeeForm({ onSuccess, onCancel }: AddEmployeeFormProps) {
               onClick={handleSectionChange}
             />
             {expandedSection === "address" && (
-              <AddEmployeeAddressSection register={register} errors={errors} />
+              <AddEmployeeAddressSection
+                register={register}
+                trigger={trigger}
+                errors={errors}
+              />
             )}
           </div>
 
@@ -326,7 +389,10 @@ export function AddEmployeeForm({ onSuccess, onCancel }: AddEmployeeFormProps) {
           </div>
         </div>
 
-        <AddEmployeeFormActions isLoading={isLoading} onCancel={onCancel} />
+        <AddEmployeeFormActions
+          isLoading={isLoading || isUploadingImage}
+          onCancel={onCancel}
+        />
       </form>
     </div>
   );
