@@ -26,7 +26,6 @@ export function EmployeeFiltersCard({
   filters,
   debouncedSearchTerm,
   departments,
-  positions,
   employmentStatuses,
   employmentTypes,
   onFilterChange,

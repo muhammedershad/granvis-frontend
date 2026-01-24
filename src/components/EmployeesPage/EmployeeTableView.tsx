@@ -149,12 +149,18 @@ export function EmployeeTableView({
                   Employee {getSortIcon("name")}
                 </Button>
               </TableHead>
-              <TableHead className="text-muted-foreground">Department</TableHead>
+              <TableHead className="text-muted-foreground">
+                Department
+              </TableHead>
               <TableHead className="text-muted-foreground">Contact</TableHead>
               <TableHead className="text-muted-foreground">Status</TableHead>
               <TableHead className="text-muted-foreground">Type</TableHead>
-              <TableHead className="text-muted-foreground">Employee ID</TableHead>
-              <TableHead className="text-muted-foreground">Experience</TableHead>
+              <TableHead className="text-muted-foreground">
+                Employee ID
+              </TableHead>
+              <TableHead className="text-muted-foreground">
+                Experience
+              </TableHead>
               <TableHead className="text-muted-foreground">Actions</TableHead>
             </TableRow>
           </TableHeader>
@@ -168,9 +174,12 @@ export function EmployeeTableView({
                 <TableCell>
                   <div className="flex items-center space-x-3">
                     <Avatar className="w-10 h-10 border-2 border-white/40 dark:border-white/10 shadow-sm">
-                      <AvatarImage src={`${getCloudFrontUrl(employee.avatarKey)}`} alt={employee.name} />
+                      <AvatarImage
+                        src={`${getCloudFrontUrl(employee.avatarKey)}`}
+                        alt={employee.name}
+                      />
                       <AvatarFallback className="bg-gradient-to-br from-purple-500 to-blue-500 text-white">
-                        {employee.name[0]?.toUpperCase() || '?'}
+                        {employee.name[0]?.toUpperCase() || "?"}
                       </AvatarFallback>
                     </Avatar>
                     <div>
@@ -190,9 +199,9 @@ export function EmployeeTableView({
                   >
                     <span>
                       {employee.department
-                  ? employee.department.charAt(0).toUpperCase() +
-                    employee.department.slice(1)
-                  : "N/A"}
+                        ? employee.department.charAt(0).toUpperCase() +
+                          employee.department.slice(1)
+                        : "N/A"}
                     </span>
                   </Badge>
                 </TableCell>

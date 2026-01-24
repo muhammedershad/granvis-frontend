@@ -1,11 +1,5 @@
 import { Card } from "../ui/card";
-import {
-  AlertCircle,
-  CheckCircle,
-  Clock,
-  UserX,
-  Users,
-} from "lucide-react";
+import { AlertCircle, CheckCircle, Clock, UserX, Users } from "lucide-react";
 
 interface EmployeeStats {
   total: number;

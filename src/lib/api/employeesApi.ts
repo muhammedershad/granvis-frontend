@@ -51,7 +51,10 @@ export const employeesApi = apiSlice.injectEndpoints({
       providesTags: (result) =>
         result?.data
           ? [
-              ...result.data.map(({ id }) => ({ type: "Employee" as const, id })),
+              ...result.data.map(({ id }) => ({
+                type: "Employee" as const,
+                id,
+              })),
               { type: "Employee" as const, id: "LIST" },
               { type: "Employee" as const, id: "STATS" },
             ]

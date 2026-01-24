@@ -24,7 +24,6 @@ import { cn } from "../ui/utils";
 import { toast } from "sonner";
 import {
   useDeleteEmployeeMutation,
-  useGetEmployeeStatisticsQuery,
   useGetEmployeesQuery,
 } from "@/lib/api/employeesApi";
 import { EmployeeStatsCards } from "./EmployeeStatsCards";
@@ -260,7 +259,6 @@ export function EmployeesPageContent({ onEmployeeSelect }: EmployeesPageProps) {
     }));
   };
 
-
   const handleDeleteClick = (employeeId: string) => {
     setEmployeeToDelete(employeeId);
     setDeleteDialogOpen(true);
@@ -275,8 +273,7 @@ export function EmployeesPageContent({ onEmployeeSelect }: EmployeesPageProps) {
       await deleteEmployee(employeeToDelete).unwrap();
 
       toast.success("Employee deleted successfully!", {
-        description:
-          "The employee has been removed from the system.",
+        description: "The employee has been removed from the system.",
       });
 
       setDeleteDialogOpen(false);
@@ -459,10 +456,10 @@ export function EmployeesPageContent({ onEmployeeSelect }: EmployeesPageProps) {
             </h3>
             <p className="text-muted-foreground max-w-md mx-auto">
               {filters.search ||
-               filters.department !== "all" ||
-               filters.employmentStatus !== "all" ||
-               filters.employmentType !== "all" ||
-               filters.position !== "all"
+              filters.department !== "all" ||
+              filters.employmentStatus !== "all" ||
+              filters.employmentType !== "all" ||
+              filters.position !== "all"
                 ? "No employees match your current filters. Try adjusting your search criteria."
                 : "No employees have been added yet. Start by adding your first employee."}
             </p>
@@ -516,7 +513,8 @@ export function EmployeesPageContent({ onEmployeeSelect }: EmployeesPageProps) {
           <AlertDialogHeader>
             <AlertDialogTitle>Are you sure?</AlertDialogTitle>
             <AlertDialogDescription>
-              This action will delete the employee. This action cannot be undone.
+              This action will delete the employee. This action cannot be
+              undone.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
