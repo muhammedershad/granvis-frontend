@@ -16,7 +16,7 @@ export function getCloudFrontUrl(
     return null;
   }
 
-  return `https://${cloudfrontDomain}/${objectKey}`;
+  return `${cloudfrontDomain}/${objectKey}`;
 }
 
 /**

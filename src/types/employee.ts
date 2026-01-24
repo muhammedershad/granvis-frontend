@@ -75,3 +75,5 @@ export interface EmployeeSort {
   field: keyof Employee;
   direction: "asc" | "desc";
 }
+
+export type EmployeeViewType = "cards" | "table";

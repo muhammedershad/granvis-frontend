@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useDebounce } from "@/hooks/useDebounce";
 import { AlertCircle, Grid3X3, List, Loader2, Plus } from "lucide-react";
 import { Button } from "../ui/button";
@@ -112,6 +112,7 @@ function buildURLParams(
 // eslint-disable-next-line complexity
 export function ClientsPageContent({ onClientSelect }: ClientsPageProps) {
   const router = useRouter();
+  const pathname = usePathname();
   const searchParams = useSearchParams();
 
   const [currentPage, setCurrentPage] = useState(1);
@@ -243,7 +244,7 @@ export function ClientsPageContent({ onClientSelect }: ClientsPageProps) {
   const updateURLParams = (newFilters: ClientFilters, page: number = 1) => {
     const params = buildURLParams(newFilters, page);
     const queryString = params.toString();
-    router.push(queryString ? `/clients?${queryString}` : "/clients");
+    router.push(queryString ? `${pathname}?${queryString}` : pathname);
   };
 
   const handleSort = (field: keyof Client) => {

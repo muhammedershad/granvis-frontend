@@ -4,15 +4,36 @@ import { Employee } from "@/types/employee";
 // Extend the main API slice with employee endpoints
 export const employeesApi = apiSlice.injectEndpoints({
   endpoints: (builder) => ({
-    // Get all employees with optional filters
+    // Get all employees with optional filters and pagination
     getEmployees: builder.query<
-      Employee[],
+      {
+        data: Employee[];
+        total: number;
+        page: number;
+        limit: number;
+        totalPages: number;
+        statistics?: {
+          totalEmployees: number;
+          activeEmployees: number;
+          inactiveEmployees: number;
+          onLeaveEmployees: number;
+          terminatedEmployees: number;
+          byDepartment: Record<string, number>;
+          byEmploymentStatus: Record<string, number>;
+          byEmploymentType: Record<string, number>;
+          byRole: Record<string, number>;
+        };
+      },
       {
         department?: string;
-        status?: string;
-        type?: string;
+        employmentStatus?: string;
+        employmentType?: string;
+        position?: string;
         role?: string;
         search?: string;
+        page?: number;
+        limit?: number;
+        includeStats?: boolean;
       }
     >({
       query: (filters) => {
@@ -28,13 +49,37 @@ export const employeesApi = apiSlice.injectEndpoints({
         };
       },
       providesTags: (result) =>
-        result
+        result?.data
           ? [
-              ...result.map(({ id }) => ({ type: "Employee" as const, id })),
+              ...result.data.map(({ id }) => ({ type: "Employee" as const, id })),
               { type: "Employee" as const, id: "LIST" },
+              { type: "Employee" as const, id: "STATS" },
             ]
           : [{ type: "Employee" as const, id: "LIST" }],
       keepUnusedDataFor: 300, // Cache for 5 minutes
+    }),
+
+    // Get employee statistics
+    getEmployeeStatistics: builder.query<
+      {
+        totalEmployees: number;
+        activeEmployees: number;
+        inactiveEmployees: number;
+        onLeaveEmployees: number;
+        terminatedEmployees: number;
+        byDepartment: Record<string, number>;
+        byEmploymentStatus: Record<string, number>;
+        byEmploymentType: Record<string, number>;
+        byRole: Record<string, number>;
+      },
+      void
+    >({
+      query: () => ({
+        url: "/employees/statistics",
+        method: "GET",
+      }),
+      providesTags: [{ type: "Employee" as const, id: "STATS" }],
+      keepUnusedDataFor: 120, // Cache for 2 minutes
     }),
 
     // Check if email is available
@@ -143,6 +188,7 @@ export const employeesApi = apiSlice.injectEndpoints({
 // Export hooks for usage in functional components
 export const {
   useGetEmployeesQuery,
+  useGetEmployeeStatisticsQuery,
   useCheckEmailAvailabilityQuery,
   useCheckPhoneAvailabilityQuery,
   useGetManagersQuery,
