@@ -1,11 +1,11 @@
-'use client';
+"use client";
 
-import { useEffect } from 'react';
-import { getCookie } from '@/lib/cookies';
-import { useRouter } from 'next/navigation';
-import { useSelector } from 'react-redux';
-import { getAuthDetails } from '@/store/slices/authSlice';
-import { Loader2 } from 'lucide-react';
+import { useEffect } from "react";
+import { getCookie } from "@/lib/cookies";
+import { useRouter } from "next/navigation";
+import { useSelector } from "react-redux";
+import { getAuthDetails } from "@/store/slices/authSlice";
+import { Loader2 } from "lucide-react";
 
 export default function Home() {
   const router = useRouter();
@@ -15,7 +15,7 @@ export default function Home() {
   const isAuthenticated = Boolean(auth?.isAuthenticated);
 
   // read cookie if you still need to verify cookie presence
-  const accessTokenCookie = getCookie('accessToken');
+  const accessTokenCookie = getCookie("accessToken");
 
   useEffect(() => {
     // Give a small delay to ensure Redux state is fully rehydrated
@@ -23,26 +23,26 @@ export default function Home() {
       // Redirect based on authentication status and role
       if (isAuthenticated && accessTokenCookie && auth.user) {
         switch (auth.user.role) {
-          case 'super_admin':
-            router.push('/super-admin/dashboard');
+          case "super_admin":
+            router.push("/super-admin/dashboard");
             break;
-          case 'admin':
-            router.push('/admin/dashboard');
+          case "admin":
+            router.push("/admin/dashboard");
             break;
-          case 'manager':
-            router.push('/manager/dashboard');
+          case "manager":
+            router.push("/manager/dashboard");
             break;
-          case 'accountant':
-            router.push('/accountant/dashboard');
+          case "accountant":
+            router.push("/accountant/dashboard");
             break;
-          case 'employee':
-            router.push('/employee/dashboard');
+          case "employee":
+            router.push("/employee/dashboard");
             break;
           default:
-            router.push('/sign-in');
+            router.push("/sign-in");
         }
       } else {
-        router.push('/sign-in');
+        router.push("/sign-in");
       }
     }, 100);
 

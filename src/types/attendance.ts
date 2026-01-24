@@ -11,7 +11,7 @@ export interface AttendanceRecord {
   workingHours: number;
   breakHours: number;
   overtimeHours: number;
-  status: 'present' | 'absent' | 'late' | 'partial' | 'holiday';
+  status: "present" | "absent" | "late" | "partial" | "holiday";
   location: {
     latitude: number;
     longitude: number;
@@ -55,7 +55,11 @@ export interface AttendanceStats {
   attendancePercentage: number;
 }
 
-export type AttendanceActionType = 'clock-in' | 'clock-out' | 'break-start' | 'break-end';
+export type AttendanceActionType =
+  | "clock-in"
+  | "clock-out"
+  | "break-start"
+  | "break-end";
 
 export interface AttendanceAction {
   type: AttendanceActionType;

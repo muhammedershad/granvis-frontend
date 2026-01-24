@@ -1,6 +1,12 @@
-'use client';
-import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { useIsMobile } from './ui/use-mobile';
+"use client";
+import {
+  ReactNode,
+  createContext,
+  useContext,
+  useEffect,
+  useState,
+} from "react";
+import { useIsMobile } from "./ui/use-mobile";
 
 interface SidebarContextType {
   isCollapsed: boolean;
@@ -40,28 +46,32 @@ export function SidebarProvider({ children }: { children: ReactNode }) {
 
   // Close mobile sidebar when clicking outside or pressing escape
   useEffect(() => {
-    if (!isMobile || !isMobileOpen) return;
+    if (!isMobile || !isMobileOpen) {
+      return;
+    }
 
     const handleEscape = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') {
+      if (e.key === "Escape") {
         setIsMobileOpen(false);
       }
     };
 
-    document.addEventListener('keydown', handleEscape);
-    return () => document.removeEventListener('keydown', handleEscape);
+    document.addEventListener("keydown", handleEscape);
+    return () => document.removeEventListener("keydown", handleEscape);
   }, [isMobile, isMobileOpen]);
 
   return (
-    <SidebarContext.Provider value={{ 
-      isCollapsed, 
-      setIsCollapsed, 
-      toggleSidebar,
-      isMobile,
-      isMobileOpen,
-      setIsMobileOpen,
-      toggleMobileSidebar
-    }}>
+    <SidebarContext.Provider
+      value={{
+        isCollapsed,
+        setIsCollapsed,
+        toggleSidebar,
+        isMobile,
+        isMobileOpen,
+        setIsMobileOpen,
+        toggleMobileSidebar,
+      }}
+    >
       {children}
     </SidebarContext.Provider>
   );
@@ -70,7 +80,7 @@ export function SidebarProvider({ children }: { children: ReactNode }) {
 export function useSidebar() {
   const context = useContext(SidebarContext);
   if (context === undefined) {
-    throw new Error('useSidebar must be used within a SidebarProvider');
+    throw new Error("useSidebar must be used within a SidebarProvider");
   }
   return context;
 }

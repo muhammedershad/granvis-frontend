@@ -2,10 +2,12 @@
  * Format a number as Indian Rupees with appropriate unit (Lakh/Crore)
  */
 export function formatIndianCurrency(value: number): string {
-  if (value === 0) return '₹0';
+  if (value === 0) {
+    return "₹0";
+  }
 
   const absValue = Math.abs(value);
-  const sign = value < 0 ? '-' : '';
+  const sign = value < 0 ? "-" : "";
 
   // Convert to Crores (1 Crore = 10,000,000)
   if (absValue >= 10000000) {
@@ -33,12 +35,14 @@ export function formatIndianCurrency(value: number): string {
  * Format a number as full Indian Rupees with commas (Indian numbering system)
  */
 export function formatIndianCurrencyFull(value: number): string {
-  if (value === 0) return '₹0';
+  if (value === 0) {
+    return "₹0";
+  }
 
   // Indian numbering system: XX,XX,XXX
-  const formatter = new Intl.NumberFormat('en-IN', {
-    style: 'currency',
-    currency: 'INR',
+  const formatter = new Intl.NumberFormat("en-IN", {
+    style: "currency",
+    currency: "INR",
     maximumFractionDigits: 0,
   });
 

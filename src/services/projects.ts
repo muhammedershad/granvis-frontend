@@ -1,5 +1,5 @@
-import api from './api';
-import { Project } from '../types/project';
+import api from "./api";
+import { Project } from "../types/project";
 
 export interface ProjectQueryParams {
   page?: number;
@@ -9,8 +9,15 @@ export interface ProjectQueryParams {
   status?: string;
   priority?: string;
   projectManager?: string;
-  sortBy?: 'createdAt' | 'name' | 'startDate' | 'totalBudget' | 'progressPercentage' | 'priority' | 'status';
-  sortOrder?: 'asc' | 'desc';
+  sortBy?:
+    | "createdAt"
+    | "name"
+    | "startDate"
+    | "totalBudget"
+    | "progressPercentage"
+    | "priority"
+    | "status";
+  sortOrder?: "asc" | "desc";
   startDateFrom?: string;
   startDateTo?: string;
   minBudget?: number;
@@ -33,16 +40,20 @@ export const projectsApi = {
   /**
    * Get paginated list of projects with filters
    */
-  getProjects: async (params?: ProjectQueryParams): Promise<PaginatedResponse<Project>> => {
-    const response = await api.get('/projects/paginated', { params });
+  getProjects: async (
+    params?: ProjectQueryParams
+  ): Promise<PaginatedResponse<Project>> => {
+    const response = await api.get("/projects/paginated", { params });
     return response.data;
   },
 
   /**
    * Get all projects (without pagination)
    */
-  getAllProjects: async (filters?: Record<string, unknown>): Promise<Project[]> => {
-    const response = await api.get('/projects', { params: filters });
+  getAllProjects: async (
+    filters?: Record<string, unknown>
+  ): Promise<Project[]> => {
+    const response = await api.get("/projects", { params: filters });
     return response.data;
   },
 
@@ -57,15 +68,20 @@ export const projectsApi = {
   /**
    * Create a new project
    */
-  createProject: async (project: Omit<Project, 'id' | 'createdAt' | 'updatedAt'>): Promise<Project> => {
-    const response = await api.post('/projects', project);
+  createProject: async (
+    project: Omit<Project, "id" | "createdAt" | "updatedAt">
+  ): Promise<Project> => {
+    const response = await api.post("/projects", project);
     return response.data;
   },
 
   /**
    * Update an existing project
    */
-  updateProject: async (id: string, project: Partial<Project>): Promise<Project> => {
+  updateProject: async (
+    id: string,
+    project: Partial<Project>
+  ): Promise<Project> => {
     const response = await api.patch(`/projects/${id}`, project);
     return response.data;
   },
@@ -106,7 +122,7 @@ export const projectsApi = {
    * Get project statistics
    */
   getStatistics: async (): Promise<Record<string, unknown>> => {
-    const response = await api.get('/projects/statistics');
+    const response = await api.get("/projects/statistics");
     return response.data;
   },
 };

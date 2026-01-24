@@ -8,7 +8,13 @@ import { cn } from "./utils";
 import { Button } from "./button";
 import { Calendar } from "./calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "./popover";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "./select";
 
 interface DatePickerProps {
   date?: Date;
@@ -18,6 +24,7 @@ interface DatePickerProps {
   disabled?: boolean;
   fromYear?: number;
   toYear?: number;
+  onBlur?: () => void;
 }
 
 export function DatePicker({
@@ -28,12 +35,24 @@ export function DatePicker({
   disabled = false,
   fromYear = 1950,
   toYear = new Date().getFullYear() + 10,
+  onBlur,
 }: DatePickerProps) {
   const [month, setMonth] = React.useState<Date>(date || new Date());
+  const [open, setOpen] = React.useState(false);
 
   const months = [
-    "January", "February", "March", "April", "May", "June",
-    "July", "August", "September", "October", "November", "December"
+    "January",
+    "February",
+    "March",
+    "April",
+    "May",
+    "June",
+    "July",
+    "August",
+    "September",
+    "October",
+    "November",
+    "December",
   ];
 
   const years = Array.from(
@@ -66,8 +85,14 @@ export function DatePicker({
     setMonth(newDate);
   };
 
+  const handleDateSelect = (selectedDate: Date | undefined) => {
+    onDateChange?.(selectedDate);
+    setOpen(false);
+    onBlur?.();
+  };
+
   return (
-    <Popover>
+    <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
         <Button
           variant="outline"
@@ -75,7 +100,7 @@ export function DatePicker({
           className={cn(
             "h-10 w-full justify-start text-left font-normal",
             !date && "text-muted-foreground",
-            className,
+            className
           )}
         >
           <CalendarIcon className="mr-2 size-4" />
@@ -95,7 +120,10 @@ export function DatePicker({
             </Button>
 
             <div className="flex gap-2 flex-1">
-              <Select value={months[month.getMonth()]} onValueChange={handleMonthChange}>
+              <Select
+                value={months[month.getMonth()]}
+                onValueChange={handleMonthChange}
+              >
                 <SelectTrigger className="h-8 text-sm">
                   <SelectValue />
                 </SelectTrigger>
@@ -108,13 +136,20 @@ export function DatePicker({
                 </SelectContent>
               </Select>
 
-              <Select value={month.getFullYear().toString()} onValueChange={handleYearChange}>
+              <Select
+                value={month.getFullYear().toString()}
+                onValueChange={handleYearChange}
+              >
                 <SelectTrigger className="h-8 w-24 text-sm">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
                   {years.map((y) => (
-                    <SelectItem key={y} value={y.toString()} className="text-sm">
+                    <SelectItem
+                      key={y}
+                      value={y.toString()}
+                      className="text-sm"
+                    >
                       {y}
                     </SelectItem>
                   ))}
@@ -135,7 +170,7 @@ export function DatePicker({
         <Calendar
           mode="single"
           selected={date}
-          onSelect={onDateChange}
+          onSelect={handleDateSelect}
           month={month}
           onMonthChange={setMonth}
           fromYear={fromYear}

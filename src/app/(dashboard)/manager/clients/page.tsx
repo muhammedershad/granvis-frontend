@@ -5,7 +5,13 @@ import { UserCheck } from "lucide-react";
 
 export default function ManagerClientsPage() {
   return (
-    <RoleGuard allowedRoles={[IAuthRoles.MANAGER, IAuthRoles.ADMIN, IAuthRoles.SUPER_ADMIN]}>
+    <RoleGuard
+      allowedRoles={[
+        IAuthRoles.MANAGER,
+        IAuthRoles.ADMIN,
+        IAuthRoles.SUPER_ADMIN,
+      ]}
+    >
       <div className="space-y-6">
         <Card className="backdrop-blur-xl bg-white/70 dark:bg-black/20 border-white/20 dark:border-white/10 p-6 relative overflow-hidden shadow-xl dark:shadow-2xl shadow-gray-200/50 dark:shadow-black/50">
           <div className="absolute inset-0 bg-gradient-to-br from-purple-50/80 via-blue-50/60 to-indigo-50/80 opacity-100 dark:opacity-0 transition-opacity duration-300"></div>
@@ -17,7 +23,9 @@ export default function ManagerClientsPage() {
             </div>
             <div>
               <h1 className="text-2xl font-bold text-foreground">Clients</h1>
-              <p className="text-muted-foreground">Manage assigned clients and relationships</p>
+              <p className="text-muted-foreground">
+                Manage assigned clients and relationships
+              </p>
             </div>
           </div>
         </Card>

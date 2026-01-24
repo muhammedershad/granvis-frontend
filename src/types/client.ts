@@ -10,12 +10,17 @@ export interface Client {
   website?: string;
   name: string;
   avatar?: string;
-  
+
   // Company Information
   companyName: string;
-  companyType: 'Individual' | 'Small Business' | 'Corporation' | 'Non-Profit' | 'Government';
+  companyType:
+    | "Individual"
+    | "Small Business"
+    | "Corporation"
+    | "Non-Profit"
+    | "Government";
   industry: string;
-  
+
   // Address
   address: {
     street: string;
@@ -24,7 +29,7 @@ export interface Client {
     zipCode: string;
     country: string;
   };
-  
+
   // Contact Details
   primaryContact: {
     name: string;
@@ -38,25 +43,31 @@ export interface Client {
     email: string;
     phone: string;
   };
-  
+
   // Business Information
-  status: 'Potential Lead' | 'On Hold' | 'Active';
-  source: 'Referral' | 'Website' | 'Social Media' | 'Advertisement' | 'Cold Call' | 'Other';
-  priority: 'Low' | 'Medium' | 'High' | 'VIP';
-  
+  status: "Potential Lead" | "On Hold" | "Active";
+  source:
+    | "Referral"
+    | "Website"
+    | "Social Media"
+    | "Advertisement"
+    | "Cold Call"
+    | "Other";
+  priority: "Low" | "Medium" | "High" | "VIP";
+
   // Financial
   totalProjectValue: number;
   projectsCount: number;
-  
+
   // Notes and Tags
   notes: string;
   tags: string[];
-  
+
   // Project Relationships
   projectIds: string[];
   activeProjects: number;
   completedProjects: number;
-  
+
   // System fields
   createdAt: string;
   updatedAt: string;
@@ -75,7 +86,7 @@ export interface ClientFilters {
 
 export interface ClientSort {
   field: keyof Client;
-  direction: 'asc' | 'desc';
+  direction: "asc" | "desc";
 }
 
-export type ClientViewType = 'cards' | 'table';
+export type ClientViewType = "cards" | "table";

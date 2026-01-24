@@ -1,4 +1,4 @@
-'use client';
+"use client";
 
 import { useRouter } from "next/navigation";
 import RoleGuard from "@/components/auth/RoleGuard";
@@ -12,32 +12,38 @@ export default function NewProjectPage() {
   const router = useRouter();
   const [createProject] = useCreateProjectMutation();
 
-  const handleCreateProject = async (newProject: Omit<Project, "id" | "createdAt" | "updatedAt">) => {
+  const handleCreateProject = async (
+    newProject: Omit<Project, "id" | "createdAt" | "updatedAt">
+  ) => {
     try {
       await createProject(newProject).unwrap();
       toast.success("Project created successfully");
-      router.push('/admin/projects');
+      router.push("/admin/projects");
     } catch (err) {
       console.error("Failed to create project:", err);
-      const errorMessage = err && typeof err === 'object' && 'data' in err
-        ? (err.data as { message?: string })?.message || "Failed to create project"
-        : "Failed to create project";
+      const errorMessage =
+        err && typeof err === "object" && "data" in err
+          ? (err.data as { message?: string })?.message ||
+            "Failed to create project"
+          : "Failed to create project";
       toast.error("Error creating project", {
-        description: Array.isArray(errorMessage) ? errorMessage.join(", ") : errorMessage,
+        description: Array.isArray(errorMessage)
+          ? errorMessage.join(", ")
+          : errorMessage,
       });
     }
   };
 
   const handleCancel = () => {
-    router.push('/admin/projects');
+    router.push("/admin/projects");
   };
 
   return (
     <RoleGuard allowedRoles={[IAuthRoles.ADMIN, IAuthRoles.SUPER_ADMIN]}>
       <div className="container mx-auto py-8">
-        <AddProjectForm 
-          onSubmit={handleCreateProject} 
-          onCancel={handleCancel} 
+        <AddProjectForm
+          onSubmit={handleCreateProject}
+          onCancel={handleCancel}
         />
       </div>
     </RoleGuard>

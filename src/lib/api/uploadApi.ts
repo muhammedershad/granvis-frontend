@@ -1,4 +1,4 @@
-import { apiSlice } from './apiSlice';
+import { apiSlice } from "./apiSlice";
 
 export interface UploadResult {
   key: string;
@@ -8,8 +8,7 @@ export interface UploadResult {
 
 export interface PresignedUrlResponse {
   uploadUrl: string;
-  key: string;
-  cloudFrontUrl: string;
+  objectKey: string;
 }
 
 /**
@@ -24,14 +23,14 @@ export async function uploadToS3WithPresignedUrl(
   return new Promise((resolve, reject) => {
     const xhr = new XMLHttpRequest();
 
-    xhr.upload.addEventListener('progress', (event) => {
+    xhr.upload.addEventListener("progress", (event) => {
       if (event.lengthComputable && onProgress) {
         const progress = Math.round((event.loaded / event.total) * 100);
         onProgress(progress);
       }
     });
 
-    xhr.addEventListener('load', () => {
+    xhr.addEventListener("load", () => {
       if (xhr.status >= 200 && xhr.status < 300) {
         resolve();
       } else {
@@ -39,16 +38,16 @@ export async function uploadToS3WithPresignedUrl(
       }
     });
 
-    xhr.addEventListener('error', () => {
-      reject(new Error('Upload failed due to network error'));
+    xhr.addEventListener("error", () => {
+      reject(new Error("Upload failed due to network error"));
     });
 
-    xhr.addEventListener('abort', () => {
-      reject(new Error('Upload was aborted'));
+    xhr.addEventListener("abort", () => {
+      reject(new Error("Upload was aborted"));
     });
 
-    xhr.open('PUT', presignedUrl);
-    xhr.setRequestHeader('Content-Type', file.type);
+    xhr.open("PUT", presignedUrl);
+    xhr.setRequestHeader("Content-Type", file.type);
     xhr.send(file);
   });
 }
@@ -56,44 +55,52 @@ export async function uploadToS3WithPresignedUrl(
 export const uploadApi = apiSlice.injectEndpoints({
   endpoints: (builder) => ({
     // Upload a single file
-    uploadFile: builder.mutation<UploadResult, { file: File; folder?: string }>({
-      query: ({ file, folder }) => {
-        const formData = new FormData();
-        formData.append('file', file);
-        if (folder) {
-          formData.append('folder', folder);
-        }
-        return {
-          url: '/upload/single',
-          method: 'POST',
-          body: formData,
-        };
-      },
-    }),
+    uploadFile: builder.mutation<UploadResult, { file: File; folder?: string }>(
+      {
+        query: ({ file, folder }) => {
+          const formData = new FormData();
+          formData.append("file", file);
+          if (folder) {
+            formData.append("folder", folder);
+          }
+          return {
+            url: "/upload/single",
+            method: "POST",
+            body: formData,
+          };
+        },
+      }
+    ),
 
     // Upload multiple files
-    uploadFiles: builder.mutation<UploadResult[], { files: File[]; folder?: string }>({
+    uploadFiles: builder.mutation<
+      UploadResult[],
+      { files: File[]; folder?: string }
+    >({
       query: ({ files, folder }) => {
         const formData = new FormData();
         files.forEach((file) => {
-          formData.append('files', file);
+          formData.append("files", file);
         });
         if (folder) {
-          formData.append('folder', folder);
+          formData.append("folder", folder);
         }
         return {
-          url: '/upload/multiple',
-          method: 'POST',
+          url: "/upload/multiple",
+          method: "POST",
           body: formData,
         };
       },
     }),
 
     // Get presigned URL for direct upload
-    getPresignedUrl: builder.mutation<PresignedUrlResponse, { fileName: string; contentType: string; folder?: string }>({
+    getPresignedUrl: builder.mutation<
+      PresignedUrlResponse,
+      { fileName: string; contentType: string; folder?: string }
+    >({
       query: (body) => ({
-        url: '/upload/presigned-url',
-        method: 'POST',
+        url: "/upload/presigned-url",
+        method: "POST",
         body,
       }),
     }),
@@ -101,8 +108,8 @@ export const uploadApi = apiSlice.injectEndpoints({
     // Delete a file
     deleteFile: builder.mutation<void, string>({
       query: (key) => ({
-        url: '/upload/delete',
-        method: 'POST',
+        url: "/upload/delete",
+        method: "POST",
         body: { key },
       }),
     }),

@@ -1,46 +1,121 @@
-import { apiSlice } from './apiSlice';
-import { Employee } from '@/types/employee';
+import { apiSlice } from "./apiSlice";
+import { Employee } from "@/types/employee";
 
 // Extend the main API slice with employee endpoints
 export const employeesApi = apiSlice.injectEndpoints({
   endpoints: (builder) => ({
-    // Get all employees with optional filters
-    getEmployees: builder.query<Employee[], {
-      department?: string;
-      status?: string;
-      type?: string;
-      role?: string;
-      search?: string;
-    }>({
+    // Get all employees with optional filters and pagination
+    getEmployees: builder.query<
+      {
+        data: Employee[];
+        total: number;
+        page: number;
+        limit: number;
+        totalPages: number;
+        statistics?: {
+          totalEmployees: number;
+          activeEmployees: number;
+          inactiveEmployees: number;
+          onLeaveEmployees: number;
+          terminatedEmployees: number;
+          byDepartment: Record<string, number>;
+          byEmploymentStatus: Record<string, number>;
+          byEmploymentType: Record<string, number>;
+          byRole: Record<string, number>;
+        };
+      },
+      {
+        department?: string;
+        employmentStatus?: string;
+        employmentType?: string;
+        position?: string;
+        role?: string;
+        search?: string;
+        page?: number;
+        limit?: number;
+        includeStats?: boolean;
+      }
+    >({
       query: (filters) => {
         const params = new URLSearchParams();
         Object.entries(filters || {}).forEach(([key, value]) => {
-          if (value !== undefined && value !== null && value !== '') {
+          if (value !== undefined && value !== null && value !== "") {
             params.append(key, String(value));
           }
         });
         return {
           url: `/employees?${params.toString()}`,
-          method: 'GET',
+          method: "GET",
         };
       },
       providesTags: (result) =>
-        result
+        result?.data
           ? [
-              ...result.map(({ id }) => ({ type: 'Employee' as const, id })),
-              { type: 'Employee' as const, id: 'LIST' },
+              ...result.data.map(({ id }) => ({
+                type: "Employee" as const,
+                id,
+              })),
+              { type: "Employee" as const, id: "LIST" },
+              { type: "Employee" as const, id: "STATS" },
             ]
-          : [{ type: 'Employee' as const, id: 'LIST' }],
+          : [{ type: "Employee" as const, id: "LIST" }],
       keepUnusedDataFor: 300, // Cache for 5 minutes
+    }),
+
+    // Get employee statistics
+    getEmployeeStatistics: builder.query<
+      {
+        totalEmployees: number;
+        activeEmployees: number;
+        inactiveEmployees: number;
+        onLeaveEmployees: number;
+        terminatedEmployees: number;
+        byDepartment: Record<string, number>;
+        byEmploymentStatus: Record<string, number>;
+        byEmploymentType: Record<string, number>;
+        byRole: Record<string, number>;
+      },
+      void
+    >({
+      query: () => ({
+        url: "/employees/statistics",
+        method: "GET",
+      }),
+      providesTags: [{ type: "Employee" as const, id: "STATS" }],
+      keepUnusedDataFor: 120, // Cache for 2 minutes
+    }),
+
+    // Check if email is available
+    checkEmailAvailability: builder.query<
+      { available: boolean; message?: string },
+      string
+    >({
+      query: (email) => ({
+        url: `/employees/check-email?email=${encodeURIComponent(email)}`,
+        method: "GET",
+      }),
+      keepUnusedDataFor: 0, // Don't cache email checks
+    }),
+
+    // Check if phone is available
+    checkPhoneAvailability: builder.query<
+      { available: boolean; message?: string },
+      string
+    >({
+      query: (phone) => ({
+        url: `/employees/check-phone?phone=${encodeURIComponent(phone)}`,
+        method: "GET",
+      }),
+      keepUnusedDataFor: 0, // Don't cache phone checks
     }),
 
     // Get potential managers (employees with manager or admin role)
     getManagers: builder.query<Employee[], void>({
       query: () => ({
-        url: '/employees/managers',
-        method: 'GET',
+        url: "/employees/managers",
+        method: "GET",
       }),
-      providesTags: [{ type: 'Employee' as const, id: 'MANAGERS' }],
+      providesTags: [{ type: "Employee" as const, id: "MANAGERS" }],
       keepUnusedDataFor: 300,
     }),
 
@@ -48,9 +123,9 @@ export const employeesApi = apiSlice.injectEndpoints({
     getEmployeeById: builder.query<Employee, string>({
       query: (id) => ({
         url: `/employees/${id}`,
-        method: 'GET',
+        method: "GET",
       }),
-      providesTags: (result, error, id) => [{ type: 'Employee' as const, id }],
+      providesTags: (result, error, id) => [{ type: "Employee" as const, id }],
       keepUnusedDataFor: 300,
     }),
 
@@ -58,38 +133,44 @@ export const employeesApi = apiSlice.injectEndpoints({
     getEmployeesByManager: builder.query<Employee[], string>({
       query: (managerId) => ({
         url: `/employees/manager/${managerId}`,
-        method: 'GET',
+        method: "GET",
       }),
       providesTags: (result, error, managerId) => [
-        { type: 'Employee' as const, id: `MANAGER_${managerId}` },
+        { type: "Employee" as const, id: `MANAGER_${managerId}` },
       ],
       keepUnusedDataFor: 300,
     }),
 
     // Create a new employee
-    createEmployee: builder.mutation<Employee, Omit<Employee, 'id' | 'createdAt' | 'updatedAt'>>({
+    createEmployee: builder.mutation<
+      Employee,
+      Omit<Employee, "id" | "createdAt" | "updatedAt">
+    >({
       query: (employee) => ({
-        url: '/employees',
-        method: 'POST',
+        url: "/employees",
+        method: "POST",
         body: employee,
       }),
       invalidatesTags: [
-        { type: 'Employee' as const, id: 'LIST' },
-        { type: 'Employee' as const, id: 'MANAGERS' },
+        { type: "Employee" as const, id: "LIST" },
+        { type: "Employee" as const, id: "MANAGERS" },
       ],
     }),
 
     // Update an employee
-    updateEmployee: builder.mutation<Employee, { id: string; data: Partial<Employee> }>({
+    updateEmployee: builder.mutation<
+      Employee,
+      { id: string; data: Partial<Employee> }
+    >({
       query: ({ id, data }) => ({
         url: `/employees/${id}`,
-        method: 'PATCH',
+        method: "PATCH",
         body: data,
       }),
       invalidatesTags: (result, error, { id }) => [
-        { type: 'Employee' as const, id },
-        { type: 'Employee' as const, id: 'LIST' },
-        { type: 'Employee' as const, id: 'MANAGERS' },
+        { type: "Employee" as const, id },
+        { type: "Employee" as const, id: "LIST" },
+        { type: "Employee" as const, id: "MANAGERS" },
       ],
     }),
 
@@ -97,11 +178,11 @@ export const employeesApi = apiSlice.injectEndpoints({
     deleteEmployee: builder.mutation<{ message: string }, string>({
       query: (id) => ({
         url: `/employees/${id}`,
-        method: 'DELETE',
+        method: "DELETE",
       }),
       invalidatesTags: [
-        { type: 'Employee' as const, id: 'LIST' },
-        { type: 'Employee' as const, id: 'MANAGERS' },
+        { type: "Employee" as const, id: "LIST" },
+        { type: "Employee" as const, id: "MANAGERS" },
       ],
     }),
   }),
@@ -110,6 +191,9 @@ export const employeesApi = apiSlice.injectEndpoints({
 // Export hooks for usage in functional components
 export const {
   useGetEmployeesQuery,
+  useGetEmployeeStatisticsQuery,
+  useCheckEmailAvailabilityQuery,
+  useCheckPhoneAvailabilityQuery,
   useGetManagersQuery,
   useGetEmployeeByIdQuery,
   useGetEmployeesByManagerQuery,

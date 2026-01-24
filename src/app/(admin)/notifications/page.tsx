@@ -1,8 +1,8 @@
-'use client'
+"use client";
 import { NotificationPage } from "@/components/NotificationPage";
 
 const Page = () => {
-    return <NotificationPage />;
-}
+  return <NotificationPage />;
+};
 
 export default Page;

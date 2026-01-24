@@ -3,15 +3,18 @@ import { z } from "zod";
 // Zod schema for creating a new client
 export const createClientSchema = z.object({
   // Personal Information
-  firstName: z.string()
+  firstName: z
+    .string()
     .min(1, "First name is required")
     .max(50, "First name must be 50 characters or less")
     .regex(/^\S+$/, "First name must be a single word without spaces"),
-  middleName: z.string()
+  middleName: z
+    .string()
     .max(50, "Middle name must be 50 characters or less")
     .regex(/^$|^\S+$/, "Middle name must be a single word without spaces")
     .optional(),
-  lastName: z.string()
+  lastName: z
+    .string()
     .min(1, "Last name is required")
     .max(50, "Last name must be 50 characters or less")
     .regex(/^\S+$/, "Last name must be a single word without spaces"),
@@ -35,14 +38,25 @@ export const createClientSchema = z.object({
   // Family/Additional Contacts
   spouseName: z.string().optional(),
   spousePhone: z.string().optional(),
-  spouseEmail: z.string().email("Invalid spouse email").optional().or(z.literal("")),
+  spouseEmail: z
+    .string()
+    .email("Invalid spouse email")
+    .optional()
+    .or(z.literal("")),
   emergencyContactName: z.string().optional(),
   emergencyContactRelationship: z.string().optional(),
   emergencyContactPhone: z.string().optional(),
 
   // Client Information
   status: z.enum(["Potential Lead", "On Hold", "Active"]),
-  source: z.enum(["Referral", "Website", "Social Media", "Advertisement", "Cold Call", "Other"]),
+  source: z.enum([
+    "Referral",
+    "Website",
+    "Social Media",
+    "Advertisement",
+    "Cold Call",
+    "Other",
+  ]),
   priority: z.enum(["Low", "Medium", "High", "VIP"]),
 
   // Preferences
@@ -57,7 +71,7 @@ export const createClientSchema = z.object({
   tags: z.string().optional(),
 
   // System
-  createdBy: z.string()
+  createdBy: z.string(),
 });
 
 export type CreateClientFormData = z.infer<typeof createClientSchema>;

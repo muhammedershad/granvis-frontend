@@ -1,0 +1,1 @@
+export { ClientDetailsPage } from "./ClientDetailsPageMain";

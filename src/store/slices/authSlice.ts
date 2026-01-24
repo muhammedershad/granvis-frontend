@@ -1,12 +1,12 @@
-import { createSlice, PayloadAction } from '@reduxjs/toolkit';
-import { RootState } from '@/store/store';
+import { PayloadAction, createSlice } from "@reduxjs/toolkit";
+import { RootState } from "@/store/store";
 
 export enum IAuthRoles {
-  SUPER_ADMIN = 'super_admin',
-  ADMIN = 'admin',
-  MANAGER = 'manager',
-  ACCOUNTANT = 'accountant',
-  EMPLOYEE = 'employee',
+  SUPER_ADMIN = "super_admin",
+  ADMIN = "admin",
+  MANAGER = "manager",
+  ACCOUNTANT = "accountant",
+  EMPLOYEE = "employee",
 }
 
 interface User {
@@ -31,13 +31,10 @@ const initialState: AuthState = {
 };
 
 const authSlice = createSlice({
-  name: 'auth',
+  name: "auth",
   initialState,
   reducers: {
-    setCredentials: (
-      state,
-      action: PayloadAction<{ user: User }>
-    ) => {
+    setCredentials: (state, action: PayloadAction<{ user: User }>) => {
       state.user = action.payload.user;
       state.isAuthenticated = true;
     },

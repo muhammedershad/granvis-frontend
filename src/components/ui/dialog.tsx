@@ -39,7 +39,7 @@ const DialogOverlay = React.forwardRef<
     data-slot="dialog-overlay"
     className={cn(
       "data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 fixed inset-0 z-50 bg-black/50",
-      className,
+      className
     )}
     {...props}
   />
@@ -65,7 +65,7 @@ const DialogContent = React.forwardRef<
         "md:max-w-4xl md:max-h-[calc(100%-4rem)] md:top-1/2 md:translate-y-[-50%]",
         // Large screens: even more spacious
         "lg:max-w-5xl xl:max-w-6xl",
-        className,
+        className
       )}
       {...props}
     >
@@ -95,7 +95,7 @@ function DialogFooter({ className, ...props }: React.ComponentProps<"div">) {
       data-slot="dialog-footer"
       className={cn(
         "flex flex-col-reverse gap-2 sm:flex-row sm:justify-end",
-        className,
+        className
       )}
       {...props}
     />

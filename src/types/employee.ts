@@ -7,21 +7,30 @@ export interface Employee {
   email: string;
   phone: string;
   avatar?: string;
+  avatarKey?: string;
   name: string;
   gender: string;
-  status: 'Active' | 'Inactive' | 'On Leave' | 'Terminated';
+  status: "Active" | "Inactive" | "On Leave" | "Terminated";
   joinDate: string;
 
   // Employment Details
   employeeId: string;
   position: string;
-  department: 'architecture' | 'interior' | 'landscape' | 'construction' | 'drafting' | 'accountant' | 'admin' | 'marketing';
+  department:
+    | "architecture"
+    | "interior"
+    | "landscape"
+    | "construction"
+    | "drafting"
+    | "accountant"
+    | "admin"
+    | "marketing";
   managerId?: string;
   manager?: string;
   hireDate: string;
-  employmentStatus: 'Active' | 'Inactive' | 'On Leave' | 'Terminated';
-  employmentType: 'Full-time' | 'Part-time' | 'Contract' | 'Intern';
-  role: 'employee' | 'admin' | 'manager' | 'super_admin' | 'accountant';
+  employmentStatus: "Active" | "Inactive" | "On Leave" | "Terminated";
+  employmentType: "Full-time" | "Part-time" | "Contract" | "Intern";
+  role: "employee" | "admin" | "manager" | "super_admin" | "accountant";
   salary?: number;
 
   // Personal Details
@@ -64,5 +73,7 @@ export interface EmployeeFilters {
 
 export interface EmployeeSort {
   field: keyof Employee;
-  direction: 'asc' | 'desc';
+  direction: "asc" | "desc";
 }
+
+export type EmployeeViewType = "cards" | "table";
