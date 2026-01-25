@@ -1,8 +1,8 @@
 import { FieldErrors, UseFormRegister, UseFormSetValue } from "react-hook-form";
 import { CreateClientFormData } from "@/lib/validations/client";
-import { Input } from "../ui/input";
-import { Label } from "../ui/label";
-import { Textarea } from "../ui/textarea";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import { X as XIcon } from "lucide-react";
 
 interface NotesSectionProps {

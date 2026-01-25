@@ -19,7 +19,7 @@ import { Separator } from "../ui/separator";
 import { Alert, AlertDescription, AlertTitle } from "../ui/alert";
 import { Project } from "../../types/project";
 import { Client } from "../../types/client";
-import { AddClientForm } from "../AddClientForm";
+import { AddClientForm } from "@/components/clients";
 import {
   uploadToS3WithPresignedUrl,
   useGetPresignedUrlMutation,

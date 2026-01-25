@@ -8,15 +8,15 @@ import {
   UseFormTrigger,
 } from "react-hook-form";
 import NextImage from "next/image";
-import { Input } from "../ui/input";
-import { Label } from "../ui/label";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "../ui/select";
+} from "@/components/ui/select";
 import { type CreateClientFormData } from "@/lib/validations/client";
 import {
   AlertCircle,
@@ -25,10 +25,10 @@ import {
   Loader2,
   X,
 } from "lucide-react";
-import { ImageCropDialog } from "../ui/ImageCropDialog";
+import { ImageCropDialog } from "@/components/ui/ImageCropDialog";
 import { useImageCrop } from "@/hooks/useImageCrop";
-import { Alert, AlertDescription } from "../ui/alert";
-import { Button } from "../ui/button";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Button } from "@/components/ui/button";
 import { clientsApi } from "@/lib/api/clientsApi";
 
 interface PersonalSectionProps {

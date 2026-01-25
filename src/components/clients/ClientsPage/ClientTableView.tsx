@@ -1,5 +1,5 @@
-import { Client } from "../../types/client";
-import { Card } from "../ui/card";
+import { Client } from "@/types/client";
+import { Card } from "@/components/ui/card";
 import {
   Table,
   TableBody,
@@ -7,17 +7,17 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from "../ui/table";
-import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
-import { Badge } from "../ui/badge";
-import { Button } from "../ui/button";
+} from "@/components/ui/table";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from "../ui/dropdown-menu";
+} from "@/components/ui/dropdown-menu";
 import {
   AlertCircle,
   ArrowDown,
@@ -34,7 +34,7 @@ import {
   Trash2,
   TrendingUp,
 } from "lucide-react";
-import { cn } from "../ui/utils";
+import { cn } from "@/components/ui/utils";
 import { formatIndianCurrency } from "@/lib/utils/currency";
 import { getCloudFrontUrl } from "@/lib/utils/cloudfront";
 

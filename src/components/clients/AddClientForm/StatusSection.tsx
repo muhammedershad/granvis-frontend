@@ -1,15 +1,15 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { FieldErrors, UseFormRegister } from "react-hook-form";
 import { CreateClientFormData } from "@/lib/validations/client";
-import { Input } from "../ui/input";
-import { Label } from "../ui/label";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "../ui/select";
+} from "@/components/ui/select";
 
 interface StatusSectionProps {
   register: UseFormRegister<CreateClientFormData>;

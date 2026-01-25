@@ -31,20 +31,20 @@ import {
   Users,
   X,
 } from "lucide-react";
-import { Button } from "../ui/button";
-import { Textarea } from "../ui/textarea";
-import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
-import { Badge } from "../ui/badge";
-import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "../ui/tabs";
+import { Button } from "@/components/ui/button";
+import { Textarea } from "@/components/ui/textarea";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from "../ui/dropdown-menu";
-import { Label } from "../ui/label";
+} from "@/components/ui/dropdown-menu";
+import { Label } from "@/components/ui/label";
 import {
   Table,
   TableBody,
@@ -52,8 +52,8 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from "../ui/table";
-import { Client } from "../../types/client";
+} from "@/components/ui/table";
+import { Client } from "@/types/client";
 
 // Mock comprehensive client data
 const mockClientData: Client[] = [

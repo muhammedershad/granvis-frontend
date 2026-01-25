@@ -1,4 +1,4 @@
-import { Card } from "../ui/card";
+import { Card } from "@/components/ui/card";
 import {
   Pagination,
   PaginationContent,
@@ -6,7 +6,7 @@ import {
   PaginationLink,
   PaginationNext,
   PaginationPrevious,
-} from "../ui/pagination";
+} from "@/components/ui/pagination";
 
 interface ClientPaginationProps {
   currentPage: number;

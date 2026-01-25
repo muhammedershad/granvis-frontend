@@ -9,6 +9,7 @@ export interface UploadResult {
 export interface PresignedUrlResponse {
   uploadUrl: string;
   objectKey: string;
+  cloudFrontUrl: string;
 }
 
 /**

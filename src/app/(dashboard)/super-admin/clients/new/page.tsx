@@ -3,7 +3,7 @@
 import { useRouter } from "next/navigation";
 import RoleGuard from "@/components/auth/RoleGuard";
 import { IAuthRoles } from "@/store/slices/authSlice";
-import { AddClientForm } from "@/components/AddClientForm";
+import { AddClientForm } from "@/components/clients";
 
 export default function NewClientPage() {
   const router = useRouter();

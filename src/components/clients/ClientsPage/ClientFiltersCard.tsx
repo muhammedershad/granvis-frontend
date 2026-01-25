@@ -1,15 +1,15 @@
-import { Card } from "../ui/card";
-import { Input } from "../ui/input";
-import { Button } from "../ui/button";
+import { Card } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "../ui/select";
+} from "@/components/ui/select";
 import { Filter, Loader2, Search } from "lucide-react";
-import { ClientFilters } from "../../types/client";
+import { ClientFilters } from "@/types/client";
 
 interface ClientFiltersCardProps {
   filters: ClientFilters;

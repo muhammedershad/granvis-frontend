@@ -3,9 +3,9 @@
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Button } from "../ui/button";
-import { Separator } from "../ui/separator";
-import { Alert, AlertDescription, AlertTitle } from "../ui/alert";
+import { Button } from "@/components/ui/button";
+import { Separator } from "@/components/ui/separator";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import {
   type CreateClientFormData,
   createClientSchema,

@@ -1,7 +1,7 @@
 "use client";
 import RoleGuard from "@/components/auth/RoleGuard";
 import { IAuthRoles } from "@/store/slices/authSlice";
-import { ClientsPage } from "@/components/ClientsPage";
+import { ClientsPage } from "@/components/clients";
 
 export default function SuperAdminClientsPage() {
   return (

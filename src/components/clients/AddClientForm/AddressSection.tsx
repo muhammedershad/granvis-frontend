@@ -1,7 +1,7 @@
 import { FieldErrors, UseFormRegister } from "react-hook-form";
 import { CreateClientFormData } from "@/lib/validations/client";
-import { Input } from "../ui/input";
-import { Label } from "../ui/label";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 
 interface AddressSectionProps {
   register: UseFormRegister<CreateClientFormData>;

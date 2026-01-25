@@ -1,9 +1,11 @@
+"use client";
+
 import { useEffect, useMemo, useState } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useDebounce } from "@/hooks/useDebounce";
 import { AlertCircle, Grid3X3, List, Loader2, Plus } from "lucide-react";
-import { Button } from "../ui/button";
-import { Card } from "../ui/card";
+import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -13,14 +15,14 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-} from "../ui/alert-dialog";
+} from "@/components/ui/alert-dialog";
 import {
   Client,
   ClientFilters,
   ClientSort,
   ClientViewType,
-} from "../../types/client";
-import { cn } from "../ui/utils";
+} from "@/types/client";
+import { cn } from "@/components/ui/utils";
 import { toast } from "sonner";
 import {
   useDeleteClientMutation,

@@ -5,7 +5,7 @@ import {
   ChevronDown,
   ChevronRight,
 } from "lucide-react";
-import { cn } from "../ui/utils";
+import { cn } from "@/components/ui/utils";
 
 interface SectionHeaderProps {
   id: string;
