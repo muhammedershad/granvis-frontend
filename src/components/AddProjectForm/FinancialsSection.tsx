@@ -1,5 +1,5 @@
 import { FieldErrors, UseFormRegister } from "react-hook-form";
-import { Calendar, DollarSign } from "lucide-react";
+import { Calendar, IndianRupee } from "lucide-react";
 import { Label } from "../ui/label";
 import { Input } from "../ui/input";
 import { ProjectFormData } from "./schemas";
@@ -92,48 +92,28 @@ export function FinancialsSection({
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div className="space-y-3">
-          <Label
-            htmlFor="totalBudget"
-            className="text-xs font-medium text-muted-foreground"
-          >
-            Total Budget *
-          </Label>
-          <div className="relative">
-            <DollarSign className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
-            <Input
-              id="totalBudget"
-              type="number"
-              {...register("totalBudget")}
-              className="pl-9 bg-background"
-              placeholder="850000.00"
-            />
-          </div>
-          {errors.totalBudget && (
-            <p className="text-[10px] text-red-500">
-              {errors.totalBudget.message}
-            </p>
-          )}
+      <div className="space-y-3">
+        <Label
+          htmlFor="totalBudget"
+          className="text-xs font-medium text-muted-foreground"
+        >
+          Total Budget *
+        </Label>
+        <div className="relative">
+          <IndianRupee className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
+          <Input
+            id="totalBudget"
+            type="number"
+            {...register("totalBudget")}
+            className="pl-9 bg-background"
+            placeholder="850000.00"
+          />
         </div>
-        <div className="space-y-3">
-          <Label
-            htmlFor="spentAmount"
-            className="text-xs font-medium text-muted-foreground"
-          >
-            Spent Amount
-          </Label>
-          <div className="relative">
-            <DollarSign className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
-            <Input
-              id="spentAmount"
-              type="number"
-              {...register("spentAmount")}
-              className="pl-9 bg-background"
-              placeholder="0.00"
-            />
-          </div>
-        </div>
+        {errors.totalBudget && (
+          <p className="text-[10px] text-red-500">
+            {errors.totalBudget.message}
+          </p>
+        )}
       </div>
     </div>
   );

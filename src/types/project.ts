@@ -5,6 +5,7 @@ export interface Project {
   name: string;
   description: string;
   client: string;
+  clientId?: string;
   clientEmail?: string;
   clientPhone?: string;
 
@@ -32,7 +33,9 @@ export interface Project {
 
   // Team
   projectManager: string;
+  managerId?: string;
   teamMembers: string[];
+  teamMemberIds?: string[];
 
   // Location
   location?: {

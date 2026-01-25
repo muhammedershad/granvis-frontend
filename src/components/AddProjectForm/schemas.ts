@@ -8,6 +8,12 @@ export const basicInfoSchema = z.object({
     .min(10, "Description must be at least 10 characters"),
   type: z.enum(["Villa", "Commercial", "Interior", "Landscape"]),
   category: z.string().optional(),
+  sqft: z
+    .string()
+    .optional()
+    .refine((val) => !val || !isNaN(Number(val)), {
+      message: "Sqft must be a number",
+    }),
   status: z.enum([
     "Planning",
     "In Progress",
@@ -20,6 +26,7 @@ export const basicInfoSchema = z.object({
 
 export const clientInfoSchema = z.object({
   client: z.string().min(1, "Client selection is required"),
+  clientId: z.string().optional(),
   clientEmail: z
     .string()
     .email("Invalid email format")
@@ -36,7 +43,9 @@ export const detailsSchema = z.object({
   currentPhase: z.string().optional(),
   progressPercentage: z.string().optional(),
   projectManager: z.string().min(1, "Project manager is required"),
+  managerId: z.string().optional(),
   teamMembers: z.string().optional(),
+  teamMemberIds: z.array(z.string()).optional(),
 });
 
 export const timelineSchema = z.object({
@@ -50,7 +59,6 @@ export const timelineSchema = z.object({
     .refine((val) => !isNaN(Number(val)) && Number(val) > 0, {
       message: "Budget must be a positive number",
     }),
-  spentAmount: z.string().optional(),
 });
 
 export const additionalSchema = z.object({

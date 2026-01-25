@@ -4,79 +4,126 @@ import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { toast } from "sonner";
+import { useRouter } from "next/navigation";
 import {
   AlertCircle,
   Building2,
   Calendar,
   FileText,
-  Loader2,
   MapPin,
   Users,
-  X,
 } from "lucide-react";
-import { Button } from "../ui/button";
 import { Separator } from "../ui/separator";
 import { Alert, AlertDescription, AlertTitle } from "../ui/alert";
 import { Project } from "../../types/project";
 import { Client } from "../../types/client";
-import { AddClientForm } from "../AddClientForm";
+import { Employee } from "../../types/employee";
 import {
   uploadToS3WithPresignedUrl,
   useGetPresignedUrlMutation,
 } from "@/lib/api/uploadApi";
+import { useGetClientsQuery } from "@/lib/api/clientsApi";
+import { getCloudFrontUrl } from "@/lib/utils/cloudfront";
+import { useImageCrop } from "@/hooks/useImageCrop";
+import { useDebounce } from "@/hooks/useDebounce";
+import { ImageCropDialog } from "../ui/ImageCropDialog";
 import { ProjectFormData, projectFormSchema } from "./schemas";
+import { FormHeader } from "./FormHeader";
 import { SectionHeader } from "./SectionHeader";
 import { IdentitySection } from "./IdentitySection";
 import { ClientSection } from "./ClientSection";
 import { ScopeSection } from "./ScopeSection";
 import { FinancialsSection } from "./FinancialsSection";
 import { LocationSection } from "./LocationSection";
+import { FormActions } from "./FormActions";
+import {
+  checkIdentitySectionCompletion,
+  checkClientSectionCompletion,
+  checkScopeSectionCompletion,
+  checkFinancialsSectionCompletion,
+  checkLocationSectionCompletion,
+} from "./completionChecks";
 
 interface AddProjectFormProps {
-  onSubmit: (project: Omit<Project, "id" | "createdAt" | "updatedAt">) => void;
+  onSubmit: (
+    project: Omit<Project, "id" | "createdAt" | "updatedAt">
+  ) => Promise<void>;
   onCancel: () => void;
+  isSubmitting?: boolean;
 }
 
-// Mock clients - simplified
-const mockClients: Client[] = [
-  {
-    id: "1",
-    name: "John Smith",
-    email: "john.smith@example.com",
-    phone: "+1 (555) 123-4567",
-    companyName: "Smith Enterprises",
-    companyType: "Small Business",
-    industry: "Technology",
-    status: "Active",
-    priority: "High",
-  } as Client,
-  {
-    id: "2",
-    name: "Sarah Johnson",
-    email: "sarah.johnson@greentech.com",
-    phone: "+1 (555) 987-6543",
-    companyName: "GreenTech Solutions",
-    companyType: "Corporation",
-    industry: "Environmental",
-    status: "Active",
-    priority: "Medium",
-  } as Client,
-];
-
-export function AddProjectForm({ onSubmit, onCancel }: AddProjectFormProps) {
+export function AddProjectForm({
+  onSubmit,
+  onCancel,
+  isSubmitting = false,
+}: AddProjectFormProps) {
+  const router = useRouter();
   const [expandedSection, setExpandedSection] = useState<string>("identity");
   const [selectedClient, setSelectedClient] = useState<Client | null>(null);
   const [clientSearchTerm, setClientSearchTerm] = useState("");
-  const [showAddClientDialog, setShowAddClientDialog] = useState(false);
-  const [imagePreview, setImagePreview] = useState<string | null>(null);
-  const [imageFile, setImageFile] = useState<File | null>(null);
+  const [imageBlobToUpload, setImageBlobToUpload] = useState<Blob | null>(null);
   const [uploadProgress, setUploadProgress] = useState<number>(0);
   const [isUploading, setIsUploading] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [tagsList, setTagsList] = useState<string[]>([]);
-  const [teamList, setTeamList] = useState<string[]>([]);
+  const [selectedManager, setSelectedManager] = useState<Employee | null>(null);
+  const [selectedTeamMembers, setSelectedTeamMembers] = useState<Employee[]>([]);
 
   const [getPresignedUrl] = useGetPresignedUrlMutation();
+
+  // Debounce client search term for API calls (1 second delay)
+  const debouncedSearchTerm = useDebounce(clientSearchTerm, 1000);
+
+  // Fetch clients from API with debounced search
+  const {
+    data: clientsData,
+    isLoading: isLoadingClients,
+    isFetching: isFetchingClients,
+  } = useGetClientsQuery({
+    search: debouncedSearchTerm || undefined,
+    limit: 20,
+    status: "Active",
+  });
+
+  const clients = clientsData?.data || [];
+
+  // Navigate to new client page
+  const handleAddClientClick = () => {
+    router.push("/admin/clients/new");
+  };
+
+  // Use image crop hook for cover image
+  const {
+    originalImage,
+    croppedImage,
+    croppedBlob,
+    imageFile,
+    isDialogOpen,
+    error: imageError,
+    handleInputChange: handleImageInputChange,
+    handleCropComplete,
+    setIsDialogOpen,
+    removeCroppedImage,
+    openCropDialog,
+  } = useImageCrop({
+    maxSizeInMB: 1,
+    allowedFormats: ["image/jpeg", "image/jpg", "image/png", "image/webp"],
+    onError: (error) => {
+      console.error("Image validation error:", error);
+    },
+  });
+
+  // Handle crop complete - store blob for upload
+  const handleCropCompleteWrapper = (blob: Blob, url: string) => {
+    handleCropComplete(blob, url);
+    setImageBlobToUpload(blob);
+  };
+
+  // Handle remove image
+  const handleRemoveImage = () => {
+    removeCroppedImage();
+    setImageBlobToUpload(null);
+  };
 
   const {
     register,
@@ -91,6 +138,7 @@ export function AddProjectForm({ onSubmit, onCancel }: AddProjectFormProps) {
       name: "",
       description: "",
       client: "",
+      clientId: "",
       clientEmail: "",
       clientPhone: "",
       type: "Villa",
@@ -102,11 +150,12 @@ export function AddProjectForm({ onSubmit, onCancel }: AddProjectFormProps) {
       deadline: "",
       estimatedDuration: "",
       totalBudget: "",
-      spentAmount: "0",
       progressPercentage: "0",
       currentPhase: "",
       projectManager: "",
+      managerId: "",
       teamMembers: "",
+      teamMemberIds: [],
       address: "",
       city: "",
       state: "",
@@ -117,30 +166,21 @@ export function AddProjectForm({ onSubmit, onCancel }: AddProjectFormProps) {
     },
   });
 
-  const _formData = watch();
+  const formData = watch();
 
   const handleClientSelect = (client: Client) => {
     setSelectedClient(client);
     setValue("client", client.name);
+    setValue("clientId", client.id);
     setValue("clientEmail", client.email || "");
     setValue("clientPhone", client.phone || "");
   };
 
-  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      setImageFile(file);
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setImagePreview(reader.result as string);
-      };
-      reader.readAsDataURL(file);
-    }
-  };
-
-  const handleRemoveImage = () => {
-    setImagePreview(null);
-    setImageFile(null);
+  // Helper to convert date to UTC ISO string
+  const toUTCDateString = (dateStr: string | undefined): string | undefined => {
+    if (!dateStr) return undefined;
+    const date = new Date(dateStr);
+    return date.toISOString();
   };
 
   // eslint-disable-next-line complexity
@@ -148,39 +188,41 @@ export function AddProjectForm({ onSubmit, onCancel }: AddProjectFormProps) {
     data: ProjectFormData,
     imageUrls: string[]
   ): Omit<Project, "id" | "createdAt" | "updatedAt"> => {
+    const totalBudget = parseFloat(data.totalBudget) || 0;
+
     return {
       name: data.name,
       description: `${data.description}${data.requirements ? `\n\nClient Requirements:\n${data.requirements}` : ""}`,
       client: data.client,
+      clientId: data.clientId || undefined,
       clientEmail: data.clientEmail || undefined,
       clientPhone: data.clientPhone || undefined,
       type: data.type,
       category: data.category || undefined,
       status: data.status,
       priority: data.priority,
-      startDate: data.startDate,
-      endDate: data.endDate || undefined,
-      deadline: data.deadline || undefined,
+      startDate: toUTCDateString(data.startDate) || data.startDate,
+      endDate: toUTCDateString(data.endDate) || undefined,
+      deadline: toUTCDateString(data.deadline) || undefined,
       estimatedDuration: data.estimatedDuration
         ? parseInt(data.estimatedDuration)
         : undefined,
-      totalBudget: parseFloat(data.totalBudget) || 0,
-      spentAmount: data.spentAmount ? parseFloat(data.spentAmount) : undefined,
-      remainingBudget:
-        (parseFloat(data.totalBudget) || 0) -
-        (parseFloat(data.spentAmount || "0") || 0),
+      totalBudget,
+      remainingBudget: totalBudget,
       progressPercentage: data.progressPercentage
         ? parseInt(data.progressPercentage)
         : undefined,
       currentPhase: data.currentPhase || undefined,
       milestones: [],
       projectManager: data.projectManager,
+      managerId: data.managerId || undefined,
       teamMembers: data.teamMembers
         ? data.teamMembers
             .split(",")
             .map((member) => member.trim())
             .filter(Boolean)
         : [],
+      teamMemberIds: data.teamMemberIds || [],
       location: {
         address: data.address || undefined,
         city: data.city || undefined,
@@ -201,7 +243,8 @@ export function AddProjectForm({ onSubmit, onCancel }: AddProjectFormProps) {
   };
 
   const uploadImage = async (): Promise<string[] | null> => {
-    if (!imageFile) {
+    // Use blob if available (cropped image), otherwise no image to upload
+    if (!imageBlobToUpload || !imageFile) {
       return [];
     }
 
@@ -211,21 +254,22 @@ export function AddProjectForm({ onSubmit, onCancel }: AddProjectFormProps) {
     try {
       const presignedData = await getPresignedUrl({
         fileName: imageFile.name,
-        contentType: imageFile.type,
+        contentType: imageBlobToUpload.type || "image/jpeg",
       }).unwrap();
 
       setUploadProgress(30);
 
       await uploadToS3WithPresignedUrl(
         presignedData.uploadUrl,
-        imageFile,
+        imageBlobToUpload,
         (progress: number) => {
           setUploadProgress(30 + progress * 0.6);
         }
       );
 
       setUploadProgress(100);
-      return [presignedData.cloudFrontUrl];
+      const cloudFrontUrl = getCloudFrontUrl(presignedData.objectKey);
+      return cloudFrontUrl ? [cloudFrontUrl] : [];
     } catch (error) {
       console.error("Failed to upload image:", error);
       const errorMessage =
@@ -245,15 +289,18 @@ export function AddProjectForm({ onSubmit, onCancel }: AddProjectFormProps) {
   const handleSubmit = handleFormSubmit(async (data) => {
     setSubmitError(null);
 
+    // Step 1: Upload image if present
     const imageUrls = await uploadImage();
     if (imageUrls === null) {
       return;
     }
 
+    // Step 2: Build project data and call API
     const project = buildProjectFromFormData(data, imageUrls);
-    onSubmit(project);
+    await onSubmit(project);
   });
 
+  // Error checks for each section
   const hasIdentityErrors = !!(
     errors.name ||
     errors.description ||
@@ -275,28 +322,57 @@ export function AddProjectForm({ onSubmit, onCancel }: AddProjectFormProps) {
     errors.country
   );
 
-  return (
-    <div className="w-full">
-      <form onSubmit={handleSubmit} className="space-y-6">
-        <div className="space-y-2">
-          <h2 className="text-2xl font-bold text-foreground">
-            Create New Project
-          </h2>
-          <p className="text-sm text-muted-foreground">
-            Set up a new architectural or design project with comprehensive
-            details.
-          </p>
-        </div>
+  // Completion checks for each section
+  const isIdentityCompleted = checkIdentitySectionCompletion(
+    hasIdentityErrors,
+    formData
+  );
+  const isClientCompleted = checkClientSectionCompletion(
+    hasClientErrors,
+    formData
+  );
+  const isScopeCompleted = checkScopeSectionCompletion(hasScopeErrors, formData);
+  const isFinancialsCompleted = checkFinancialsSectionCompletion(
+    hasFinancialsErrors,
+    formData
+  );
+  const isLocationCompleted = checkLocationSectionCompletion(
+    hasLocationErrors,
+    formData
+  );
 
+  return (
+    <div className="flex flex-col gap-6">
+      {/* Image Crop Dialog */}
+      {originalImage && (
+        <ImageCropDialog
+          open={isDialogOpen}
+          onOpenChange={setIsDialogOpen}
+          imageSrc={originalImage}
+          onCropComplete={handleCropCompleteWrapper}
+          aspectRatio={16 / 9}
+          circularCrop={false}
+          title="Crop Cover Image"
+          description="Adjust the crop area and zoom to get the perfect cover image"
+        />
+      )}
+
+      <FormHeader />
+
+      <form onSubmit={handleSubmit} className="space-y-4">
         {submitError && (
-          <Alert variant="destructive">
+          <Alert
+            variant="destructive"
+            className="bg-red-500/10 border-red-500/20 text-red-600 dark:text-red-400"
+          >
             <AlertCircle className="h-4 w-4" />
-            <AlertTitle>Error</AlertTitle>
+            <AlertTitle>Submission Error</AlertTitle>
             <AlertDescription>{submitError}</AlertDescription>
           </Alert>
         )}
 
-        <div className="space-y-4">
+        <div className="space-y-3 bg-white dark:bg-black/40 p-4 rounded-2xl border border-gray-100 dark:border-white/5 shadow-sm dark:shadow-none">
+          {/* Section 1: Project Identity */}
           <div className="space-y-3">
             <SectionHeader
               id="identity"
@@ -306,6 +382,7 @@ export function AddProjectForm({ onSubmit, onCancel }: AddProjectFormProps) {
               status="Required"
               isActive={expandedSection === "identity"}
               hasErrors={hasIdentityErrors}
+              isCompleted={isIdentityCompleted}
               onClick={setExpandedSection}
             />
             {expandedSection === "identity" && (
@@ -314,15 +391,19 @@ export function AddProjectForm({ onSubmit, onCancel }: AddProjectFormProps) {
                 errors={errors}
                 setValue={setValue}
                 watch={watch}
-                imagePreview={imagePreview}
-                onImageSelect={handleImageChange}
+                croppedImage={croppedImage}
+                croppedBlob={croppedBlob}
+                imageError={imageError}
+                onImageInputChange={handleImageInputChange}
                 onRemoveImage={handleRemoveImage}
+                onOpenCropDialog={openCropDialog}
               />
             )}
           </div>
 
           <Separator className="bg-gray-100 dark:bg-white/5" />
 
+          {/* Section 2: Client & Stakeholders */}
           <div className="space-y-3">
             <SectionHeader
               id="stakeholders"
@@ -332,6 +413,7 @@ export function AddProjectForm({ onSubmit, onCancel }: AddProjectFormProps) {
               status="Required"
               isActive={expandedSection === "stakeholders"}
               hasErrors={hasClientErrors}
+              isCompleted={isClientCompleted}
               onClick={setExpandedSection}
             />
             {expandedSection === "stakeholders" && (
@@ -339,18 +421,21 @@ export function AddProjectForm({ onSubmit, onCancel }: AddProjectFormProps) {
                 register={register}
                 errors={errors}
                 setValue={setValue}
-                clients={mockClients}
+                clients={clients}
                 selectedClient={selectedClient}
                 searchTerm={clientSearchTerm}
                 onSearchChange={setClientSearchTerm}
                 onClientSelect={handleClientSelect}
-                onAddClientClick={() => setShowAddClientDialog(true)}
+                onAddClientClick={handleAddClientClick}
+                isLoading={isLoadingClients}
+                isFetching={isFetchingClients}
               />
             )}
           </div>
 
           <Separator className="bg-gray-100 dark:bg-white/5" />
 
+          {/* Section 3: Scope & Resources */}
           <div className="space-y-3">
             <SectionHeader
               id="scope"
@@ -360,6 +445,7 @@ export function AddProjectForm({ onSubmit, onCancel }: AddProjectFormProps) {
               status="Required"
               isActive={expandedSection === "scope"}
               hasErrors={hasScopeErrors}
+              isCompleted={isScopeCompleted}
               onClick={setExpandedSection}
             />
             {expandedSection === "scope" && (
@@ -367,14 +453,17 @@ export function AddProjectForm({ onSubmit, onCancel }: AddProjectFormProps) {
                 register={register}
                 errors={errors}
                 setValue={setValue}
-                teamList={teamList}
-                setTeamList={setTeamList}
+                selectedManager={selectedManager}
+                onManagerSelect={setSelectedManager}
+                selectedTeamMembers={selectedTeamMembers}
+                onTeamMembersChange={setSelectedTeamMembers}
               />
             )}
           </div>
 
           <Separator className="bg-gray-100 dark:bg-white/5" />
 
+          {/* Section 4: Timeline & Financials */}
           <div className="space-y-3">
             <SectionHeader
               id="financials"
@@ -384,6 +473,7 @@ export function AddProjectForm({ onSubmit, onCancel }: AddProjectFormProps) {
               status="Required"
               isActive={expandedSection === "financials"}
               hasErrors={hasFinancialsErrors}
+              isCompleted={isFinancialsCompleted}
               onClick={setExpandedSection}
             />
             {expandedSection === "financials" && (
@@ -393,6 +483,7 @@ export function AddProjectForm({ onSubmit, onCancel }: AddProjectFormProps) {
 
           <Separator className="bg-gray-100 dark:bg-white/5" />
 
+          {/* Section 5: Location & Meta */}
           <div className="space-y-3">
             <SectionHeader
               id="location"
@@ -402,6 +493,7 @@ export function AddProjectForm({ onSubmit, onCancel }: AddProjectFormProps) {
               status="Optional"
               isActive={expandedSection === "location"}
               hasErrors={hasLocationErrors}
+              isCompleted={isLocationCompleted}
               onClick={setExpandedSection}
             />
             {expandedSection === "location" && (
@@ -416,54 +508,13 @@ export function AddProjectForm({ onSubmit, onCancel }: AddProjectFormProps) {
           </div>
         </div>
 
-        <div className="flex items-center justify-end gap-3 pt-4 border-t">
-          <Button
-            type="button"
-            variant="outline"
-            onClick={onCancel}
-            disabled={isUploading}
-          >
-            Cancel
-          </Button>
-          <Button
-            type="submit"
-            disabled={isUploading}
-            className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white"
-          >
-            {isUploading ? (
-              <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Uploading... {uploadProgress}%
-              </>
-            ) : (
-              "Create Project"
-            )}
-          </Button>
-        </div>
+        <FormActions
+          isLoading={isUploading || isSubmitting}
+          uploadProgress={isUploading ? uploadProgress : undefined}
+          onCancel={onCancel}
+        />
       </form>
 
-      {showAddClientDialog && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
-          <div className="relative w-full max-w-4xl bg-background rounded-lg shadow-xl max-h-[90vh] overflow-y-auto">
-            <Button
-              variant="ghost"
-              size="icon"
-              className="absolute right-4 top-4 z-10"
-              onClick={() => setShowAddClientDialog(false)}
-            >
-              <X className="h-4 w-4" />
-            </Button>
-            <div className="p-6">
-              <AddClientForm
-                onCancel={() => setShowAddClientDialog(false)}
-                onSuccess={() => {
-                  setShowAddClientDialog(false);
-                }}
-              />
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 }
