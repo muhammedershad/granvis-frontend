@@ -93,10 +93,10 @@ export function ClientFiltersCard({
             }
           >
             <SelectTrigger className="bg-white/60 dark:bg-white/5 border-white/40 dark:border-white/10 text-foreground shadow-sm">
-              <SelectValue placeholder="Architectural Style" />
+              <SelectValue placeholder="Architectural Interest" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">All Styles</SelectItem>
+              <SelectItem value="all">All Interests</SelectItem>
               {architecturalStyles.map((style) => (
                 <SelectItem key={style} value={style}>
                   {style}

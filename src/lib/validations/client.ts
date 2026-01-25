@@ -1,5 +1,8 @@
 import { z } from "zod";
 
+// Helper function to validate phone number
+const phoneRegex = /^\+?[1-9]\d{7,14}$/;
+
 // Zod schema for creating a new client
 export const createClientSchema = z.object({
   // Personal Information
@@ -19,7 +22,13 @@ export const createClientSchema = z.object({
     .max(50, "Last name must be 50 characters or less")
     .regex(/^\S+$/, "Last name must be a single word without spaces"),
   email: z.string().email("Invalid email address").optional().or(z.literal("")),
-  phone: z.string().min(1, "Phone number is required"),
+  phone: z
+    .string()
+    .min(1, "Phone number is required")
+    .regex(
+      phoneRegex,
+      "Phone must be numeric with optional leading + and 8-15 digits"
+    ),
   alternatePhone: z.string().optional(),
   dateOfBirth: z.string().optional(),
   gender: z.string().optional(),
@@ -69,6 +78,10 @@ export const createClientSchema = z.object({
   // Notes and Tags
   notes: z.string().optional(),
   tags: z.string().optional(),
+
+  // Avatar
+  avatar: z.string().optional(),
+  avatarKey: z.string().optional(),
 
   // System
   createdBy: z.string(),

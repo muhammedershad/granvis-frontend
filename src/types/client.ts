@@ -10,6 +10,7 @@ export interface Client {
   website?: string;
   name: string;
   avatar?: string;
+  avatarKey?: string;
 
   // Company Information
   companyName: string;

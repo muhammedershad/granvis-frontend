@@ -89,7 +89,7 @@ export function PersonalSection({
         </Label>
         <Input
           {...register("phone")}
-          placeholder="+1 (555) 000-0000"
+          placeholder="+91 98765 43210"
           className="h-10"
         />
         {errors.phone && (

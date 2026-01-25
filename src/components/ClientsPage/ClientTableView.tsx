@@ -36,6 +36,7 @@ import {
 } from "lucide-react";
 import { cn } from "../ui/utils";
 import { formatIndianCurrency } from "@/lib/utils/currency";
+import { getCloudFrontUrl } from "@/lib/utils/cloudfront";
 
 interface ClientTableViewProps {
   clients: Client[];
@@ -157,12 +158,12 @@ export function ClientTableView({
                 <TableCell>
                   <div className="flex items-center space-x-3">
                     <Avatar className="w-10 h-10 border-2 border-white/40 dark:border-white/10 shadow-sm">
-                      <AvatarImage src={client.avatar} alt={client.name} />
+                      <AvatarImage
+                        src={`${getCloudFrontUrl(client.avatarKey)}`}
+                        alt={client.name}
+                      />
                       <AvatarFallback className="bg-gradient-to-br from-purple-500 to-blue-500 text-white">
-                        {client.name
-                          .split(" ")
-                          .map((n) => n[0])
-                          .join("")}
+                        {client.name[0]?.toUpperCase() || "?"}
                       </AvatarFallback>
                     </Avatar>
                     <div>

@@ -15,6 +15,7 @@ import {
 } from "@/lib/api/employeesApi";
 import { useGetPresignedUrlMutation } from "@/lib/api/uploadApi";
 import { uploadToS3 } from "@/lib/utils/uploadToS3";
+import { UPLOAD_PATHS } from "@/lib/constants/uploadPaths";
 import { toast } from "sonner";
 import { dateToUTC } from "@/lib/utils/date";
 import {
@@ -144,7 +145,7 @@ export function AddEmployeeForm({ onSuccess, onCancel }: AddEmployeeFormProps) {
           const presignedResponse = await getPresignedUrl({
             fileName: `avatar-${Date.now()}.jpg`,
             contentType: "image/jpeg",
-            folder: "griha-local/employee-avatars",
+            folder: UPLOAD_PATHS.EMPLOYEE_AVATARS,
           }).unwrap();
 
           // Upload blob to S3 using presigned URL

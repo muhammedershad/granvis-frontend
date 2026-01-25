@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
 import { useState } from "react";
@@ -12,6 +11,9 @@ import {
   createClientSchema,
 } from "@/lib/validations/client";
 import { useCreateClientMutation } from "@/lib/api/clientsApi";
+import { useGetPresignedUrlMutation } from "@/lib/api/uploadApi";
+import { uploadToS3 } from "@/lib/utils/uploadToS3";
+import { UPLOAD_PATHS } from "@/lib/constants/uploadPaths";
 import { toast } from "sonner";
 import {
   Activity,
@@ -24,7 +26,7 @@ import {
 } from "lucide-react";
 import { FormHeader } from "./FormHeader";
 import { SectionHeader } from "./SectionHeader";
-import { PersonalSection } from "./PersonalSection";
+import { PersonalSectionWithCrop } from "./PersonalSectionWithCrop";
 import { ProfessionalSection } from "./ProfessionalSection";
 import { AddressSection } from "./AddressSection";
 import { StatusSection } from "./StatusSection";
@@ -38,9 +40,12 @@ interface AddClientFormProps {
 
 export function AddClientFormMain({ onSuccess, onCancel }: AddClientFormProps) {
   const [createClient, { isLoading }] = useCreateClientMutation();
+  const [getPresignedUrl] = useGetPresignedUrlMutation();
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [expandedSection, setExpandedSection] = useState<string>("personal");
   const [tagsList, setTagsList] = useState<string[]>([]);
+  const [imageBlobToUpload, setImageBlobToUpload] = useState<Blob | null>(null);
+  const [isUploadingImage, setIsUploadingImage] = useState(false);
 
   const {
     register,
@@ -48,6 +53,9 @@ export function AddClientFormMain({ onSuccess, onCancel }: AddClientFormProps) {
     formState: { errors },
     setValue,
     watch,
+    trigger,
+    setError,
+    clearErrors,
   } = useForm<CreateClientFormData>({
     resolver: zodResolver(createClientSchema),
     defaultValues: {
@@ -82,14 +90,70 @@ export function AddClientFormMain({ onSuccess, onCancel }: AddClientFormProps) {
       budgetRange: "",
       notes: "",
       tags: "",
+      avatar: "",
+      avatarKey: "",
       createdBy: "Current User",
     },
   });
 
+  const handleImageChange = (
+    _file: File | null,
+    preview: string | null,
+    blob: Blob | null
+  ) => {
+    setImageBlobToUpload(blob);
+    setValue("avatar", preview || "");
+  };
+
   const onSubmit = async (data: CreateClientFormData) => {
     setSubmitError(null);
+
     try {
-      const clientData = buildClientData(data);
+      let avatarKey: string | undefined;
+
+      // Step 1: Upload image to S3 if blob exists
+      if (imageBlobToUpload) {
+        setIsUploadingImage(true);
+        try {
+          // Get presigned URL from backend
+          const presignedResponse = await getPresignedUrl({
+            fileName: `avatar-${Date.now()}.jpg`,
+            contentType: "image/jpeg",
+            folder: UPLOAD_PATHS.CLIENT_AVATARS,
+          }).unwrap();
+
+          // Upload blob to S3 using presigned URL
+          await uploadToS3(
+            presignedResponse.uploadUrl,
+            imageBlobToUpload,
+            "image/jpeg"
+          );
+
+          // Store the object key for the client record
+          avatarKey = presignedResponse.objectKey;
+
+          toast.success("Image uploaded successfully!");
+        } catch (uploadError) {
+          console.error("Failed to upload image:", uploadError);
+          const uploadErrorMessage =
+            uploadError instanceof Error
+              ? uploadError.message
+              : "Failed to upload image. Please check your connection and try again.";
+
+          setSubmitError(uploadErrorMessage);
+          toast.error("Failed to upload image", {
+            description: uploadErrorMessage,
+          });
+
+          // Stop submission if image upload fails
+          return;
+        } finally {
+          setIsUploadingImage(false);
+        }
+      }
+
+      // Step 2: Create client with avatarKey
+      const clientData = buildClientData(data, avatarKey);
       await createClient(clientData).unwrap();
 
       const displayName = [data.firstName, data.middleName, data.lastName]
@@ -162,11 +226,17 @@ export function AddClientFormMain({ onSuccess, onCancel }: AddClientFormProps) {
               onClick={() => toggleSection("personal")}
             />
             {expandedSection === "personal" && (
-              <PersonalSection
+              <PersonalSectionWithCrop
                 register={register}
+                setValue={setValue}
+                trigger={trigger}
+                setError={setError}
+                clearErrors={clearErrors}
                 errors={errors}
                 genderValue={genderValue || ""}
+                formData={watch()}
                 onGenderChange={(value) => setValue("gender", value)}
+                onImageChange={handleImageChange}
               />
             )}
           </div>
@@ -271,12 +341,17 @@ export function AddClientFormMain({ onSuccess, onCancel }: AddClientFormProps) {
             type="button"
             variant="outline"
             onClick={onCancel}
-            disabled={isLoading}
+            disabled={isLoading || isUploadingImage}
           >
             Cancel
           </Button>
-          <Button type="submit" disabled={isLoading}>
-            {isLoading ? (
+          <Button type="submit" disabled={isLoading || isUploadingImage}>
+            {isUploadingImage ? (
+              <>
+                <Loader2 className="w-4 h-4 animate-spin" />
+                Uploading Image...
+              </>
+            ) : isLoading ? (
               <>
                 <Loader2 className="w-4 h-4 animate-spin" />
                 Creating...

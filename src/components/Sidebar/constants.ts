@@ -35,7 +35,6 @@ export const bgNavigationItems: NavigationItem[] = [
     title: "Projects",
     icon: Building2,
     page: "projects",
-    badge: "24",
     roles: [
       IAuthRoles.SUPER_ADMIN,
       IAuthRoles.ADMIN,
@@ -47,14 +46,12 @@ export const bgNavigationItems: NavigationItem[] = [
     title: "Clients",
     icon: UserCheck,
     page: "clients",
-    badge: "3",
     roles: [IAuthRoles.SUPER_ADMIN, IAuthRoles.ADMIN, IAuthRoles.MANAGER],
   },
   {
     title: "Payments",
     icon: CreditCard,
     page: "payments",
-    badge: "8",
     roles: [IAuthRoles.SUPER_ADMIN, IAuthRoles.ADMIN, IAuthRoles.ACCOUNTANT],
   },
   {

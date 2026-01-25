@@ -5,13 +5,6 @@ import { AlertCircle, Grid3X3, List, Loader2, Plus } from "lucide-react";
 import { Button } from "../ui/button";
 import { Card } from "../ui/card";
 import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "../ui/dialog";
-import {
   AlertDialog,
   AlertDialogAction,
   AlertDialogCancel,
@@ -21,7 +14,6 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "../ui/alert-dialog";
-import { AddClientForm } from "../AddClientForm";
 import {
   Client,
   ClientFilters,
@@ -129,11 +121,11 @@ export function ClientsPageContent({ onClientSelect }: ClientsPageProps) {
     field: "name",
     direction: "asc",
   });
-  const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [clientToDelete, setClientToDelete] = useState<string | null>(null);
 
   const debouncedSearchTerm = useDebounce(filters.search, 500);
+  const debouncedSearchForUrl = useDebounce(filters.search, 1000);
 
   useEffect(() => {
     const urlFilters: ClientFilters = {
@@ -160,6 +152,18 @@ export function ClientsPageContent({ onClientSelect }: ClientsPageProps) {
       setCurrentPage(1);
     }
   }, [debouncedSearchTerm, currentPage, filters.search]);
+
+  // Update URL when debounced search changes (1 second delay)
+  useEffect(() => {
+    const currentUrlSearch = searchParams.get("search") || "";
+    if (debouncedSearchForUrl !== currentUrlSearch) {
+      const newFilters = { ...filters, search: debouncedSearchForUrl };
+      const params = buildURLParams(newFilters, 1);
+      const queryString = params.toString();
+      router.push(queryString ? `${pathname}?${queryString}` : pathname);
+      setCurrentPage(1);
+    }
+  }, [debouncedSearchForUrl]);
 
   const apiFilters = useMemo(
     () => buildApiFilters(filters, debouncedSearchTerm, currentPage),
@@ -197,10 +201,8 @@ export function ClientsPageContent({ onClientSelect }: ClientsPageProps) {
   }, [apiStats?.byPriority]);
 
   const architecturalStyles = useMemo(() => {
-    if (apiStats?.byArchitecturalStyle) {
-      return Object.keys(apiStats.byArchitecturalStyle);
-    }
-    return [
+    // Always show all available architectural interests (matching the add client form)
+    const defaultStyles = [
       "Modern",
       "Contemporary",
       "Traditional",
@@ -214,7 +216,19 @@ export function ClientsPageContent({ onClientSelect }: ClientsPageProps) {
       "Craftsman",
       "Victorian",
       "Mid-Century Modern",
+      "Other",
     ];
+
+    // Merge with any custom interests from API stats (excluding "Unknown")
+    if (apiStats?.byArchitecturalStyle) {
+      const apiStyles = Object.keys(apiStats.byArchitecturalStyle).filter(
+        (style) => style !== "Unknown"
+      );
+      const allStyles = new Set([...defaultStyles, ...apiStyles]);
+      return Array.from(allStyles);
+    }
+
+    return defaultStyles;
   }, [apiStats?.byArchitecturalStyle]);
 
   const stats = useMemo(() => {
@@ -255,10 +269,6 @@ export function ClientsPageContent({ onClientSelect }: ClientsPageProps) {
     }));
   };
 
-  const handleAddClientSuccess = () => {
-    setIsAddDialogOpen(false);
-  };
-
   const handleDeleteClick = (clientId: string) => {
     setClientToDelete(clientId);
     setDeleteDialogOpen(true);
@@ -297,8 +307,11 @@ export function ClientsPageContent({ onClientSelect }: ClientsPageProps) {
   const handleFilterChange = (key: keyof ClientFilters, value: string) => {
     const newFilters = { ...filters, [key]: value };
     setFilters(newFilters);
-    setCurrentPage(1);
-    updateURLParams(newFilters, 1);
+    // For search, URL update is handled by debounced effect
+    if (key !== "search") {
+      setCurrentPage(1);
+      updateURLParams(newFilters, 1);
+    }
   };
 
   const handleClearFilters = () => {
@@ -400,25 +413,13 @@ export function ClientsPageContent({ onClientSelect }: ClientsPageProps) {
             </Button>
           </div>
 
-          <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
-            <DialogTrigger asChild>
-              <Button className="bg-gradient-to-r from-purple-500 to-blue-500 hover:from-purple-600 hover:to-blue-600 border-0 shadow-lg shadow-purple-200/50 dark:shadow-purple-500/25">
-                <Plus className="w-4 h-4 mr-2" />
-                Add Client
-              </Button>
-            </DialogTrigger>
-            <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto backdrop-blur-xl bg-white/90 dark:bg-black/90 border-white/30 dark:border-white/10 shadow-2xl">
-              <DialogHeader>
-                <DialogTitle className="text-foreground">
-                  Add New Client
-                </DialogTitle>
-              </DialogHeader>
-              <AddClientForm
-                onSuccess={handleAddClientSuccess}
-                onCancel={() => setIsAddDialogOpen(false)}
-              />
-            </DialogContent>
-          </Dialog>
+          <Button
+            className="bg-gradient-to-r from-purple-500 to-blue-500 hover:from-purple-600 hover:to-blue-600 border-0 shadow-lg shadow-purple-200/50 dark:shadow-purple-500/25"
+            onClick={() => router.push(`${pathname}/new`)}
+          >
+            <Plus className="w-4 h-4 mr-2" />
+            Add Client
+          </Button>
         </div>
       </div>
 
@@ -447,7 +448,43 @@ export function ClientsPageContent({ onClientSelect }: ClientsPageProps) {
         </div>
       )}
 
-      {viewType === "cards" ? (
+      {clients.length === 0 ? (
+        <Card className="backdrop-blur-xl bg-white/70 dark:bg-black/20 border-white/20 dark:border-white/10 shadow-xl shadow-gray-200/50 dark:shadow-black/50">
+          <div className="absolute inset-0 bg-gradient-to-br from-blue-50/60 via-indigo-50/40 to-purple-50/60 opacity-100 dark:opacity-0 transition-opacity duration-300"></div>
+          <div className="relative p-12 text-center space-y-4">
+            <div className="w-16 h-16 mx-auto bg-gradient-to-br from-purple-100 to-blue-100 dark:from-purple-900/30 dark:to-blue-900/30 rounded-full flex items-center justify-center">
+              <AlertCircle className="w-8 h-8 text-purple-600 dark:text-purple-400" />
+            </div>
+            <h3 className="text-lg font-semibold text-foreground">
+              No Clients Found
+            </h3>
+            <p className="text-muted-foreground max-w-md mx-auto">
+              {filters.search ||
+              filters.status !== "all" ||
+              filters.priority !== "all" ||
+              filters.architecturalStyle !== "all" ||
+              filters.companyType !== "all" ||
+              filters.source !== "all"
+                ? "No clients match your current filters. Try adjusting your search criteria."
+                : "No clients have been added yet. Start by adding your first client."}
+            </p>
+            {(filters.search ||
+              filters.status !== "all" ||
+              filters.priority !== "all" ||
+              filters.architecturalStyle !== "all" ||
+              filters.companyType !== "all" ||
+              filters.source !== "all") && (
+              <Button
+                onClick={handleClearFilters}
+                variant="outline"
+                className="bg-gradient-to-r from-purple-500/10 to-blue-500/10 hover:from-purple-500/20 hover:to-blue-500/20 border-purple-300 dark:border-purple-700"
+              >
+                Clear Filters
+              </Button>
+            )}
+          </div>
+        </Card>
+      ) : viewType === "cards" ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
           {clients.map((client) => (
             <ClientCard

@@ -20,6 +20,7 @@ export const clientsApi = apiSlice.injectEndpoints({
         search?: string;
         companyType?: string;
         source?: string;
+        architecturalStyle?: string;
         page?: number;
         limit?: number;
       }
@@ -54,6 +55,30 @@ export const clientsApi = apiSlice.injectEndpoints({
       }),
       providesTags: (result, error, id) => [{ type: "Client" as const, id }],
       keepUnusedDataFor: 300,
+    }),
+
+    // Check if email is available
+    checkEmailAvailability: builder.query<
+      { available: boolean; message?: string },
+      string
+    >({
+      query: (email) => ({
+        url: `/clients/check-email?email=${encodeURIComponent(email)}`,
+        method: "GET",
+      }),
+      keepUnusedDataFor: 0, // Don't cache email checks
+    }),
+
+    // Check if phone is available
+    checkPhoneAvailability: builder.query<
+      { available: boolean; message?: string },
+      string
+    >({
+      query: (phone) => ({
+        url: `/clients/check-phone?phone=${encodeURIComponent(phone)}`,
+        method: "GET",
+      }),
+      keepUnusedDataFor: 0, // Don't cache phone checks
     }),
 
     // Get client statistics
@@ -190,6 +215,8 @@ export const clientsApi = apiSlice.injectEndpoints({
 export const {
   useGetClientsQuery,
   useGetClientByIdQuery,
+  useCheckEmailAvailabilityQuery,
+  useCheckPhoneAvailabilityQuery,
   useGetClientStatisticsQuery,
   useSearchClientsQuery,
   useCreateClientMutation,

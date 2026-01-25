@@ -1,4 +1,4 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
+import { useState } from "react";
 import {
   FieldErrors,
   UseFormClearErrors,
@@ -7,19 +7,17 @@ import {
   UseFormSetValue,
   UseFormTrigger,
 } from "react-hook-form";
-import { useState } from "react";
 import NextImage from "next/image";
-import { Input } from "./ui/input";
-import { Label } from "./ui/label";
+import { Input } from "../ui/input";
+import { Label } from "../ui/label";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "./ui/select";
-import { DatePicker } from "./ui/date-picker";
-import { type CreateEmployeeFormInput } from "@/lib/validations/employee";
+} from "../ui/select";
+import { type CreateClientFormData } from "@/lib/validations/client";
 import {
   AlertCircle,
   Edit2,
@@ -27,21 +25,22 @@ import {
   Loader2,
   X,
 } from "lucide-react";
-import { ImageCropDialog } from "./ui/ImageCropDialog";
+import { ImageCropDialog } from "../ui/ImageCropDialog";
 import { useImageCrop } from "@/hooks/useImageCrop";
-import { Alert, AlertDescription } from "./ui/alert";
-import { Button } from "./ui/button";
-import { employeesApi } from "@/lib/api/employeesApi";
-import { dateToUTC } from "@/lib/utils/date";
+import { Alert, AlertDescription } from "../ui/alert";
+import { Button } from "../ui/button";
+import { clientsApi } from "@/lib/api/clientsApi";
 
 interface PersonalSectionProps {
-  register: UseFormRegister<CreateEmployeeFormInput>;
-  setValue: UseFormSetValue<CreateEmployeeFormInput>;
-  trigger: UseFormTrigger<CreateEmployeeFormInput>;
-  setError: UseFormSetError<CreateEmployeeFormInput>;
-  clearErrors: UseFormClearErrors<CreateEmployeeFormInput>;
-  errors: FieldErrors<CreateEmployeeFormInput>;
-  formData: CreateEmployeeFormInput;
+  register: UseFormRegister<CreateClientFormData>;
+  setValue: UseFormSetValue<CreateClientFormData>;
+  trigger: UseFormTrigger<CreateClientFormData>;
+  setError: UseFormSetError<CreateClientFormData>;
+  clearErrors: UseFormClearErrors<CreateClientFormData>;
+  errors: FieldErrors<CreateClientFormData>;
+  genderValue: string;
+  formData: CreateClientFormData;
+  onGenderChange: (value: string) => void;
   onImageChange?: (
     file: File | null,
     preview: string | null,
@@ -49,74 +48,24 @@ interface PersonalSectionProps {
   ) => void;
 }
 
-export function AddEmployeePersonalSection({
+export function PersonalSectionWithCrop({
   register,
   setValue,
   trigger,
   setError,
   clearErrors,
   errors,
+  genderValue,
   formData,
+  onGenderChange,
   onImageChange,
 }: PersonalSectionProps) {
-  const [isCheckingEmail, setIsCheckingEmail] = useState(false);
   const [isCheckingPhone, setIsCheckingPhone] = useState(false);
 
-  // Use lazy query hooks for email and phone availability checks
-  const [checkEmailTrigger] = employeesApi.useLazyCheckEmailAvailabilityQuery();
-  const [checkPhoneTrigger] = employeesApi.useLazyCheckPhoneAvailabilityQuery();
+  // Use lazy query hook for phone availability check
+  const [checkPhoneTrigger] = clientsApi.useLazyCheckPhoneAvailabilityQuery();
 
-  // Use the image crop hook
-  const {
-    originalImage,
-    croppedImage,
-    croppedBlob,
-    imageFile,
-    isDialogOpen,
-    error: imageError,
-    handleInputChange,
-    handleCropComplete,
-    setIsDialogOpen,
-    removeCroppedImage,
-    openCropDialog,
-  } = useImageCrop({
-    maxSizeInMB: 1,
-    allowedFormats: ["image/jpeg", "image/jpg", "image/png", "image/webp"],
-    onError: (error) => {
-      console.error("Image validation error:", error);
-    },
-  });
-
-  const handleEmailBlur = async () => {
-    // First validate with Zod schema
-    const isValid = await trigger("email");
-
-    if (!isValid || !formData.email) {
-      return;
-    }
-
-    // If Zod validation passes, check email availability in database
-    setIsCheckingEmail(true);
-
-    try {
-      const result = await checkEmailTrigger(formData.email).unwrap();
-
-      if (!result.available) {
-        setError("email", {
-          type: "manual",
-          message: result.message || "Email already exists",
-        });
-      } else {
-        // Clear any previous email errors if email is available
-        clearErrors("email");
-      }
-    } catch (error) {
-      console.error("Error checking email availability:", error);
-    } finally {
-      setIsCheckingEmail(false);
-    }
-  };
-
+  // Handle phone blur - validate and check uniqueness
   const handlePhoneBlur = async () => {
     // First validate with Zod schema
     const isValid = await trigger("phone");
@@ -147,6 +96,27 @@ export function AddEmployeePersonalSection({
     }
   };
 
+  // Use the image crop hook
+  const {
+    originalImage,
+    croppedImage,
+    croppedBlob,
+    imageFile,
+    isDialogOpen,
+    error: imageError,
+    handleInputChange,
+    handleCropComplete,
+    setIsDialogOpen,
+    removeCroppedImage,
+    openCropDialog,
+  } = useImageCrop({
+    maxSizeInMB: 1,
+    allowedFormats: ["image/jpeg", "image/jpg", "image/png", "image/webp"],
+    onError: (error) => {
+      console.error("Image validation error:", error);
+    },
+  });
+
   const handleRemoveImage = () => {
     removeCroppedImage();
     if (onImageChange) {
@@ -167,6 +137,21 @@ export function AddEmployeePersonalSection({
 
   return (
     <div className="p-4 pt-2 space-y-6 animate-in fade-in slide-in-from-top-2 duration-300">
+      {/* Image Crop Dialog */}
+      {originalImage && (
+        <ImageCropDialog
+          open={isDialogOpen}
+          onOpenChange={setIsDialogOpen}
+          imageSrc={originalImage}
+          onCropComplete={handleCropCompleteWrapper}
+          aspectRatio={1}
+          circularCrop={false}
+          title="Crop Client Photo"
+          description="Adjust the crop area and zoom to get the perfect client photo"
+        />
+      )}
+
+      {/* Personal Information Fields */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <div className="space-y-1.5">
           <Label className="text-xs font-medium text-muted-foreground">
@@ -174,10 +159,9 @@ export function AddEmployeePersonalSection({
           </Label>
           <Input
             {...register("firstName")}
-            placeholder="e.g. John"
+            placeholder="e.g. Liam"
             className="h-10"
             maxLength={50}
-            onBlur={() => trigger("firstName")}
           />
           {errors.firstName && (
             <p className="text-[10px] text-red-500">
@@ -191,10 +175,9 @@ export function AddEmployeePersonalSection({
           </Label>
           <Input
             {...register("middleName")}
-            placeholder="e.g. Michael"
+            placeholder="e.g. James"
             className="h-10"
             maxLength={50}
-            onBlur={() => trigger("middleName")}
           />
           {errors.middleName && (
             <p className="text-[10px] text-red-500">
@@ -208,10 +191,9 @@ export function AddEmployeePersonalSection({
           </Label>
           <Input
             {...register("lastName")}
-            placeholder="e.g. Doe"
+            placeholder="e.g. Chen"
             className="h-10"
             maxLength={50}
-            onBlur={() => trigger("lastName")}
           />
           {errors.lastName && (
             <p className="text-[10px] text-red-500">
@@ -224,22 +206,14 @@ export function AddEmployeePersonalSection({
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div className="space-y-1.5">
           <Label className="text-xs font-medium text-muted-foreground">
-            Email Address *
+            Email Address
           </Label>
-          <div className="relative">
-            <Input
-              type="email"
-              {...register("email")}
-              placeholder="john.doe@company.com"
-              className="h-10"
-              onBlur={handleEmailBlur}
-            />
-            {isCheckingEmail && (
-              <div className="absolute right-3 top-1/2 -translate-y-1/2">
-                <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
-              </div>
-            )}
-          </div>
+          <Input
+            type="email"
+            {...register("email")}
+            placeholder="liam.chen@example.com"
+            className="h-10"
+          />
           {errors.email && (
             <p className="text-[10px] text-red-500">{errors.email.message}</p>
           )}
@@ -267,17 +241,14 @@ export function AddEmployeePersonalSection({
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div className="space-y-1.5">
           <Label className="text-xs font-medium text-muted-foreground">
-            Gender *
+            Gender
           </Label>
-          <Select
-            value={formData.gender}
-            onValueChange={(value) => setValue("gender", value as any)}
-          >
+          <Select value={genderValue} onValueChange={onGenderChange}>
             <SelectTrigger className="h-10">
-              <SelectValue />
+              <SelectValue placeholder="Select Identity" />
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="Male">Male</SelectItem>
@@ -285,38 +256,17 @@ export function AddEmployeePersonalSection({
               <SelectItem value="Other">Other</SelectItem>
             </SelectContent>
           </Select>
-          {errors.gender && (
-            <p className="text-[10px] text-red-500">{errors.gender.message}</p>
-          )}
         </div>
         <div className="space-y-1.5">
           <Label className="text-xs font-medium text-muted-foreground">
-            Date of Birth *
+            Date of Birth
           </Label>
-          <DatePicker
-            date={
-              formData.dateOfBirth ? new Date(formData.dateOfBirth) : undefined
-            }
-            onDateChange={(date) => {
-              setValue("dateOfBirth", dateToUTC(date));
-            }}
-            onBlur={() => trigger("dateOfBirth")}
-            placeholder="Select date of birth"
-            fromYear={1950}
-            toYear={new Date().getFullYear()}
-          />
-          {errors.dateOfBirth && (
-            <p className="text-[10px] text-red-500">
-              {errors.dateOfBirth.message}
-            </p>
-          )}
+          <Input type="date" {...register("dateOfBirth")} className="h-10" />
         </div>
       </div>
-
-      {/* Employee Photo Upload with Crop */}
       <div className="space-y-2">
         <Label className="text-xs font-medium text-muted-foreground">
-          Photo
+          Client Photo
         </Label>
 
         {imageError && (
@@ -329,14 +279,14 @@ export function AddEmployeePersonalSection({
         {!croppedImage ? (
           <div className="relative">
             <input
-              id="employeePhoto"
+              id="clientPhoto"
               type="file"
               accept="image/jpeg,image/jpg,image/png,image/webp"
               onChange={handleInputChange}
               className="hidden"
             />
             <label
-              htmlFor="employeePhoto"
+              htmlFor="clientPhoto"
               className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed border-gray-200 dark:border-white/10 rounded-lg cursor-pointer bg-gray-50/50 dark:bg-white/5 hover:bg-gray-100 dark:hover:bg-white/10 transition-all duration-300 group"
             >
               <div className="flex flex-col items-center justify-center pt-5 pb-6">
@@ -355,7 +305,7 @@ export function AddEmployeePersonalSection({
             <div className="relative w-full h-48 border-2 border-gray-200 dark:border-white/10 rounded-lg overflow-hidden bg-gray-50/50 dark:bg-white/5">
               <NextImage
                 src={croppedImage}
-                alt="Employee preview"
+                alt="Client preview"
                 fill
                 className="object-contain"
               />
@@ -388,20 +338,6 @@ export function AddEmployeePersonalSection({
           </div>
         )}
       </div>
-
-      {/* Image Crop Dialog */}
-      {originalImage && (
-        <ImageCropDialog
-          open={isDialogOpen}
-          onOpenChange={setIsDialogOpen}
-          imageSrc={originalImage}
-          onCropComplete={handleCropCompleteWrapper}
-          aspectRatio={1}
-          circularCrop={false}
-          title="Crop Profile Photo"
-          description="Adjust the crop area and zoom to get the perfect profile photo"
-        />
-      )}
     </div>
   );
 }

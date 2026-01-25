@@ -42,7 +42,10 @@ export function checkSectionErrors(
   return checkFn ? checkFn(errors) : false;
 }
 
-export function buildClientData(data: CreateClientFormData) {
+export function buildClientData(
+  data: CreateClientFormData,
+  avatarKey?: string
+) {
   const fullName = [data.firstName, data.middleName, data.lastName]
     .filter(Boolean)
     .join(" ");
@@ -54,7 +57,6 @@ export function buildClientData(data: CreateClientFormData) {
     name: fullName,
     email: data.email || "",
     phone: data.phone,
-    website: undefined,
     companyName: data.employer || fullName,
     companyType: "Individual" as const,
     industry: data.occupation || "Other",
@@ -82,6 +84,12 @@ export function buildClientData(data: CreateClientFormData) {
     status: data.status,
     source: data.source,
     priority: data.priority,
+    ...(data.architecturalStyle && {
+      architecturalStyle: data.architecturalStyle,
+    }),
+    ...(data.architecturalStyleOther && {
+      architecturalStyleOther: data.architecturalStyleOther,
+    }),
     totalProjectValue: 0,
     projectsCount: 0,
     notes: data.notes || "",
@@ -95,5 +103,6 @@ export function buildClientData(data: CreateClientFormData) {
     activeProjects: 0,
     completedProjects: 0,
     createdBy: data.createdBy,
+    ...(avatarKey && { avatarKey }),
   };
 }
