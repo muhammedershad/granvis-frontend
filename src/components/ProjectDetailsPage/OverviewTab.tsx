@@ -1,13 +1,21 @@
+import { useState } from "react";
 import {
   Building2,
+  Calendar,
+  ChevronDown,
+  ChevronUp,
   DollarSign,
-  Image as ImageIcon,
+  Expand,
+  Layers,
   Mail,
   MapPin,
   Phone,
   Plus,
+  Target,
+  TrendingUp,
   User,
   Users,
+  X,
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
 import { Badge } from "../ui/badge";
@@ -15,6 +23,7 @@ import { Progress } from "../ui/progress";
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
 import { Button } from "../ui/button";
 import type { Project } from "@/types/project";
+import { getTypeIcon } from "../ProjectsPage/projectHelpers";
 
 interface OverviewTabProps {
   project: Project;
@@ -84,271 +93,577 @@ const getInitials = (name: string) => {
     .toUpperCase();
 };
 
+// Parse description to separate main description from client requirements
+const parseDescription = (description: string) => {
+  const clientReqMatch = description.match(/Client Requirements?:?\s*(.*)/i);
+  if (clientReqMatch) {
+    const mainDesc = description.slice(0, clientReqMatch.index).trim();
+    const clientReq = clientReqMatch[1].trim();
+    return { mainDescription: mainDesc, clientRequirements: clientReq };
+  }
+  return { mainDescription: description, clientRequirements: null };
+};
+
 export function OverviewTab({ project }: OverviewTabProps) {
+  const [isDescriptionExpanded, setIsDescriptionExpanded] = useState(false);
+  const [isRequirementsExpanded, setIsRequirementsExpanded] = useState(false);
+  const [showFullImage, setShowFullImage] = useState(false);
+
+  const { mainDescription, clientRequirements } = parseDescription(
+    project.description
+  );
+  const shouldTruncateDesc = mainDescription.length > 200;
+  const shouldTruncateReq =
+    clientRequirements && clientRequirements.length > 150;
+
+  const budgetPercentage =
+    project.totalBudget && project.spentAmount !== undefined
+      ? (project.spentAmount / project.totalBudget) * 100
+      : 0;
+
   return (
     <div className="space-y-6">
-      {/* Project Cover Image */}
-      {project.coverImage ? (
-        <Card className="relative overflow-hidden bg-card/50 backdrop-blur-sm border-border/50">
-          <div className="relative h-48 sm:h-64 md:h-80 w-full">
+      {/* Hero Section with Cover Image */}
+      <div className="relative">
+        {project.coverImage ? (
+          <Card className="relative overflow-hidden bg-card/50 backdrop-blur-sm border-border/50">
+            {/* Aspect Ratio Container - 4:1 compact ratio */}
+            <div className="relative w-full h-44 sm:h-52 md:h-60">
+              <img
+                src={project.coverImage}
+                alt={`${project.name} cover`}
+                className="w-full h-full object-cover object-center"
+              />
+              {/* Gradient Overlay */}
+              <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
+              <div className="absolute inset-0 bg-gradient-to-r from-black/40 via-transparent to-transparent" />
+
+              {/* View Full Image Button */}
+              <Button
+                variant="secondary"
+                size="sm"
+                className="absolute top-4 right-4 bg-black/50 hover:bg-black/70 text-white border-0 backdrop-blur-sm"
+                onClick={() => setShowFullImage(true)}
+              >
+                <Expand className="h-4 w-4 mr-2" />
+                View Full
+              </Button>
+
+              {/* Project Info Overlay */}
+              <div className="absolute bottom-0 left-0 right-0 p-6">
+                <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-4">
+                  <div>
+                    <div className="flex items-center gap-2 mb-2">
+                      <Badge className={getStatusColor(project.status)}>
+                        {project.status}
+                      </Badge>
+                      <Badge className={getPriorityColor(project.priority)}>
+                        {project.priority} Priority
+                      </Badge>
+                    </div>
+                    <h2 className="text-white text-2xl sm:text-3xl font-bold drop-shadow-lg">
+                      {project.name}
+                    </h2>
+                    <div className="flex items-center gap-2 text-white/80 text-sm mt-2">
+                      <MapPin className="h-4 w-4" />
+                      <span>
+                        {project.location.city}, {project.location.state}
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Quick Stats on Hero */}
+                  <div className="flex flex-wrap gap-3">
+                    <div className="bg-white/10 backdrop-blur-md rounded-lg px-4 py-2 border border-white/20">
+                      <p className="text-white/70 text-xs uppercase tracking-wide">
+                        Progress
+                      </p>
+                      <p className="text-white font-semibold text-lg">
+                        {project.progressPercentage ?? 0}%
+                      </p>
+                    </div>
+                    <div className="bg-white/10 backdrop-blur-md rounded-lg px-4 py-2 border border-white/20">
+                      <p className="text-white/70 text-xs uppercase tracking-wide">
+                        Budget
+                      </p>
+                      <p className="text-white font-semibold text-lg">
+                        {formatCurrency(project.totalBudget)}
+                      </p>
+                    </div>
+                    <div className="bg-white/10 backdrop-blur-md rounded-lg px-4 py-2 border border-white/20">
+                      <p className="text-white/70 text-xs uppercase tracking-wide">
+                        Team
+                      </p>
+                      <p className="text-white font-semibold text-lg">
+                        {project.teamMembers.length + 1}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </Card>
+        ) : (
+          <Card className="relative overflow-hidden bg-card/50 backdrop-blur-sm border-border/50">
+            <div className="relative w-full h-44 sm:h-52 md:h-60 bg-gradient-to-br from-gray-100 to-gray-200 dark:from-gray-800 dark:to-gray-900">
+              {/* Placeholder with Type Icon */}
+              <div className="absolute inset-0 flex items-center justify-center">
+                {(() => {
+                  const TypeIcon = getTypeIcon(project.type);
+                  return <TypeIcon className="w-20 h-20 text-gray-400 dark:text-gray-600 opacity-50" />;
+                })()}
+              </div>
+              {/* Gradient Overlay */}
+              <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
+              <div className="absolute inset-0 bg-gradient-to-r from-black/40 via-transparent to-transparent" />
+
+              {/* Project Info Overlay */}
+              <div className="absolute bottom-0 left-0 right-0 p-6">
+                <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-4">
+                  <div>
+                    <div className="flex items-center gap-2 mb-2">
+                      <Badge className={getStatusColor(project.status)}>
+                        {project.status}
+                      </Badge>
+                      <Badge className={getPriorityColor(project.priority)}>
+                        {project.priority} Priority
+                      </Badge>
+                    </div>
+                    <h2 className="text-white text-2xl sm:text-3xl font-bold drop-shadow-lg">
+                      {project.name}
+                    </h2>
+                    <div className="flex items-center gap-2 text-white/80 text-sm mt-2">
+                      <MapPin className="h-4 w-4" />
+                      <span>
+                        {project.location.city}, {project.location.state}
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Quick Stats on Hero */}
+                  <div className="flex flex-wrap gap-3">
+                    <div className="bg-white/10 backdrop-blur-md rounded-lg px-4 py-2 border border-white/20">
+                      <p className="text-white/70 text-xs uppercase tracking-wide">
+                        Progress
+                      </p>
+                      <p className="text-white font-semibold text-lg">
+                        {project.progressPercentage ?? 0}%
+                      </p>
+                    </div>
+                    <div className="bg-white/10 backdrop-blur-md rounded-lg px-4 py-2 border border-white/20">
+                      <p className="text-white/70 text-xs uppercase tracking-wide">
+                        Budget
+                      </p>
+                      <p className="text-white font-semibold text-lg">
+                        {formatCurrency(project.totalBudget)}
+                      </p>
+                    </div>
+                    <div className="bg-white/10 backdrop-blur-md rounded-lg px-4 py-2 border border-white/20">
+                      <p className="text-white/70 text-xs uppercase tracking-wide">
+                        Team
+                      </p>
+                      <p className="text-white font-semibold text-lg">
+                        {project.teamMembers.length + 1}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </Card>
+        )}
+
+        {/* Full Image Modal */}
+        {showFullImage && project.coverImage && (
+          <div
+            className="fixed inset-0 z-50 bg-black/90 flex items-center justify-center p-4"
+            onClick={() => setShowFullImage(false)}
+          >
+            <Button
+              variant="ghost"
+              size="icon"
+              className="absolute top-4 right-4 text-white hover:bg-white/20"
+              onClick={() => setShowFullImage(false)}
+            >
+              <X className="h-6 w-6" />
+            </Button>
             <img
               src={project.coverImage}
               alt={`${project.name} cover`}
-              className="w-full h-full object-cover"
+              className="max-w-full max-h-full object-contain rounded-lg"
+              onClick={(e) => e.stopPropagation()}
             />
-            <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
-            <div className="absolute bottom-4 left-4 right-4">
-              <h2 className="text-white text-xl sm:text-2xl font-semibold drop-shadow-lg">
-                {project.name}
-              </h2>
-              <p className="text-white/80 text-sm mt-1 drop-shadow">
-                {project.location.city}, {project.location.state}
-              </p>
-            </div>
           </div>
-        </Card>
-      ) : (
-        <Card className="relative overflow-hidden bg-card/50 backdrop-blur-sm border-border/50">
-          <div className="relative h-32 w-full flex items-center justify-center bg-gradient-to-br from-blue-500/10 to-purple-500/10 dark:from-blue-400/20 dark:to-purple-400/20">
-            <div className="text-center">
-              <ImageIcon className="h-10 w-10 text-muted-foreground/50 mx-auto mb-2" />
-              <p className="text-muted-foreground text-sm">No cover image</p>
-            </div>
-          </div>
-        </Card>
-      )}
+        )}
+      </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Project Information */}
-        <Card className="relative overflow-hidden bg-card/50 backdrop-blur-sm border-border/50">
-          <div className="absolute inset-0 bg-gradient-to-br from-blue-500/[0.02] to-purple-500/[0.02] dark:from-blue-400/[0.05] dark:to-purple-400/[0.05]"></div>
-          <CardHeader className="relative">
+      {/* Description & Client Requirements Row */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* Project Description - Takes 2 columns */}
+        <Card className="lg:col-span-2 relative overflow-hidden bg-card/50 backdrop-blur-sm border-border/50">
+          <div className="absolute inset-0 bg-gradient-to-br from-slate-500/[0.02] to-zinc-500/[0.02] dark:from-slate-400/[0.05] dark:to-zinc-400/[0.05]"></div>
+          <CardHeader className="relative pb-2">
             <div className="flex items-center gap-3">
-              <div className="p-2 bg-blue-500/10 rounded-lg border border-blue-500/20">
-                <Building2 className="h-5 w-5 text-blue-600 dark:text-blue-400" />
+              <div className="p-2 bg-slate-500/10 rounded-lg border border-slate-500/20">
+                <Layers className="h-5 w-5 text-slate-600 dark:text-slate-400" />
               </div>
               <CardTitle className="text-foreground">
-                Project Information
+                Project Description
               </CardTitle>
             </div>
           </CardHeader>
-          <CardContent className="relative space-y-4">
-            <div className="space-y-3">
-              <div>
-                <label className="text-sm text-muted-foreground">
-                  Description
-                </label>
-                <p className="text-foreground mt-1">{project.description}</p>
-              </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="text-sm text-muted-foreground">Type</label>
-                  <p className="text-foreground mt-1">{project.type}</p>
-                </div>
-                <div>
-                  <label className="text-sm text-muted-foreground">
-                    Category
-                  </label>
-                  <p className="text-foreground mt-1">
-                    {project.category || "N/A"}
-                  </p>
-                </div>
-              </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="text-sm text-muted-foreground">
-                    Status
-                  </label>
-                  <div className="mt-1">
-                    <Badge className={getStatusColor(project.status)}>
-                      {project.status}
-                    </Badge>
-                  </div>
-                </div>
-                <div>
-                  <label className="text-sm text-muted-foreground">
-                    Priority
-                  </label>
-                  <div className="mt-1">
-                    <Badge className={getPriorityColor(project.priority)}>
-                      {project.priority}
-                    </Badge>
-                  </div>
-                </div>
-              </div>
-              {project.currentPhase && (
-                <div>
-                  <label className="text-sm text-muted-foreground">
-                    Current Phase
-                  </label>
-                  <p className="text-foreground mt-1">{project.currentPhase}</p>
-                </div>
+          <CardContent className="relative">
+            <div className="prose prose-sm dark:prose-invert max-w-none">
+              <p className="text-foreground/90 leading-relaxed">
+                {shouldTruncateDesc && !isDescriptionExpanded
+                  ? `${mainDescription.slice(0, 200)}...`
+                  : mainDescription}
+              </p>
+              {shouldTruncateDesc && (
+                <Button
+                  variant="link"
+                  size="sm"
+                  className="p-0 h-auto text-primary"
+                  onClick={() => setIsDescriptionExpanded(!isDescriptionExpanded)}
+                >
+                  {isDescriptionExpanded ? (
+                    <>
+                      Show Less <ChevronUp className="h-4 w-4 ml-1" />
+                    </>
+                  ) : (
+                    <>
+                      Read More <ChevronDown className="h-4 w-4 ml-1" />
+                    </>
+                  )}
+                </Button>
               )}
-              <div>
-                <label className="text-sm text-muted-foreground">
-                  Progress
-                </label>
-                <div className="mt-2">
-                  <Progress
-                    value={project.progressPercentage ?? 0}
-                    className="h-2"
-                  />
-                  <p className="text-sm text-muted-foreground mt-1">
-                    {project.progressPercentage ?? 0}% Complete
-                  </p>
-                </div>
-              </div>
+            </div>
+
+            {/* Project Tags */}
+            <div className="flex flex-wrap gap-2 mt-4 pt-4 border-t border-border/50">
+              <Badge variant="outline" className="text-xs">
+                {project.type}
+              </Badge>
+              {project.category && (
+                <Badge variant="outline" className="text-xs">
+                  {project.category}
+                </Badge>
+              )}
+              {project.currentPhase && (
+                <Badge variant="outline" className="text-xs">
+                  Phase: {project.currentPhase}
+                </Badge>
+              )}
             </div>
           </CardContent>
         </Card>
 
-        {/* Client Information */}
-        <Card className="relative overflow-hidden bg-card/50 backdrop-blur-sm border-border/50">
-          <div className="absolute inset-0 bg-gradient-to-br from-emerald-500/[0.02] to-green-500/[0.02] dark:from-emerald-400/[0.05] dark:to-green-400/[0.05]"></div>
-          <CardHeader className="relative">
-            <div className="flex items-center gap-3">
-              <div className="p-2 bg-emerald-500/10 rounded-lg border border-emerald-500/20">
-                <User className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />
+        {/* Client Requirements - Separate Card */}
+        {clientRequirements ? (
+          <Card className="relative overflow-hidden bg-card/50 backdrop-blur-sm border-border/50">
+            <div className="absolute inset-0 bg-gradient-to-br from-rose-500/[0.02] to-pink-500/[0.02] dark:from-rose-400/[0.05] dark:to-pink-400/[0.05]"></div>
+            <CardHeader className="relative pb-2">
+              <div className="flex items-center gap-3">
+                <div className="p-2 bg-rose-500/10 rounded-lg border border-rose-500/20">
+                  <Target className="h-5 w-5 text-rose-600 dark:text-rose-400" />
+                </div>
+                <CardTitle className="text-foreground text-base">
+                  Client Requirements
+                </CardTitle>
               </div>
-              <CardTitle className="text-foreground">
-                Client Information
+            </CardHeader>
+            <CardContent className="relative">
+              <p className="text-foreground/90 text-sm leading-relaxed">
+                {shouldTruncateReq && !isRequirementsExpanded
+                  ? `${clientRequirements.slice(0, 150)}...`
+                  : clientRequirements}
+              </p>
+              {shouldTruncateReq && (
+                <Button
+                  variant="link"
+                  size="sm"
+                  className="p-0 h-auto text-primary mt-2"
+                  onClick={() =>
+                    setIsRequirementsExpanded(!isRequirementsExpanded)
+                  }
+                >
+                  {isRequirementsExpanded ? (
+                    <>
+                      Show Less <ChevronUp className="h-4 w-4 ml-1" />
+                    </>
+                  ) : (
+                    <>
+                      Read More <ChevronDown className="h-4 w-4 ml-1" />
+                    </>
+                  )}
+                </Button>
+              )}
+            </CardContent>
+          </Card>
+        ) : (
+          <Card className="relative overflow-hidden bg-card/50 backdrop-blur-sm border-border/50">
+            <div className="absolute inset-0 bg-gradient-to-br from-emerald-500/[0.02] to-green-500/[0.02] dark:from-emerald-400/[0.05] dark:to-green-400/[0.05]"></div>
+            <CardHeader className="relative pb-2">
+              <div className="flex items-center gap-3">
+                <div className="p-2 bg-emerald-500/10 rounded-lg border border-emerald-500/20">
+                  <User className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />
+                </div>
+                <CardTitle className="text-foreground text-base">
+                  Client
+                </CardTitle>
+              </div>
+            </CardHeader>
+            <CardContent className="relative">
+              <div className="flex items-start gap-3">
+                <Avatar className="h-10 w-10 border-2 border-border/50">
+                  <AvatarImage
+                    src={`https://avatar.vercel.sh/${project.client}`}
+                    alt={project.client}
+                  />
+                  <AvatarFallback className="bg-gradient-to-br from-emerald-500/10 to-green-500/10 text-sm">
+                    {getInitials(project.client)}
+                  </AvatarFallback>
+                </Avatar>
+                <div className="flex-1 min-w-0">
+                  <h4 className="text-foreground font-medium truncate">
+                    {project.client}
+                  </h4>
+                  {project.clientPhone && (
+                    <div className="flex items-center gap-2 text-sm text-muted-foreground mt-1">
+                      <Phone className="h-3 w-3 flex-shrink-0" />
+                      <span className="truncate">{project.clientPhone}</span>
+                    </div>
+                  )}
+                  {project.clientEmail && (
+                    <div className="flex items-center gap-2 text-sm text-muted-foreground mt-1">
+                      <Mail className="h-3 w-3 flex-shrink-0" />
+                      <span className="truncate">{project.clientEmail}</span>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+      </div>
+
+      {/* Project Details Grid */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {/* Project Info Card */}
+        <Card className="relative overflow-hidden bg-card/50 backdrop-blur-sm border-border/50">
+          <div className="absolute inset-0 bg-gradient-to-br from-blue-500/[0.02] to-indigo-500/[0.02] dark:from-blue-400/[0.05] dark:to-indigo-400/[0.05]"></div>
+          <CardHeader className="relative pb-3">
+            <div className="flex items-center gap-3">
+              <div className="p-2 bg-blue-500/10 rounded-lg border border-blue-500/20">
+                <Building2 className="h-5 w-5 text-blue-600 dark:text-blue-400" />
+              </div>
+              <CardTitle className="text-foreground text-base">
+                Project Details
               </CardTitle>
             </div>
           </CardHeader>
-          <CardContent className="relative space-y-4">
-            <div className="flex items-start gap-4">
-              <Avatar className="h-12 w-12 border-2 border-border/50">
-                <AvatarImage
-                  src={`https://avatar.vercel.sh/${project.client}`}
-                  alt={project.client}
-                />
-                <AvatarFallback className="bg-gradient-to-br from-emerald-500/10 to-green-500/10">
-                  {getInitials(project.client)}
-                </AvatarFallback>
-              </Avatar>
-              <div className="flex-1">
-                <h3 className="text-foreground font-medium">
-                  {project.client}
-                </h3>
-                <p className="text-sm text-muted-foreground">Client</p>
-              </div>
+          <CardContent className="relative space-y-3">
+            <div className="flex justify-between items-center py-2 border-b border-border/30">
+              <span className="text-sm text-muted-foreground">Type</span>
+              <span className="text-sm font-medium text-foreground">
+                {project.type}
+              </span>
             </div>
+            <div className="flex justify-between items-center py-2 border-b border-border/30">
+              <span className="text-sm text-muted-foreground">Category</span>
+              <span className="text-sm font-medium text-foreground">
+                {project.category || "N/A"}
+              </span>
+            </div>
+            <div className="flex justify-between items-center py-2 border-b border-border/30">
+              <span className="text-sm text-muted-foreground">Status</span>
+              <Badge className={`${getStatusColor(project.status)} text-xs`}>
+                {project.status}
+              </Badge>
+            </div>
+            <div className="flex justify-between items-center py-2">
+              <span className="text-sm text-muted-foreground">Priority</span>
+              <Badge className={`${getPriorityColor(project.priority)} text-xs`}>
+                {project.priority}
+              </Badge>
+            </div>
+          </CardContent>
+        </Card>
 
-            <div className="space-y-3">
-              {project.clientPhone && (
-                <div className="flex items-center gap-3">
-                  <Phone className="h-4 w-4 text-muted-foreground" />
-                  <span className="text-foreground">{project.clientPhone}</span>
-                </div>
-              )}
-              {project.clientEmail && (
-                <div className="flex items-center gap-3">
-                  <Mail className="h-4 w-4 text-muted-foreground" />
-                  <span className="text-foreground">{project.clientEmail}</span>
-                </div>
-              )}
-              {!project.clientPhone && !project.clientEmail && (
-                <p className="text-muted-foreground text-sm">
-                  No contact information available
-                </p>
-              )}
+        {/* Budget Card */}
+        <Card className="relative overflow-hidden bg-card/50 backdrop-blur-sm border-border/50">
+          <div className="absolute inset-0 bg-gradient-to-br from-emerald-500/[0.02] to-green-500/[0.02] dark:from-emerald-400/[0.05] dark:to-green-400/[0.05]"></div>
+          <CardHeader className="relative pb-3">
+            <div className="flex items-center gap-3">
+              <div className="p-2 bg-emerald-500/10 rounded-lg border border-emerald-500/20">
+                <DollarSign className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />
+              </div>
+              <CardTitle className="text-foreground text-base">Budget</CardTitle>
+            </div>
+          </CardHeader>
+          <CardContent className="relative space-y-3">
+            <div className="flex justify-between items-center py-2 border-b border-border/30">
+              <span className="text-sm text-muted-foreground">Total</span>
+              <span className="text-sm font-medium text-foreground">
+                {formatCurrency(project.totalBudget)}
+              </span>
+            </div>
+            <div className="flex justify-between items-center py-2 border-b border-border/30">
+              <span className="text-sm text-muted-foreground">Spent</span>
+              <span className="text-sm font-medium text-foreground">
+                {formatCurrency(project.spentAmount)}
+              </span>
+            </div>
+            <div className="flex justify-between items-center py-2 border-b border-border/30">
+              <span className="text-sm text-muted-foreground">Remaining</span>
+              <span className="text-sm font-medium text-emerald-600 dark:text-emerald-400">
+                {formatCurrency(project.remainingBudget)}
+              </span>
+            </div>
+            <div className="pt-2">
+              <div className="flex justify-between text-xs text-muted-foreground mb-1">
+                <span>Utilization</span>
+                <span>{budgetPercentage.toFixed(1)}%</span>
+              </div>
+              <Progress value={budgetPercentage} className="h-2" />
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Timeline Card */}
+        <Card className="relative overflow-hidden bg-card/50 backdrop-blur-sm border-border/50">
+          <div className="absolute inset-0 bg-gradient-to-br from-amber-500/[0.02] to-orange-500/[0.02] dark:from-amber-400/[0.05] dark:to-orange-400/[0.05]"></div>
+          <CardHeader className="relative pb-3">
+            <div className="flex items-center gap-3">
+              <div className="p-2 bg-amber-500/10 rounded-lg border border-amber-500/20">
+                <Calendar className="h-5 w-5 text-amber-600 dark:text-amber-400" />
+              </div>
+              <CardTitle className="text-foreground text-base">
+                Timeline
+              </CardTitle>
+            </div>
+          </CardHeader>
+          <CardContent className="relative space-y-3">
+            <div className="flex justify-between items-center py-2 border-b border-border/30">
+              <span className="text-sm text-muted-foreground">Start Date</span>
+              <span className="text-sm font-medium text-foreground">
+                {formatDate(project.startDate)}
+              </span>
+            </div>
+            <div className="flex justify-between items-center py-2 border-b border-border/30">
+              <span className="text-sm text-muted-foreground">End Date</span>
+              <span className="text-sm font-medium text-foreground">
+                {formatDate(project.endDate)}
+              </span>
+            </div>
+            {project.currentPhase && (
+              <div className="flex justify-between items-center py-2 border-b border-border/30">
+                <span className="text-sm text-muted-foreground">
+                  Current Phase
+                </span>
+                <span className="text-sm font-medium text-foreground">
+                  {project.currentPhase}
+                </span>
+              </div>
+            )}
+            <div className="flex justify-between items-center py-2">
+              <span className="text-sm text-muted-foreground">Last Updated</span>
+              <span className="text-sm font-medium text-muted-foreground">
+                {formatDate(project.updatedAt)}
+              </span>
             </div>
           </CardContent>
         </Card>
       </div>
 
-      {/* Budget & Team */}
+      {/* Client & Team Row */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Budget Information */}
-        <Card className="relative overflow-hidden bg-card/50 backdrop-blur-sm border-border/50">
-          <div className="absolute inset-0 bg-gradient-to-br from-green-500/[0.02] to-emerald-500/[0.02] dark:from-green-400/[0.05] dark:to-emerald-400/[0.05]"></div>
-          <CardHeader className="relative">
-            <div className="flex items-center gap-3">
-              <div className="p-2 bg-green-500/10 rounded-lg border border-green-500/20">
-                <DollarSign className="h-5 w-5 text-green-600 dark:text-green-400" />
+        {/* Client Information - Show only if requirements exist (client card shown above otherwise) */}
+        {clientRequirements && (
+          <Card className="relative overflow-hidden bg-card/50 backdrop-blur-sm border-border/50">
+            <div className="absolute inset-0 bg-gradient-to-br from-emerald-500/[0.02] to-green-500/[0.02] dark:from-emerald-400/[0.05] dark:to-green-400/[0.05]"></div>
+            <CardHeader className="relative pb-3">
+              <div className="flex items-center gap-3">
+                <div className="p-2 bg-emerald-500/10 rounded-lg border border-emerald-500/20">
+                  <User className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />
+                </div>
+                <CardTitle className="text-foreground text-base">
+                  Client Information
+                </CardTitle>
               </div>
-              <CardTitle className="text-foreground">
-                Budget Information
-              </CardTitle>
-            </div>
-          </CardHeader>
-          <CardContent className="relative space-y-4">
-            <div className="grid grid-cols-3 gap-4">
-              <div>
-                <label className="text-sm text-muted-foreground">
-                  Total Budget
-                </label>
-                <p className="text-foreground mt-1 font-medium">
-                  {formatCurrency(project.totalBudget)}
-                </p>
-              </div>
-              <div>
-                <label className="text-sm text-muted-foreground">
-                  Spent Amount
-                </label>
-                <p className="text-foreground mt-1 font-medium">
-                  {formatCurrency(project.spentAmount)}
-                </p>
-              </div>
-              <div>
-                <label className="text-sm text-muted-foreground">
-                  Remaining
-                </label>
-                <p className="text-foreground mt-1 font-medium">
-                  {formatCurrency(project.remainingBudget)}
-                </p>
-              </div>
-            </div>
-            {project.totalBudget && project.spentAmount !== undefined && (
-              <div>
-                <label className="text-sm text-muted-foreground">
-                  Budget Utilization
-                </label>
-                <div className="mt-2">
-                  <Progress
-                    value={
-                      project.totalBudget > 0
-                        ? (project.spentAmount / project.totalBudget) * 100
-                        : 0
-                    }
-                    className="h-2"
+            </CardHeader>
+            <CardContent className="relative">
+              <div className="flex items-start gap-4">
+                <Avatar className="h-12 w-12 border-2 border-border/50">
+                  <AvatarImage
+                    src={`https://avatar.vercel.sh/${project.client}`}
+                    alt={project.client}
                   />
-                  <p className="text-sm text-muted-foreground mt-1">
-                    {project.totalBudget > 0
-                      ? (
-                          (project.spentAmount / project.totalBudget) *
-                          100
-                        ).toFixed(1)
-                      : 0}
-                    % Used
-                  </p>
+                  <AvatarFallback className="bg-gradient-to-br from-emerald-500/10 to-green-500/10">
+                    {getInitials(project.client)}
+                  </AvatarFallback>
+                </Avatar>
+                <div className="flex-1">
+                  <h4 className="text-foreground font-medium">
+                    {project.client}
+                  </h4>
+                  <p className="text-sm text-muted-foreground">Client</p>
+                  <div className="mt-3 space-y-2">
+                    {project.clientPhone && (
+                      <div className="flex items-center gap-2 text-sm">
+                        <Phone className="h-4 w-4 text-muted-foreground" />
+                        <span className="text-foreground">
+                          {project.clientPhone}
+                        </span>
+                      </div>
+                    )}
+                    {project.clientEmail && (
+                      <div className="flex items-center gap-2 text-sm">
+                        <Mail className="h-4 w-4 text-muted-foreground" />
+                        <span className="text-foreground">
+                          {project.clientEmail}
+                        </span>
+                      </div>
+                    )}
+                  </div>
                 </div>
               </div>
-            )}
-          </CardContent>
-        </Card>
+            </CardContent>
+          </Card>
+        )}
 
         {/* Project Team */}
-        <Card className="relative overflow-hidden bg-card/50 backdrop-blur-sm border-border/50">
+        <Card
+          className={`relative overflow-hidden bg-card/50 backdrop-blur-sm border-border/50 ${
+            !clientRequirements ? "lg:col-span-2" : ""
+          }`}
+        >
           <div className="absolute inset-0 bg-gradient-to-br from-purple-500/[0.02] to-indigo-500/[0.02] dark:from-purple-400/[0.05] dark:to-indigo-400/[0.05]"></div>
-          <CardHeader className="relative">
+          <CardHeader className="relative pb-3">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
                 <div className="p-2 bg-purple-500/10 rounded-lg border border-purple-500/20">
                   <Users className="h-5 w-5 text-purple-600 dark:text-purple-400" />
                 </div>
-                <CardTitle className="text-foreground">Project Team</CardTitle>
+                <CardTitle className="text-foreground text-base">
+                  Project Team
+                </CardTitle>
               </div>
-              <Button variant="ghost" size="sm">
-                <Plus className="h-4 w-4 mr-2" />
-                Add Member
+              <Button variant="ghost" size="sm" className="text-xs">
+                <Plus className="h-4 w-4 mr-1" />
+                Add
               </Button>
             </div>
           </CardHeader>
-          <CardContent className="relative space-y-4">
-            <div className="space-y-3">
-              <div className="flex items-center gap-3">
-                <Avatar className="h-8 w-8">
+          <CardContent className="relative">
+            <div
+              className={`grid gap-3 ${
+                !clientRequirements ? "sm:grid-cols-2 lg:grid-cols-3" : ""
+              }`}
+            >
+              {/* Project Manager */}
+              <div className="flex items-center gap-3 p-3 rounded-lg bg-purple-500/5 border border-purple-500/10">
+                <Avatar className="h-9 w-9">
                   <AvatarImage
                     src={`https://avatar.vercel.sh/${project.projectManager}`}
                     alt={project.projectManager}
@@ -357,18 +672,23 @@ export function OverviewTab({ project }: OverviewTabProps) {
                     {getInitials(project.projectManager)}
                   </AvatarFallback>
                 </Avatar>
-                <div className="flex-1">
-                  <p className="text-foreground text-sm">
+                <div className="flex-1 min-w-0">
+                  <p className="text-foreground text-sm font-medium truncate">
                     {project.projectManager}
                   </p>
-                  <p className="text-xs text-muted-foreground">
+                  <p className="text-xs text-purple-600 dark:text-purple-400">
                     Project Manager
                   </p>
                 </div>
               </div>
+
+              {/* Team Members */}
               {project.teamMembers.map((member, index) => (
-                <div key={index} className="flex items-center gap-3">
-                  <Avatar className="h-8 w-8">
+                <div
+                  key={index}
+                  className="flex items-center gap-3 p-3 rounded-lg hover:bg-muted/50 transition-colors"
+                >
+                  <Avatar className="h-9 w-9">
                     <AvatarImage
                       src={`https://avatar.vercel.sh/${member}`}
                       alt={member}
@@ -377,14 +697,15 @@ export function OverviewTab({ project }: OverviewTabProps) {
                       {getInitials(member)}
                     </AvatarFallback>
                   </Avatar>
-                  <div className="flex-1">
-                    <p className="text-foreground text-sm">{member}</p>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-foreground text-sm truncate">{member}</p>
                     <p className="text-xs text-muted-foreground">Team Member</p>
                   </div>
                 </div>
               ))}
+
               {project.teamMembers.length === 0 && (
-                <p className="text-muted-foreground text-sm">
+                <p className="text-muted-foreground text-sm col-span-full">
                   No team members assigned yet
                 </p>
               )}
@@ -393,98 +714,42 @@ export function OverviewTab({ project }: OverviewTabProps) {
         </Card>
       </div>
 
-      {/* Location & Timeline */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Project Location */}
-        <Card className="relative overflow-hidden bg-card/50 backdrop-blur-sm border-border/50">
-          <div className="absolute inset-0 bg-gradient-to-br from-amber-500/[0.02] to-orange-500/[0.02] dark:from-amber-400/[0.05] dark:to-orange-400/[0.05]"></div>
-          <CardHeader className="relative">
-            <div className="flex items-center gap-3">
-              <div className="p-2 bg-amber-500/10 rounded-lg border border-amber-500/20">
-                <MapPin className="h-5 w-5 text-amber-600 dark:text-amber-400" />
-              </div>
-              <CardTitle className="text-foreground">
-                Project Location
-              </CardTitle>
+      {/* Location Card */}
+      <Card className="relative overflow-hidden bg-card/50 backdrop-blur-sm border-border/50">
+        <div className="absolute inset-0 bg-gradient-to-br from-cyan-500/[0.02] to-teal-500/[0.02] dark:from-cyan-400/[0.05] dark:to-teal-400/[0.05]"></div>
+        <CardHeader className="relative pb-3">
+          <div className="flex items-center gap-3">
+            <div className="p-2 bg-cyan-500/10 rounded-lg border border-cyan-500/20">
+              <MapPin className="h-5 w-5 text-cyan-600 dark:text-cyan-400" />
             </div>
-          </CardHeader>
-          <CardContent className="relative space-y-4">
-            <div>
-              <label className="text-sm text-muted-foreground">Address</label>
+            <CardTitle className="text-foreground text-base">
+              Project Location
+            </CardTitle>
+          </div>
+        </CardHeader>
+        <CardContent className="relative">
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <div className="md:col-span-2">
+              <label className="text-xs text-muted-foreground uppercase tracking-wide">
+                Address
+              </label>
               <p className="text-foreground mt-1">{project.location.address}</p>
             </div>
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label className="text-sm text-muted-foreground">City</label>
-                <p className="text-foreground mt-1">{project.location.city}</p>
-              </div>
-              <div>
-                <label className="text-sm text-muted-foreground">State</label>
-                <p className="text-foreground mt-1">{project.location.state}</p>
-              </div>
-            </div>
-            {project.location.country && (
-              <div>
-                <label className="text-sm text-muted-foreground">Country</label>
-                <p className="text-foreground mt-1">
-                  {project.location.country}
-                </p>
-              </div>
-            )}
-          </CardContent>
-        </Card>
-
-        {/* Project Timeline */}
-        <Card className="relative overflow-hidden bg-card/50 backdrop-blur-sm border-border/50">
-          <div className="absolute inset-0 bg-gradient-to-br from-cyan-500/[0.02] to-blue-500/[0.02] dark:from-cyan-400/[0.05] dark:to-blue-400/[0.05]"></div>
-          <CardHeader className="relative">
-            <div className="flex items-center gap-3">
-              <div className="p-2 bg-cyan-500/10 rounded-lg border border-cyan-500/20">
-                <Building2 className="h-5 w-5 text-cyan-600 dark:text-cyan-400" />
-              </div>
-              <CardTitle className="text-foreground">
-                Project Timeline
-              </CardTitle>
-            </div>
-          </CardHeader>
-          <CardContent className="relative space-y-4">
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label className="text-sm text-muted-foreground">
-                  Start Date
-                </label>
-                <p className="text-foreground mt-1">
-                  {formatDate(project.startDate)}
-                </p>
-              </div>
-              <div>
-                <label className="text-sm text-muted-foreground">
-                  End Date
-                </label>
-                <p className="text-foreground mt-1">
-                  {formatDate(project.endDate)}
-                </p>
-              </div>
+            <div>
+              <label className="text-xs text-muted-foreground uppercase tracking-wide">
+                City
+              </label>
+              <p className="text-foreground mt-1">{project.location.city}</p>
             </div>
             <div>
-              <label className="text-sm text-muted-foreground">
-                Created At
+              <label className="text-xs text-muted-foreground uppercase tracking-wide">
+                State
               </label>
-              <p className="text-foreground mt-1">
-                {formatDate(project.createdAt)}
-              </p>
+              <p className="text-foreground mt-1">{project.location.state}</p>
             </div>
-            <div>
-              <label className="text-sm text-muted-foreground">
-                Last Updated
-              </label>
-              <p className="text-foreground mt-1">
-                {formatDate(project.updatedAt)}
-              </p>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
+          </div>
+        </CardContent>
+      </Card>
     </div>
   );
 }
