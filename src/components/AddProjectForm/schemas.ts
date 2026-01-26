@@ -1,13 +1,26 @@
 import * as z from "zod";
 
 export const basicInfoSchema = z.object({
-  name: z.string().min(1, "Project name is required"),
+  name: z
+    .string()
+    .min(1, "Project name is required")
+    .min(3, "Project name must be at least 3 characters")
+    .max(100, "Project name must not exceed 100 characters")
+    .transform((val) => val.trim()),
   description: z
     .string()
     .min(1, "Description is required")
-    .min(10, "Description must be at least 10 characters"),
+    .min(10, "Description must be at least 10 characters")
+    .max(1000, "Description must not exceed 1000 characters")
+    .transform((val) => val.trim()),
   type: z.enum(["Villa", "Commercial", "Interior", "Landscape"]),
   category: z.string().optional(),
+  sqft: z
+    .string()
+    .optional()
+    .refine((val) => !val || !isNaN(Number(val)), {
+      message: "Sqft must be a number",
+    }),
   status: z.enum([
     "Planning",
     "In Progress",
@@ -20,6 +33,7 @@ export const basicInfoSchema = z.object({
 
 export const clientInfoSchema = z.object({
   client: z.string().min(1, "Client selection is required"),
+  clientId: z.string().min(1, "Client must be selected"),
   clientEmail: z
     .string()
     .email("Invalid email format")
@@ -32,33 +46,32 @@ export const detailsSchema = z.object({
   requirements: z
     .string()
     .min(1, "Client requirements are required")
-    .min(20, "Requirements must be at least 20 characters"),
+    .min(20, "Requirements must be at least 20 characters")
+    .transform((val) => val.trim()),
   currentPhase: z.string().optional(),
   progressPercentage: z.string().optional(),
   projectManager: z.string().min(1, "Project manager is required"),
+  managerId: z.string().min(1, "Project manager must be selected"),
   teamMembers: z.string().optional(),
+  teamMemberIds: z.array(z.string()).optional(),
 });
 
 export const timelineSchema = z.object({
   startDate: z.string().min(1, "Start date is required"),
   endDate: z.string().optional(),
-  deadline: z.string().optional(),
-  estimatedDuration: z.string().optional(),
   totalBudget: z
     .string()
-    .min(1, "Total budget is required")
-    .refine((val) => !isNaN(Number(val)) && Number(val) > 0, {
+    .optional()
+    .refine((val) => !val || (!isNaN(Number(val)) && Number(val) >= 0), {
       message: "Budget must be a positive number",
     }),
-  spentAmount: z.string().optional(),
 });
 
 export const additionalSchema = z.object({
-  address: z.string().optional(),
-  city: z.string().optional(),
-  state: z.string().optional(),
+  address: z.string().min(1, "Address is required"),
+  city: z.string().min(1, "City is required"),
+  state: z.string().min(1, "State is required"),
   country: z.string().optional(),
-  tags: z.string().optional(),
 });
 
 // Combined schema for the entire form

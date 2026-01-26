@@ -5,6 +5,7 @@ export interface Project {
   name: string;
   description: string;
   client: string;
+  clientId: string;
   clientEmail?: string;
   clientPhone?: string;
 
@@ -17,11 +18,9 @@ export interface Project {
   // Timeline
   startDate: string;
   endDate?: string;
-  deadline?: string;
-  estimatedDuration?: number; // in days
 
-  // Budget
-  totalBudget: number;
+  // Budget (optional)
+  totalBudget?: number;
   spentAmount?: number;
   remainingBudget?: number;
 
@@ -32,13 +31,15 @@ export interface Project {
 
   // Team
   projectManager: string;
+  managerId: string;
   teamMembers: string[];
+  teamMemberIds?: string[];
 
-  // Location
-  location?: {
-    address?: string;
-    city?: string;
-    state?: string;
+  // Location (required)
+  location: {
+    address: string;
+    city: string;
+    state: string;
     country?: string;
     coordinates?: {
       lat: number;
@@ -47,7 +48,6 @@ export interface Project {
   };
 
   // Additional Details
-  tags: string[];
   documents: ProjectDocument[];
   images: string[];
   coverImage?: string;

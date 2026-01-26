@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { useRouter } from "next/navigation";
 import RoleGuard from "@/components/auth/RoleGuard";
 import { IAuthRoles } from "@/store/slices/authSlice";
@@ -11,14 +12,21 @@ import { Project } from "@/types/project";
 export default function NewProjectPage() {
   const router = useRouter();
   const [createProject] = useCreateProjectMutation();
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleCreateProject = async (
     newProject: Omit<Project, "id" | "createdAt" | "updatedAt">
   ) => {
+    setIsSubmitting(true);
     try {
       await createProject(newProject).unwrap();
-      toast.success("Project created successfully");
-      router.push("/admin/projects");
+      toast.success("Project created successfully", {
+        description: "Redirecting to projects list...",
+      });
+      // Small delay to let user see the success message
+      setTimeout(() => {
+        router.push("/admin/projects");
+      }, 1000);
     } catch (err) {
       console.error("Failed to create project:", err);
       const errorMessage =
@@ -31,6 +39,7 @@ export default function NewProjectPage() {
           ? errorMessage.join(", ")
           : errorMessage,
       });
+      setIsSubmitting(false);
     }
   };
 
@@ -44,6 +53,7 @@ export default function NewProjectPage() {
         <AddProjectForm
           onSubmit={handleCreateProject}
           onCancel={handleCancel}
+          isSubmitting={isSubmitting}
         />
       </div>
     </RoleGuard>

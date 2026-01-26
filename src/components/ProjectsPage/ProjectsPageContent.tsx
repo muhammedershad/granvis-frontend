@@ -30,6 +30,7 @@ import {
 import { cn } from "../ui/utils";
 import {
   useDeleteProjectMutation,
+  useGetProjectStatisticsQuery,
   useGetProjectsQuery,
 } from "@/lib/api/projectsApi";
 import { useDebounce } from "@/hooks/useDebounce";
@@ -43,6 +44,8 @@ const ITEMS_PER_PAGE = 8;
 
 interface ProjectsPageProps {
   onProjectSelect?: (projectId: string) => void;
+  /** Base path for project details navigation. Defaults to "/projects" */
+  projectsBasePath?: string;
 }
 
 function buildURLParams(
@@ -81,8 +84,22 @@ function buildURLParams(
 }
 
 // eslint-disable-next-line complexity
-export function ProjectsPageContent({ onProjectSelect }: ProjectsPageProps) {
+export function ProjectsPageContent({
+  onProjectSelect,
+  projectsBasePath = "/projects",
+}: ProjectsPageProps) {
   const router = useRouter();
+
+  const handleProjectSelect = useCallback(
+    (projectId: string) => {
+      if (onProjectSelect) {
+        onProjectSelect(projectId);
+      } else {
+        router.push(`${projectsBasePath}/${projectId}`);
+      }
+    },
+    [onProjectSelect, projectsBasePath, router]
+  );
   const searchParams = useSearchParams();
 
   const [currentPage, setCurrentPage] = useState(1);
@@ -146,9 +163,11 @@ export function ProjectsPageContent({ onProjectSelect }: ProjectsPageProps) {
       const sortToUse = newSort || sort;
       const params = buildURLParams(newFilters, page, sortToUse);
       const queryString = params.toString();
-      router.push(queryString ? `/projects?${queryString}` : "/projects");
+      router.push(
+        queryString ? `${projectsBasePath}?${queryString}` : projectsBasePath
+      );
     },
-    [sort, router]
+    [sort, router, projectsBasePath]
   );
 
   useEffect(() => {
@@ -180,6 +199,8 @@ export function ProjectsPageContent({ onProjectSelect }: ProjectsPageProps) {
 
   const [deleteProject] = useDeleteProjectMutation();
 
+  const { data: statisticsData } = useGetProjectStatisticsQuery();
+
   const projects = useMemo(() => data?.data || [], [data?.data]);
   const pagination = data?.pagination;
   const totalPages = pagination?.totalPages || 1;
@@ -195,26 +216,23 @@ export function ProjectsPageContent({ onProjectSelect }: ProjectsPageProps) {
   const priorities = ["Low", "Medium", "High", "Critical"];
 
   const stats = useMemo(() => {
-    const total = pagination?.total || 0;
-    const inProgress = projects.filter(
-      (p) => p.status === "In Progress"
-    ).length;
-    const completed = projects.filter((p) => p.status === "Completed").length;
-    const onHold = projects.filter((p) => p.status === "On Hold").length;
-    const totalBudget = projects.reduce(
-      (sum, p) => sum + (p.totalBudget || 0),
-      0
-    );
-    const avgProgress =
-      projects.length > 0
-        ? Math.round(
-            projects.reduce((sum, p) => sum + (p.progressPercentage || 0), 0) /
-              projects.length
-          )
-        : 0;
+    const total = statisticsData?.totalProjects ?? 0;
+    const byStatus = statisticsData?.byStatus || [];
 
-    return { total, inProgress, completed, onHold, totalBudget, avgProgress };
-  }, [projects, pagination]);
+    const getStatusCount = (status: string) => {
+      const found = byStatus.find((s) => s._id === status);
+      return found?.count ?? 0;
+    };
+
+    return {
+      total,
+      planning: getStatusCount("Planning"),
+      inProgress: getStatusCount("In Progress"),
+      onHold: getStatusCount("On Hold"),
+      completed: getStatusCount("Completed"),
+      cancelled: getStatusCount("Cancelled"),
+    };
+  }, [statisticsData]);
 
   const openDeleteConfirmation = (projectId: string, projectName: string) => {
     setDeleteConfirmation({
@@ -389,13 +407,13 @@ export function ProjectsPageContent({ onProjectSelect }: ProjectsPageProps) {
           {viewType === "cards" ? (
             <ProjectCardView
               projects={projects}
-              onSelect={onProjectSelect || (() => {})}
+              onSelect={handleProjectSelect}
               onDelete={openDeleteConfirmation}
             />
           ) : (
             <ProjectTableView
               projects={projects}
-              onSelect={onProjectSelect || (() => {})}
+              onSelect={handleProjectSelect}
               onDelete={openDeleteConfirmation}
               sortField={sort.field}
               sortDirection={sort.direction}

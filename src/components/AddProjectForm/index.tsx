@@ -4,79 +4,371 @@ import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { toast } from "sonner";
+import { useRouter } from "next/navigation";
 import {
   AlertCircle,
   Building2,
   Calendar,
   FileText,
-  Loader2,
   MapPin,
   Users,
-  X,
 } from "lucide-react";
-import { Button } from "../ui/button";
 import { Separator } from "../ui/separator";
 import { Alert, AlertDescription, AlertTitle } from "../ui/alert";
 import { Project } from "../../types/project";
 import { Client } from "../../types/client";
-import { AddClientForm } from "@/components/clients";
+import { Employee } from "../../types/employee";
 import {
   uploadToS3WithPresignedUrl,
   useGetPresignedUrlMutation,
 } from "@/lib/api/uploadApi";
+import { useGetClientsQuery } from "@/lib/api/clientsApi";
+import { getCloudFrontUrl } from "@/lib/utils/cloudfront";
+import { useImageCrop } from "@/hooks/useImageCrop";
+import { useDebounce } from "@/hooks/useDebounce";
+import { ImageCropDialog } from "../ui/ImageCropDialog";
 import { ProjectFormData, projectFormSchema } from "./schemas";
+import { FormHeader } from "./FormHeader";
 import { SectionHeader } from "./SectionHeader";
 import { IdentitySection } from "./IdentitySection";
 import { ClientSection } from "./ClientSection";
 import { ScopeSection } from "./ScopeSection";
 import { FinancialsSection } from "./FinancialsSection";
 import { LocationSection } from "./LocationSection";
+import { FormActions } from "./FormActions";
+import { getFormSections } from "./useFormSections";
 
 interface AddProjectFormProps {
-  onSubmit: (project: Omit<Project, "id" | "createdAt" | "updatedAt">) => void;
+  onSubmit: (
+    project: Omit<Project, "id" | "createdAt" | "updatedAt">
+  ) => Promise<void>;
   onCancel: () => void;
+  isSubmitting?: boolean;
+  initialData?: Project;
+  mode?: "create" | "edit";
 }
 
-// Mock clients - simplified
-const mockClients: Client[] = [
-  {
-    id: "1",
-    name: "John Smith",
-    email: "john.smith@example.com",
-    phone: "+1 (555) 123-4567",
-    companyName: "Smith Enterprises",
-    companyType: "Small Business",
-    industry: "Technology",
-    status: "Active",
-    priority: "High",
-  } as Client,
-  {
-    id: "2",
-    name: "Sarah Johnson",
-    email: "sarah.johnson@greentech.com",
-    phone: "+1 (555) 987-6543",
-    companyName: "GreenTech Solutions",
-    companyType: "Corporation",
-    industry: "Environmental",
-    status: "Active",
-    priority: "Medium",
-  } as Client,
-];
+// Helper to parse description for client requirements
+const parseDescriptionForEdit = (description: string) => {
+  const clientReqMatch = description.match(
+    /Client Requirements?:?\s*([\s\S]*)/i
+  );
+  if (clientReqMatch) {
+    const mainDesc = description.slice(0, clientReqMatch.index).trim();
+    const clientReq = clientReqMatch[1].trim();
+    return { mainDescription: mainDesc, clientRequirements: clientReq };
+  }
+  return { mainDescription: description, clientRequirements: "" };
+};
 
-export function AddProjectForm({ onSubmit, onCancel }: AddProjectFormProps) {
+// Helper to format date for input field (YYYY-MM-DD)
+const formatDateForInput = (dateString: string | undefined): string => {
+  if (!dateString) {
+    return "";
+  }
+  const date = new Date(dateString);
+  return date.toISOString().split("T")[0];
+};
+
+// Helper to convert date to UTC ISO string
+const toUTCDateString = (dateStr: string | undefined): string | undefined => {
+  if (!dateStr) {
+    return undefined;
+  }
+  const date = new Date(dateStr);
+  return date.toISOString();
+};
+
+// Helper to get initial client state for edit mode
+const getInitialClient = (
+  initialData: Project | undefined,
+  isEditMode: boolean
+): Client | null => {
+  if (!isEditMode || !initialData) {
+    return null;
+  }
+  return {
+    id: initialData.clientId,
+    name: initialData.client,
+    email: initialData.clientEmail,
+    phone: initialData.clientPhone,
+  } as Client;
+};
+
+// Helper to get initial manager state for edit mode
+const getInitialManager = (
+  initialData: Project | undefined,
+  isEditMode: boolean
+): Employee | null => {
+  if (!isEditMode || !initialData) {
+    return null;
+  }
+  return {
+    id: initialData.managerId,
+    firstName: initialData.projectManager.split(" ")[0] || "",
+    lastName: initialData.projectManager.split(" ").slice(1).join(" ") || "",
+  } as Employee;
+};
+
+// Helper to get default form values
+const getDefaultFormValues = (
+  initialData: Project | undefined,
+  isEditMode: boolean,
+  parsedDescription: { mainDescription: string; clientRequirements: string }
+): ProjectFormData => {
+  if (isEditMode && initialData) {
+    return {
+      name: initialData.name,
+      description: parsedDescription.mainDescription,
+      client: initialData.client,
+      clientId: initialData.clientId,
+      clientEmail: initialData.clientEmail || "",
+      clientPhone: initialData.clientPhone || "",
+      type: initialData.type,
+      category: initialData.category || "",
+      status: initialData.status,
+      priority: initialData.priority,
+      startDate: formatDateForInput(initialData.startDate),
+      endDate: formatDateForInput(initialData.endDate),
+      totalBudget: initialData.totalBudget?.toString() || "",
+      progressPercentage: initialData.progressPercentage?.toString() || "0",
+      currentPhase: initialData.currentPhase || "",
+      projectManager: initialData.projectManager,
+      managerId: initialData.managerId,
+      teamMembers: initialData.teamMembers.join(", "),
+      teamMemberIds: initialData.teamMemberIds || [],
+      address: initialData.location.address,
+      city: initialData.location.city,
+      state: initialData.location.state,
+      country: initialData.location.country || "India",
+      requirements: parsedDescription.clientRequirements,
+      createdBy: initialData.createdBy,
+    };
+  }
+  return {
+    name: "",
+    description: "",
+    client: "",
+    clientId: "",
+    clientEmail: "",
+    clientPhone: "",
+    type: "Villa",
+    category: "",
+    status: "Planning",
+    priority: "Medium",
+    startDate: "",
+    endDate: "",
+    totalBudget: "",
+    progressPercentage: "0",
+    currentPhase: "",
+    projectManager: "",
+    managerId: "",
+    teamMembers: "",
+    teamMemberIds: [],
+    address: "",
+    city: "",
+    state: "",
+    country: "India",
+    requirements: "",
+    createdBy: "current-user",
+  };
+};
+
+// Helper to determine final images for project
+const getFinalImages = (
+  imageUrls: string[],
+  existingCoverImage: string | undefined,
+  initialData: Project | undefined,
+  isEditMode: boolean
+): string[] => {
+  if (imageUrls.length > 0) {
+    return imageUrls;
+  }
+  if (existingCoverImage) {
+    return [existingCoverImage];
+  }
+  if (isEditMode && initialData) {
+    return initialData.images;
+  }
+  return [];
+};
+
+// Helper to get parsed description for edit mode
+const getParsedDescription = (
+  initialData: Project | undefined,
+  isEditMode: boolean
+): { mainDescription: string; clientRequirements: string } => {
+  if (isEditMode && initialData) {
+    return parseDescriptionForEdit(initialData.description);
+  }
+  return { mainDescription: "", clientRequirements: "" };
+};
+
+// Helper to build project from form data
+const buildProject = (
+  data: ProjectFormData,
+  imageUrls: string[],
+  existingCoverImage: string | undefined,
+  initialData: Project | undefined,
+  isEditMode: boolean
+): Omit<Project, "id" | "createdAt" | "updatedAt"> => {
+  const totalBudget = data.totalBudget ? parseFloat(data.totalBudget) : 0;
+
+  const baseData =
+    isEditMode && initialData
+      ? {
+          spentAmount: initialData.spentAmount,
+          milestones: initialData.milestones,
+          documents: initialData.documents,
+        }
+      : {
+          milestones: [],
+          documents: [],
+        };
+
+  const finalImages = getFinalImages(
+    imageUrls,
+    existingCoverImage,
+    initialData,
+    isEditMode
+  );
+  const remainingBudget =
+    isEditMode && initialData
+      ? totalBudget - (initialData.spentAmount || 0)
+      : totalBudget;
+
+  const teamMembers = data.teamMembers
+    ? data.teamMembers
+        .split(",")
+        .map((member) => member.trim())
+        .filter(Boolean)
+    : [];
+
+  return {
+    name: data.name.trim(),
+    description: `${data.description.trim()}${data.requirements ? `\n\nClient Requirements:\n${data.requirements.trim()}` : ""}`,
+    client: data.client,
+    clientId: data.clientId,
+    clientEmail: data.clientEmail || undefined,
+    clientPhone: data.clientPhone || undefined,
+    type: data.type,
+    category: data.category || undefined,
+    status: data.status,
+    priority: data.priority,
+    startDate: toUTCDateString(data.startDate) || data.startDate,
+    endDate: toUTCDateString(data.endDate) || undefined,
+    totalBudget,
+    remainingBudget,
+    spentAmount: baseData.spentAmount,
+    progressPercentage: data.progressPercentage
+      ? parseInt(data.progressPercentage)
+      : undefined,
+    currentPhase: data.currentPhase || undefined,
+    milestones: baseData.milestones,
+    projectManager: data.projectManager,
+    managerId: data.managerId,
+    teamMembers,
+    teamMemberIds: data.teamMemberIds || [],
+    location: {
+      address: data.address,
+      city: data.city,
+      state: data.state,
+      country: data.country || "India",
+    },
+    documents: baseData.documents,
+    images: finalImages,
+    coverImage: finalImages[0] || undefined,
+    createdBy: data.createdBy,
+  };
+};
+
+export function AddProjectForm({
+  onSubmit,
+  onCancel,
+  isSubmitting = false,
+  initialData,
+  mode = "create",
+}: AddProjectFormProps) {
+  const router = useRouter();
+  const isEditMode = mode === "edit" && !!initialData;
   const [expandedSection, setExpandedSection] = useState<string>("identity");
-  const [selectedClient, setSelectedClient] = useState<Client | null>(null);
+  const [selectedClient, setSelectedClient] = useState<Client | null>(() =>
+    getInitialClient(initialData, isEditMode)
+  );
   const [clientSearchTerm, setClientSearchTerm] = useState("");
-  const [showAddClientDialog, setShowAddClientDialog] = useState(false);
-  const [imagePreview, setImagePreview] = useState<string | null>(null);
-  const [imageFile, setImageFile] = useState<File | null>(null);
+  const [imageBlobToUpload, setImageBlobToUpload] = useState<Blob | null>(null);
   const [uploadProgress, setUploadProgress] = useState<number>(0);
   const [isUploading, setIsUploading] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
-  const [tagsList, setTagsList] = useState<string[]>([]);
-  const [teamList, setTeamList] = useState<string[]>([]);
+  const [selectedManager, setSelectedManager] = useState<Employee | null>(() =>
+    getInitialManager(initialData, isEditMode)
+  );
+  const [selectedTeamMembers, setSelectedTeamMembers] = useState<Employee[]>(
+    []
+  );
+  const [existingCoverImage, setExistingCoverImage] = useState<
+    string | undefined
+  >(isEditMode && initialData ? initialData.coverImage : undefined);
 
   const [getPresignedUrl] = useGetPresignedUrlMutation();
+
+  // Debounce client search term for API calls (1 second delay)
+  const debouncedSearchTerm = useDebounce(clientSearchTerm, 1000);
+
+  // Fetch clients from API with debounced search
+  const {
+    data: clientsData,
+    isLoading: isLoadingClients,
+    isFetching: isFetchingClients,
+  } = useGetClientsQuery({
+    search: debouncedSearchTerm || undefined,
+    limit: 20,
+    status: "Active",
+  });
+
+  const clients = clientsData?.data || [];
+
+  // Navigate to new client page
+  const handleAddClientClick = () => {
+    router.push("/admin/clients/new");
+  };
+
+  // Use image crop hook for cover image
+  const {
+    originalImage,
+    croppedImage,
+    croppedBlob,
+    imageFile,
+    isDialogOpen,
+    error: imageError,
+    handleInputChange: handleImageInputChange,
+    handleCropComplete,
+    setIsDialogOpen,
+    removeCroppedImage,
+    openCropDialog,
+  } = useImageCrop({
+    maxSizeInMB: 1,
+    allowedFormats: ["image/jpeg", "image/jpg", "image/png", "image/webp"],
+    onError: (error) => {
+      console.error("Image validation error:", error);
+    },
+  });
+
+  // Handle crop complete - store blob for upload
+  const handleCropCompleteWrapper = (blob: Blob, url: string) => {
+    handleCropComplete(blob, url);
+    setImageBlobToUpload(blob);
+  };
+
+  // Handle remove image
+  const handleRemoveImage = () => {
+    removeCroppedImage();
+    setImageBlobToUpload(null);
+    setExistingCoverImage(undefined);
+  };
+
+  // Parse description for edit mode
+  const parsedDescription = getParsedDescription(initialData, isEditMode);
 
   const {
     register,
@@ -87,122 +379,28 @@ export function AddProjectForm({ onSubmit, onCancel }: AddProjectFormProps) {
   } = useForm<ProjectFormData>({
     resolver: zodResolver(projectFormSchema),
     mode: "onChange",
-    defaultValues: {
-      name: "",
-      description: "",
-      client: "",
-      clientEmail: "",
-      clientPhone: "",
-      type: "Villa",
-      category: "",
-      status: "Planning",
-      priority: "Medium",
-      startDate: "",
-      endDate: "",
-      deadline: "",
-      estimatedDuration: "",
-      totalBudget: "",
-      spentAmount: "0",
-      progressPercentage: "0",
-      currentPhase: "",
-      projectManager: "",
-      teamMembers: "",
-      address: "",
-      city: "",
-      state: "",
-      country: "USA",
-      tags: "",
-      requirements: "",
-      createdBy: "current-user",
-    },
+    defaultValues: getDefaultFormValues(
+      initialData,
+      isEditMode,
+      parsedDescription
+    ),
   });
 
-  const _formData = watch();
+  const formData = watch();
 
   const handleClientSelect = (client: Client) => {
     setSelectedClient(client);
     setValue("client", client.name);
+    setValue("clientId", client.id);
     setValue("clientEmail", client.email || "");
     setValue("clientPhone", client.phone || "");
   };
 
-  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      setImageFile(file);
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setImagePreview(reader.result as string);
-      };
-      reader.readAsDataURL(file);
-    }
-  };
-
-  const handleRemoveImage = () => {
-    setImagePreview(null);
-    setImageFile(null);
-  };
-
-  // eslint-disable-next-line complexity
-  const buildProjectFromFormData = (
-    data: ProjectFormData,
-    imageUrls: string[]
-  ): Omit<Project, "id" | "createdAt" | "updatedAt"> => {
-    return {
-      name: data.name,
-      description: `${data.description}${data.requirements ? `\n\nClient Requirements:\n${data.requirements}` : ""}`,
-      client: data.client,
-      clientEmail: data.clientEmail || undefined,
-      clientPhone: data.clientPhone || undefined,
-      type: data.type,
-      category: data.category || undefined,
-      status: data.status,
-      priority: data.priority,
-      startDate: data.startDate,
-      endDate: data.endDate || undefined,
-      deadline: data.deadline || undefined,
-      estimatedDuration: data.estimatedDuration
-        ? parseInt(data.estimatedDuration)
-        : undefined,
-      totalBudget: parseFloat(data.totalBudget) || 0,
-      spentAmount: data.spentAmount ? parseFloat(data.spentAmount) : undefined,
-      remainingBudget:
-        (parseFloat(data.totalBudget) || 0) -
-        (parseFloat(data.spentAmount || "0") || 0),
-      progressPercentage: data.progressPercentage
-        ? parseInt(data.progressPercentage)
-        : undefined,
-      currentPhase: data.currentPhase || undefined,
-      milestones: [],
-      projectManager: data.projectManager,
-      teamMembers: data.teamMembers
-        ? data.teamMembers
-            .split(",")
-            .map((member) => member.trim())
-            .filter(Boolean)
-        : [],
-      location: {
-        address: data.address || undefined,
-        city: data.city || undefined,
-        state: data.state || undefined,
-        country: data.country || "USA",
-      },
-      tags: data.tags
-        ? data.tags
-            .split(",")
-            .map((tag) => tag.trim())
-            .filter(Boolean)
-        : [],
-      documents: [],
-      images: imageUrls,
-      coverImage: imageUrls[0] || undefined,
-      createdBy: data.createdBy,
-    };
-  };
-
   const uploadImage = async (): Promise<string[] | null> => {
-    if (!imageFile) {
-      return [];
+    // Use blob if available (cropped image), otherwise no image to upload
+    if (!imageBlobToUpload || !imageFile) {
+      // Return existing image if available (edit mode with no new image)
+      return existingCoverImage ? [existingCoverImage] : [];
     }
 
     setIsUploading(true);
@@ -211,21 +409,22 @@ export function AddProjectForm({ onSubmit, onCancel }: AddProjectFormProps) {
     try {
       const presignedData = await getPresignedUrl({
         fileName: imageFile.name,
-        contentType: imageFile.type,
+        contentType: imageBlobToUpload.type || "image/jpeg",
       }).unwrap();
 
       setUploadProgress(30);
 
       await uploadToS3WithPresignedUrl(
         presignedData.uploadUrl,
-        imageFile,
+        imageBlobToUpload,
         (progress: number) => {
           setUploadProgress(30 + progress * 0.6);
         }
       );
 
       setUploadProgress(100);
-      return [presignedData.cloudFrontUrl];
+      const cloudFrontUrl = getCloudFrontUrl(presignedData.objectKey);
+      return cloudFrontUrl ? [cloudFrontUrl] : [];
     } catch (error) {
       console.error("Failed to upload image:", error);
       const errorMessage =
@@ -245,58 +444,61 @@ export function AddProjectForm({ onSubmit, onCancel }: AddProjectFormProps) {
   const handleSubmit = handleFormSubmit(async (data) => {
     setSubmitError(null);
 
+    // Step 1: Upload image if present
     const imageUrls = await uploadImage();
     if (imageUrls === null) {
       return;
     }
 
-    const project = buildProjectFromFormData(data, imageUrls);
-    onSubmit(project);
+    // Step 2: Build project data and call API
+    const project = buildProject(
+      data,
+      imageUrls,
+      existingCoverImage,
+      initialData,
+      isEditMode
+    );
+    await onSubmit(project);
   });
 
-  const hasIdentityErrors = !!(
-    errors.name ||
-    errors.description ||
-    errors.type ||
-    errors.status ||
-    errors.priority
-  );
-  const hasClientErrors = !!(
-    errors.client ||
-    errors.clientEmail ||
-    errors.clientPhone
-  );
-  const hasScopeErrors = !!(errors.requirements || errors.projectManager);
-  const hasFinancialsErrors = !!(errors.startDate || errors.totalBudget);
-  const hasLocationErrors = !!(
-    errors.address ||
-    errors.city ||
-    errors.state ||
-    errors.country
-  );
+  // Get section statuses (errors and completion)
+  const sections = getFormSections(errors, formData);
 
   return (
-    <div className="w-full">
-      <form onSubmit={handleSubmit} className="space-y-6">
-        <div className="space-y-2">
-          <h2 className="text-2xl font-bold text-foreground">
-            Create New Project
-          </h2>
-          <p className="text-sm text-muted-foreground">
-            Set up a new architectural or design project with comprehensive
-            details.
-          </p>
-        </div>
+    <div className="flex flex-col gap-6">
+      {/* Image Crop Dialog */}
+      {originalImage && (
+        <ImageCropDialog
+          open={isDialogOpen}
+          onOpenChange={setIsDialogOpen}
+          imageSrc={originalImage}
+          onCropComplete={handleCropCompleteWrapper}
+          aspectRatio={16 / 9}
+          circularCrop={false}
+          title="Crop Cover Image"
+          description="Adjust the crop area and zoom to get the perfect cover image"
+        />
+      )}
 
+      <FormHeader
+        mode={mode}
+        projectName={isEditMode ? initialData.name : undefined}
+      />
+
+      <form onSubmit={handleSubmit} className="space-y-4">
         {submitError && (
-          <Alert variant="destructive">
+          <Alert
+            variant="destructive"
+            className="bg-red-500/10 border-red-500/20 text-red-600 dark:text-red-400"
+          >
             <AlertCircle className="h-4 w-4" />
-            <AlertTitle>Error</AlertTitle>
+            <AlertTitle>Submission Error</AlertTitle>
             <AlertDescription>{submitError}</AlertDescription>
           </Alert>
         )}
 
-        <div className="space-y-4">
+        <div className="space-y-3 bg-white dark:bg-black/40 p-4 rounded-2xl border border-gray-100 dark:border-white/5 shadow-sm dark:shadow-none">
+          {/* Section 1: Project Identity */}
           <div className="space-y-3">
             <SectionHeader
               id="identity"
@@ -305,7 +507,8 @@ export function AddProjectForm({ onSubmit, onCancel }: AddProjectFormProps) {
               subtitle="Define the core details"
               status="Required"
               isActive={expandedSection === "identity"}
-              hasErrors={hasIdentityErrors}
+              hasErrors={sections.identity.hasErrors}
+              isCompleted={sections.identity.isCompleted}
               onClick={setExpandedSection}
             />
             {expandedSection === "identity" && (
@@ -314,15 +517,20 @@ export function AddProjectForm({ onSubmit, onCancel }: AddProjectFormProps) {
                 errors={errors}
                 setValue={setValue}
                 watch={watch}
-                imagePreview={imagePreview}
-                onImageSelect={handleImageChange}
+                croppedImage={croppedImage}
+                croppedBlob={croppedBlob}
+                imageError={imageError}
+                onImageInputChange={handleImageInputChange}
                 onRemoveImage={handleRemoveImage}
+                onOpenCropDialog={openCropDialog}
+                existingCoverImage={existingCoverImage}
               />
             )}
           </div>
 
           <Separator className="bg-gray-100 dark:bg-white/5" />
 
+          {/* Section 2: Client & Stakeholders */}
           <div className="space-y-3">
             <SectionHeader
               id="stakeholders"
@@ -331,7 +539,8 @@ export function AddProjectForm({ onSubmit, onCancel }: AddProjectFormProps) {
               subtitle="Select or add client details"
               status="Required"
               isActive={expandedSection === "stakeholders"}
-              hasErrors={hasClientErrors}
+              hasErrors={sections.client.hasErrors}
+              isCompleted={sections.client.isCompleted}
               onClick={setExpandedSection}
             />
             {expandedSection === "stakeholders" && (
@@ -339,18 +548,21 @@ export function AddProjectForm({ onSubmit, onCancel }: AddProjectFormProps) {
                 register={register}
                 errors={errors}
                 setValue={setValue}
-                clients={mockClients}
+                clients={clients}
                 selectedClient={selectedClient}
                 searchTerm={clientSearchTerm}
                 onSearchChange={setClientSearchTerm}
                 onClientSelect={handleClientSelect}
-                onAddClientClick={() => setShowAddClientDialog(true)}
+                onAddClientClick={handleAddClientClick}
+                isLoading={isLoadingClients}
+                isFetching={isFetchingClients}
               />
             )}
           </div>
 
           <Separator className="bg-gray-100 dark:bg-white/5" />
 
+          {/* Section 3: Scope & Resources */}
           <div className="space-y-3">
             <SectionHeader
               id="scope"
@@ -359,7 +571,8 @@ export function AddProjectForm({ onSubmit, onCancel }: AddProjectFormProps) {
               subtitle="Requirements and team allocation"
               status="Required"
               isActive={expandedSection === "scope"}
-              hasErrors={hasScopeErrors}
+              hasErrors={sections.scope.hasErrors}
+              isCompleted={sections.scope.isCompleted}
               onClick={setExpandedSection}
             />
             {expandedSection === "scope" && (
@@ -367,14 +580,17 @@ export function AddProjectForm({ onSubmit, onCancel }: AddProjectFormProps) {
                 register={register}
                 errors={errors}
                 setValue={setValue}
-                teamList={teamList}
-                setTeamList={setTeamList}
+                selectedManager={selectedManager}
+                onManagerSelect={setSelectedManager}
+                selectedTeamMembers={selectedTeamMembers}
+                onTeamMembersChange={setSelectedTeamMembers}
               />
             )}
           </div>
 
           <Separator className="bg-gray-100 dark:bg-white/5" />
 
+          {/* Section 4: Timeline & Financials */}
           <div className="space-y-3">
             <SectionHeader
               id="financials"
@@ -383,87 +599,48 @@ export function AddProjectForm({ onSubmit, onCancel }: AddProjectFormProps) {
               subtitle="Schedule and budget details"
               status="Required"
               isActive={expandedSection === "financials"}
-              hasErrors={hasFinancialsErrors}
+              hasErrors={sections.financials.hasErrors}
+              isCompleted={sections.financials.isCompleted}
               onClick={setExpandedSection}
             />
             {expandedSection === "financials" && (
-              <FinancialsSection register={register} errors={errors} />
+              <FinancialsSection
+                errors={errors}
+                setValue={setValue}
+                startDate={formData.startDate}
+                endDate={formData.endDate}
+              />
             )}
           </div>
 
           <Separator className="bg-gray-100 dark:bg-white/5" />
 
+          {/* Section 5: Location */}
           <div className="space-y-3">
             <SectionHeader
               id="location"
               icon={MapPin}
-              title="Location & Meta"
-              subtitle="Site address and categorization"
-              status="Optional"
+              title="Location"
+              subtitle="Site address details"
+              status="Required"
               isActive={expandedSection === "location"}
-              hasErrors={hasLocationErrors}
+              hasErrors={sections.location.hasErrors}
+              isCompleted={sections.location.isCompleted}
               onClick={setExpandedSection}
             />
             {expandedSection === "location" && (
-              <LocationSection
-                register={register}
-                errors={errors}
-                setValue={setValue}
-                tagsList={tagsList}
-                setTagsList={setTagsList}
-              />
+              <LocationSection register={register} errors={errors} />
             )}
           </div>
         </div>
 
-        <div className="flex items-center justify-end gap-3 pt-4 border-t">
-          <Button
-            type="button"
-            variant="outline"
-            onClick={onCancel}
-            disabled={isUploading}
-          >
-            Cancel
-          </Button>
-          <Button
-            type="submit"
-            disabled={isUploading}
-            className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white"
-          >
-            {isUploading ? (
-              <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Uploading... {uploadProgress}%
-              </>
-            ) : (
-              "Create Project"
-            )}
-          </Button>
-        </div>
+        <FormActions
+          isLoading={isUploading || isSubmitting}
+          uploadProgress={isUploading ? uploadProgress : undefined}
+          onCancel={onCancel}
+          mode={mode}
+        />
       </form>
-
-      {showAddClientDialog && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
-          <div className="relative w-full max-w-4xl bg-background rounded-lg shadow-xl max-h-[90vh] overflow-y-auto">
-            <Button
-              variant="ghost"
-              size="icon"
-              className="absolute right-4 top-4 z-10"
-              onClick={() => setShowAddClientDialog(false)}
-            >
-              <X className="h-4 w-4" />
-            </Button>
-            <div className="p-6">
-              <AddClientForm
-                onCancel={() => setShowAddClientDialog(false)}
-                onSuccess={() => {
-                  setShowAddClientDialog(false);
-                }}
-              />
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 }

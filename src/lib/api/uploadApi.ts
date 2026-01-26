@@ -18,7 +18,7 @@ export interface PresignedUrlResponse {
  */
 export async function uploadToS3WithPresignedUrl(
   presignedUrl: string,
-  file: File,
+  file: File | Blob,
   onProgress?: (progress: number) => void
 ): Promise<void> {
   return new Promise((resolve, reject) => {

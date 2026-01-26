@@ -14,6 +14,7 @@ interface SectionHeaderProps {
   status: string;
   isActive: boolean;
   hasErrors?: boolean;
+  isCompleted?: boolean;
   onClick: (id: string) => void;
 }
 
@@ -25,66 +26,96 @@ export function SectionHeader({
   status,
   isActive,
   hasErrors,
+  isCompleted,
   onClick,
 }: SectionHeaderProps) {
+  const getContainerClass = () => {
+    if (hasErrors) {
+      return "bg-red-50/50 dark:bg-red-950/20 border-red-200 dark:border-red-900/50";
+    }
+    if (isActive) {
+      return "bg-white/70 dark:bg-white/5 border-blue-500/20 dark:border-white/10 shadow-[0_8px_30px_rgb(0,0,0,0.04)] dark:shadow-[0_0_20px_rgba(0,0,0,0.3)]";
+    }
+    return "border-gray-200 dark:border-white/10 hover:bg-gray-50 dark:hover:bg-white/5";
+  };
+
+  const getIconClass = () => {
+    if (hasErrors) {
+      return "bg-red-500/10 dark:bg-red-500/20 border-red-500/30 text-red-600 dark:text-red-400";
+    }
+    if (isActive) {
+      return "bg-blue-500/10 dark:bg-blue-500/20 border-blue-500/30 text-blue-600 dark:text-blue-400";
+    }
+    return "bg-gray-100 dark:bg-white/5 border-gray-200 dark:border-white/10 text-muted-foreground";
+  };
+
   return (
     <div
       className={cn(
-        "group flex items-center justify-between p-4 cursor-pointer rounded-lg transition-all",
-        isActive
-          ? "bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-950/30 dark:to-indigo-950/30 shadow-sm"
-          : "hover:bg-muted/30"
+        "flex items-center justify-between p-4 cursor-pointer transition-all border rounded-xl",
+        getContainerClass()
       )}
       onClick={() => onClick(id)}
     >
-      <div className="flex items-center gap-4 flex-1">
+      <div className="flex items-center gap-4">
         <div
           className={cn(
-            "p-2.5 rounded-lg transition-all",
-            isActive
-              ? "bg-gradient-to-br from-blue-600 to-indigo-600 text-white shadow-md"
-              : "bg-muted/50 text-muted-foreground group-hover:bg-muted"
-          )}
-        >
-          <Icon className="h-5 w-5" />
-        </div>
-
-        <div className="flex-1">
-          <div className="flex items-center gap-3">
-            <h3 className="text-base font-semibold text-foreground">{title}</h3>
-            {hasErrors && (
-              <div className="flex items-center gap-1 text-red-500">
-                <AlertCircle className="h-3.5 w-3.5" />
-                <span className="text-[10px] font-medium">
-                  Please review errors
-                </span>
-              </div>
-            )}
-          </div>
-          <p className="text-xs text-muted-foreground mt-0.5">{subtitle}</p>
-        </div>
-      </div>
-
-      <div className="flex items-center gap-3">
-        <div
-          className={cn(
-            "flex items-center gap-1.5 text-[10px] font-medium px-2 py-1 rounded-full",
-            status === "Required"
-              ? "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400"
-              : "bg-gray-100 text-gray-600 dark:bg-gray-900/30 dark:text-gray-400"
+            "p-2.5 rounded-xl border transition-all",
+            getIconClass()
           )}
         >
           {hasErrors ? (
-            <AlertCircle className="h-3 w-3" />
+            <AlertCircle className="w-5 h-5" />
           ) : (
-            <CheckCircle2 className="h-3 w-3" />
+            <Icon className="w-5 h-5" />
           )}
-          <span>{status}</span>
+        </div>
+        <div>
+          <h3 className="font-semibold text-foreground text-sm tracking-tight">
+            {title}
+          </h3>
+          <p
+            className={cn(
+              "text-xs",
+              hasErrors
+                ? "text-red-600 dark:text-red-400"
+                : "text-muted-foreground"
+            )}
+          >
+            {hasErrors ? "Please fix errors" : subtitle}
+          </p>
+        </div>
+      </div>
+      <div className="flex items-center gap-4">
+        <div className="flex items-center gap-2">
+          {hasErrors && (
+            <div className="flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-red-500/10 border border-red-500/20 text-[10px] font-bold text-red-600 dark:text-red-400 uppercase tracking-wider">
+              <AlertCircle className="w-3 h-3 text-red-600 dark:text-red-400" />
+              Error
+            </div>
+          )}
+          {!hasErrors && isActive && (
+            <div className="flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-blue-500/10 border border-blue-500/20 text-[10px] font-bold text-blue-600 dark:text-blue-400 uppercase tracking-wider">
+              <span className="w-1 h-1 rounded-full bg-blue-500 dark:bg-blue-400 animate-pulse" />
+              In Progress
+            </div>
+          )}
+          {!hasErrors && !isActive && isCompleted && (
+            <div className="flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-[10px] font-bold text-emerald-600 dark:text-emerald-400 uppercase tracking-wider">
+              <CheckCircle2 className="w-3 h-3 text-emerald-600 dark:text-emerald-400" />
+              Completed
+            </div>
+          )}
+          {!hasErrors && !isActive && !isCompleted && (
+            <div className="flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-gray-500/10 border border-gray-500/20 text-[10px] font-bold text-gray-600 dark:text-gray-400 uppercase tracking-wider">
+              {status}
+            </div>
+          )}
         </div>
         {isActive ? (
-          <ChevronDown className="h-5 w-5 text-muted-foreground transition-transform" />
+          <ChevronDown className="w-4 h-4 text-muted-foreground" />
         ) : (
-          <ChevronRight className="h-5 w-5 text-muted-foreground transition-transform group-hover:translate-x-0.5" />
+          <ChevronRight className="w-4 h-4 text-muted-foreground" />
         )}
       </div>
     </div>

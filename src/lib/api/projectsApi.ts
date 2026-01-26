@@ -36,6 +36,17 @@ export interface PaginatedResponse<T> {
   };
 }
 
+export interface ProjectStatistics {
+  totalProjects: number;
+  byStatus: Array<{ _id: string; count: number }>;
+  byType: Array<{ _id: string; count: number }>;
+  budget: {
+    totalBudget: number;
+    totalSpent: number;
+    averageBudget: number;
+  };
+}
+
 // Extend the main API slice with project endpoints
 export const projectsApi = apiSlice.injectEndpoints({
   endpoints: (builder) => ({
@@ -115,7 +126,7 @@ export const projectsApi = apiSlice.injectEndpoints({
     }),
 
     // Get project statistics
-    getProjectStatistics: builder.query<Record<string, unknown>, void>({
+    getProjectStatistics: builder.query<ProjectStatistics, void>({
       query: () => ({
         url: "/projects/statistics",
         method: "GET",

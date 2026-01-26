@@ -78,35 +78,44 @@ export function ImageCropDialog({
         throw new Error("No 2d context");
       }
 
+      // Calculate scale factors from displayed size to natural size
       const scaleX = image.naturalWidth / image.width;
       const scaleY = image.naturalHeight / image.height;
 
-      // Set canvas size to crop size
-      canvas.width = pixelCrop.width;
-      canvas.height = pixelCrop.height;
+      // The pixelCrop coordinates are based on the CSS-scaled image display
+      // We need to account for the CSS scale when converting to natural coordinates
+      const effectiveScaleX = scaleX / scale;
+      const effectiveScaleY = scaleY / scale;
 
-      // Apply transformations
+      // Calculate the crop dimensions in natural image pixels
+      const naturalCropWidth = pixelCrop.width * effectiveScaleX;
+      const naturalCropHeight = pixelCrop.height * effectiveScaleY;
+      const naturalCropX = pixelCrop.x * effectiveScaleX;
+      const naturalCropY = pixelCrop.y * effectiveScaleY;
+
+      // Set canvas size to natural crop dimensions
+      canvas.width = naturalCropWidth;
+      canvas.height = naturalCropHeight;
+
+      // Apply rotation around center
       ctx.save();
-
-      // Translate to center for rotation
       const centerX = canvas.width / 2;
       const centerY = canvas.height / 2;
       ctx.translate(centerX, centerY);
       ctx.rotate((rotation * Math.PI) / 180);
-      ctx.scale(scale, scale);
       ctx.translate(-centerX, -centerY);
 
-      // Draw image
+      // Draw the cropped portion from the natural image
       ctx.drawImage(
         image,
-        pixelCrop.x * scaleX,
-        pixelCrop.y * scaleY,
-        pixelCrop.width * scaleX,
-        pixelCrop.height * scaleY,
+        naturalCropX,
+        naturalCropY,
+        naturalCropWidth,
+        naturalCropHeight,
         0,
         0,
-        pixelCrop.width,
-        pixelCrop.height
+        canvas.width,
+        canvas.height
       );
 
       ctx.restore();

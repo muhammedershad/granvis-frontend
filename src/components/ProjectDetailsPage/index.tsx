@@ -1,5 +1,9 @@
+"use client";
+
 import { useState } from "react";
+import { AlertCircle, Loader2 } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "../ui/tabs";
+import { Card } from "../ui/card";
 import { ProjectHeader } from "./ProjectHeader";
 import { QuickStatsCards } from "./QuickStatsCards";
 import { OverviewTab } from "./OverviewTab";
@@ -8,29 +12,66 @@ import { ScheduleTab } from "./ScheduleTab";
 import { PaymentsTab } from "./PaymentsTab";
 import { DocumentsTab } from "./DocumentsTab";
 import { TimelineItemModal } from "./TimelineItemModal";
-import {
-  mockPayments,
-  mockProject,
-  mockSchedule,
-  mockTimeline,
-} from "./mockData";
+import { useGetProjectByIdQuery } from "@/lib/api/projectsApi";
 import type { TimelineItem } from "./types";
 
 interface ProjectDetailsPageProps {
   projectId: string;
   onBack: () => void;
+  basePath?: string;
 }
 
-export function ProjectDetailsPage({ onBack }: ProjectDetailsPageProps) {
+export function ProjectDetailsPage({
+  projectId,
+  onBack,
+  basePath = "/super-admin/projects",
+}: ProjectDetailsPageProps) {
   const [selectedTimelineItem, setSelectedTimelineItem] =
     useState<TimelineItem | null>(null);
   const [activeTab, setActiveTab] = useState("overview");
 
+  const {
+    data: project,
+    isLoading,
+    error,
+  } = useGetProjectByIdQuery(projectId, {
+    skip: !projectId,
+  });
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center py-16">
+        <Loader2 className="w-8 h-8 animate-spin text-purple-500" />
+        <span className="ml-3 text-lg text-muted-foreground">
+          Loading project details...
+        </span>
+      </div>
+    );
+  }
+
+  if (error || !project) {
+    return (
+      <Card className="backdrop-blur-xl bg-red-50/70 dark:bg-red-900/20 border-red-200 dark:border-red-800 p-8">
+        <div className="flex items-center justify-center gap-3 text-red-600 dark:text-red-400">
+          <AlertCircle className="w-6 h-6" />
+          <p className="text-lg font-medium">
+            Failed to load project details. Please try again later.
+          </p>
+        </div>
+      </Card>
+    );
+  }
+
   return (
     <div className="space-y-6">
-      <ProjectHeader projectName={mockProject.name} onBack={onBack} />
+      <ProjectHeader
+        projectName={project.name}
+        projectId={projectId}
+        onBack={onBack}
+        basePath={basePath}
+      />
 
-      <QuickStatsCards project={mockProject} />
+      <QuickStatsCards project={project} />
 
       <Tabs
         value={activeTab}
@@ -71,26 +112,26 @@ export function ProjectDetailsPage({ onBack }: ProjectDetailsPageProps) {
         </TabsList>
 
         <TabsContent value="overview" className="space-y-6">
-          <OverviewTab project={mockProject} />
+          <OverviewTab project={project} />
         </TabsContent>
 
         <TabsContent value="timeline" className="space-y-6">
           <TimelineTab
-            timeline={mockTimeline}
+            milestones={project.milestones}
             onSelectItem={setSelectedTimelineItem}
           />
         </TabsContent>
 
         <TabsContent value="schedule" className="space-y-6">
-          <ScheduleTab schedule={mockSchedule} />
+          <ScheduleTab project={project} />
         </TabsContent>
 
         <TabsContent value="payments" className="space-y-6">
-          <PaymentsTab payments={mockPayments} project={mockProject} />
+          <PaymentsTab project={project} />
         </TabsContent>
 
         <TabsContent value="documents" className="space-y-6">
-          <DocumentsTab />
+          <DocumentsTab documents={project.documents} />
         </TabsContent>
       </Tabs>
 

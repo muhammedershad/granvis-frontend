@@ -1,25 +1,14 @@
-import { FieldErrors, UseFormRegister, UseFormSetValue } from "react-hook-form";
-import { X } from "lucide-react";
+import { FieldErrors, UseFormRegister } from "react-hook-form";
 import { Label } from "../ui/label";
 import { Input } from "../ui/input";
-import { Badge } from "../ui/badge";
 import { ProjectFormData } from "./schemas";
 
 interface LocationSectionProps {
   register: UseFormRegister<ProjectFormData>;
   errors: FieldErrors<ProjectFormData>;
-  setValue: UseFormSetValue<ProjectFormData>;
-  tagsList: string[];
-  setTagsList: (list: string[]) => void;
 }
 
-export function LocationSection({
-  register,
-  errors: _errors,
-  setValue,
-  tagsList,
-  setTagsList,
-}: LocationSectionProps) {
+export function LocationSection({ register, errors }: LocationSectionProps) {
   return (
     <div className="p-4 pt-2 space-y-6 animate-in fade-in slide-in-from-top-2 duration-300">
       <div className="space-y-3">
@@ -27,7 +16,7 @@ export function LocationSection({
           htmlFor="address"
           className="text-xs font-medium text-muted-foreground"
         >
-          Address
+          Address *
         </Label>
         <Input
           id="address"
@@ -35,6 +24,9 @@ export function LocationSection({
           placeholder="Street address of project site"
           className="bg-background"
         />
+        {errors.address && (
+          <p className="text-[10px] text-red-500">{errors.address.message}</p>
+        )}
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -43,18 +35,24 @@ export function LocationSection({
             htmlFor="city"
             className="text-xs font-medium text-muted-foreground"
           >
-            City
+            City *
           </Label>
           <Input id="city" {...register("city")} className="bg-background" />
+          {errors.city && (
+            <p className="text-[10px] text-red-500">{errors.city.message}</p>
+          )}
         </div>
         <div className="space-y-3">
           <Label
             htmlFor="state"
             className="text-xs font-medium text-muted-foreground"
           >
-            State
+            State *
           </Label>
           <Input id="state" {...register("state")} className="bg-background" />
+          {errors.state && (
+            <p className="text-[10px] text-red-500">{errors.state.message}</p>
+          )}
         </div>
         <div className="space-y-3">
           <Label
@@ -69,47 +67,6 @@ export function LocationSection({
             className="bg-background"
           />
         </div>
-      </div>
-
-      <div className="space-y-3">
-        <Label className="text-xs font-medium text-muted-foreground">
-          Tags
-        </Label>
-        <Input
-          placeholder="Add tag and press Enter"
-          onKeyDown={(e) => {
-            if (e.key === "Enter") {
-              e.preventDefault();
-              const input = e.currentTarget;
-              const newTag = input.value.trim();
-              if (newTag && !tagsList.includes(newTag)) {
-                const updatedTags = [...tagsList, newTag];
-                setTagsList(updatedTags);
-                setValue("tags", updatedTags.join(", "));
-                input.value = "";
-              }
-            }
-          }}
-          className="bg-background"
-        />
-        {tagsList.length > 0 && (
-          <div className="flex flex-wrap gap-2 mt-2">
-            {tagsList.map((tag, index) => (
-              <Badge key={index} variant="outline" className="gap-1">
-                {tag}
-                <X
-                  className="h-3 w-3 cursor-pointer hover:text-red-500"
-                  onClick={() => {
-                    const updatedTags = tagsList.filter((t) => t !== tag);
-                    setTagsList(updatedTags);
-                    setValue("tags", updatedTags.join(", "));
-                  }}
-                />
-              </Badge>
-            ))}
-          </div>
-        )}
-        <input type="hidden" {...register("tags")} />
       </div>
     </div>
   );

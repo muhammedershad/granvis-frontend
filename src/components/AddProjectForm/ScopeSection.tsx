@@ -1,26 +1,56 @@
 import { FieldErrors, UseFormRegister, UseFormSetValue } from "react-hook-form";
-import { X } from "lucide-react";
 import { Label } from "../ui/label";
 import { Input } from "../ui/input";
 import { Textarea } from "../ui/textarea";
-import { Badge } from "../ui/badge";
 import { ProjectFormData } from "./schemas";
+import { SearchableEmployeeSelect } from "./SearchableEmployeeSelect";
+import { MultiSelectEmployee } from "./MultiSelectEmployee";
+import { Employee } from "@/types/employee";
 
 interface ScopeSectionProps {
   register: UseFormRegister<ProjectFormData>;
   errors: FieldErrors<ProjectFormData>;
   setValue: UseFormSetValue<ProjectFormData>;
-  teamList: string[];
-  setTeamList: (list: string[]) => void;
+  selectedManager: Employee | null;
+  onManagerSelect: (manager: Employee | null) => void;
+  selectedTeamMembers: Employee[];
+  onTeamMembersChange: (members: Employee[]) => void;
 }
 
 export function ScopeSection({
   register,
   errors,
   setValue,
-  teamList,
-  setTeamList,
+  selectedManager,
+  onManagerSelect,
+  selectedTeamMembers,
+  onTeamMembersChange,
 }: ScopeSectionProps) {
+  const handleManagerSelect = (manager: Employee | null) => {
+    onManagerSelect(manager);
+    if (manager) {
+      const displayName =
+        manager.name || `${manager.firstName} ${manager.lastName}`;
+      setValue("projectManager", displayName);
+      setValue("managerId", manager.id);
+    } else {
+      setValue("projectManager", "");
+      setValue("managerId", "");
+    }
+  };
+
+  const handleTeamMembersChange = (members: Employee[]) => {
+    onTeamMembersChange(members);
+    const names = members
+      .map((m) => m.name || `${m.firstName} ${m.lastName}`)
+      .join(", ");
+    setValue("teamMembers", names);
+    setValue(
+      "teamMemberIds",
+      members.map((m) => m.id)
+    );
+  };
+
   return (
     <div className="p-4 pt-2 space-y-6 animate-in fade-in slide-in-from-top-2 duration-300">
       <div className="space-y-3">
@@ -34,7 +64,7 @@ export function ScopeSection({
           id="requirements"
           {...register("requirements")}
           placeholder="List key requirements and deliverables..."
-          className="bg-background min-h-[100px]"
+          className="bg-background h-[120px] max-h-[120px] overflow-y-auto resize-none"
         />
         {errors.requirements && (
           <p className="text-[10px] text-red-500">
@@ -51,17 +81,15 @@ export function ScopeSection({
           >
             Project Manager *
           </Label>
-          <Input
-            id="projectManager"
-            {...register("projectManager")}
-            placeholder="Lead Architect / Manager"
-            className="bg-background"
+          <SearchableEmployeeSelect
+            value={selectedManager}
+            onSelect={handleManagerSelect}
+            roleFilter={["manager", "admin", "super_admin"]}
+            placeholder="Select project manager"
+            error={errors.projectManager?.message}
           />
-          {errors.projectManager && (
-            <p className="text-[10px] text-red-500">
-              {errors.projectManager.message}
-            </p>
-          )}
+          <input type="hidden" {...register("projectManager")} />
+          <input type="hidden" {...register("managerId")} />
         </div>
         <div className="space-y-3">
           <Label
@@ -83,40 +111,12 @@ export function ScopeSection({
         <Label className="text-xs font-medium text-muted-foreground">
           Team Members
         </Label>
-        <Input
-          placeholder="Add member and press Enter"
-          onKeyDown={(e) => {
-            if (e.key === "Enter") {
-              e.preventDefault();
-              const input = e.currentTarget;
-              const newMember = input.value.trim();
-              if (newMember && !teamList.includes(newMember)) {
-                const updatedTeam = [...teamList, newMember];
-                setTeamList(updatedTeam);
-                setValue("teamMembers", updatedTeam.join(", "));
-                input.value = "";
-              }
-            }
-          }}
-          className="bg-background"
+        <MultiSelectEmployee
+          selectedEmployees={selectedTeamMembers}
+          onSelectionChange={handleTeamMembersChange}
+          excludeIds={selectedManager ? [selectedManager.id] : []}
+          placeholder="Search and select team members"
         />
-        {teamList.length > 0 && (
-          <div className="flex flex-wrap gap-2 mt-2">
-            {teamList.map((member, index) => (
-              <Badge key={index} variant="secondary" className="gap-1">
-                {member}
-                <X
-                  className="h-3 w-3 cursor-pointer hover:text-red-500"
-                  onClick={() => {
-                    const updatedTeam = teamList.filter((t) => t !== member);
-                    setTeamList(updatedTeam);
-                    setValue("teamMembers", updatedTeam.join(", "));
-                  }}
-                />
-              </Badge>
-            ))}
-          </div>
-        )}
         <input type="hidden" {...register("teamMembers")} />
       </div>
     </div>

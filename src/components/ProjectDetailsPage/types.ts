@@ -19,7 +19,8 @@ export interface TimelineItem {
     | "approval"
     | "meeting"
     | "review"
-    | "delivery";
+    | "delivery"
+    | "milestone";
   attachments?: string[];
   comments?: Array<{
     id: string;
