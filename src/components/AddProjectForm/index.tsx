@@ -44,25 +44,271 @@ interface AddProjectFormProps {
   ) => Promise<void>;
   onCancel: () => void;
   isSubmitting?: boolean;
+  initialData?: Project;
+  mode?: "create" | "edit";
 }
+
+// Helper to parse description for client requirements
+const parseDescriptionForEdit = (description: string) => {
+  const clientReqMatch = description.match(
+    /Client Requirements?:?\s*([\s\S]*)/i
+  );
+  if (clientReqMatch) {
+    const mainDesc = description.slice(0, clientReqMatch.index).trim();
+    const clientReq = clientReqMatch[1].trim();
+    return { mainDescription: mainDesc, clientRequirements: clientReq };
+  }
+  return { mainDescription: description, clientRequirements: "" };
+};
+
+// Helper to format date for input field (YYYY-MM-DD)
+const formatDateForInput = (dateString: string | undefined): string => {
+  if (!dateString) {
+    return "";
+  }
+  const date = new Date(dateString);
+  return date.toISOString().split("T")[0];
+};
+
+// Helper to convert date to UTC ISO string
+const toUTCDateString = (dateStr: string | undefined): string | undefined => {
+  if (!dateStr) {
+    return undefined;
+  }
+  const date = new Date(dateStr);
+  return date.toISOString();
+};
+
+// Helper to get initial client state for edit mode
+const getInitialClient = (
+  initialData: Project | undefined,
+  isEditMode: boolean
+): Client | null => {
+  if (!isEditMode || !initialData) {
+    return null;
+  }
+  return {
+    id: initialData.clientId,
+    name: initialData.client,
+    email: initialData.clientEmail,
+    phone: initialData.clientPhone,
+  } as Client;
+};
+
+// Helper to get initial manager state for edit mode
+const getInitialManager = (
+  initialData: Project | undefined,
+  isEditMode: boolean
+): Employee | null => {
+  if (!isEditMode || !initialData) {
+    return null;
+  }
+  return {
+    id: initialData.managerId,
+    firstName: initialData.projectManager.split(" ")[0] || "",
+    lastName: initialData.projectManager.split(" ").slice(1).join(" ") || "",
+  } as Employee;
+};
+
+// Helper to get default form values
+const getDefaultFormValues = (
+  initialData: Project | undefined,
+  isEditMode: boolean,
+  parsedDescription: { mainDescription: string; clientRequirements: string }
+): ProjectFormData => {
+  if (isEditMode && initialData) {
+    return {
+      name: initialData.name,
+      description: parsedDescription.mainDescription,
+      client: initialData.client,
+      clientId: initialData.clientId,
+      clientEmail: initialData.clientEmail || "",
+      clientPhone: initialData.clientPhone || "",
+      type: initialData.type,
+      category: initialData.category || "",
+      status: initialData.status,
+      priority: initialData.priority,
+      startDate: formatDateForInput(initialData.startDate),
+      endDate: formatDateForInput(initialData.endDate),
+      totalBudget: initialData.totalBudget?.toString() || "",
+      progressPercentage: initialData.progressPercentage?.toString() || "0",
+      currentPhase: initialData.currentPhase || "",
+      projectManager: initialData.projectManager,
+      managerId: initialData.managerId,
+      teamMembers: initialData.teamMembers.join(", "),
+      teamMemberIds: initialData.teamMemberIds || [],
+      address: initialData.location.address,
+      city: initialData.location.city,
+      state: initialData.location.state,
+      country: initialData.location.country || "India",
+      requirements: parsedDescription.clientRequirements,
+      createdBy: initialData.createdBy,
+    };
+  }
+  return {
+    name: "",
+    description: "",
+    client: "",
+    clientId: "",
+    clientEmail: "",
+    clientPhone: "",
+    type: "Villa",
+    category: "",
+    status: "Planning",
+    priority: "Medium",
+    startDate: "",
+    endDate: "",
+    totalBudget: "",
+    progressPercentage: "0",
+    currentPhase: "",
+    projectManager: "",
+    managerId: "",
+    teamMembers: "",
+    teamMemberIds: [],
+    address: "",
+    city: "",
+    state: "",
+    country: "India",
+    requirements: "",
+    createdBy: "current-user",
+  };
+};
+
+// Helper to determine final images for project
+const getFinalImages = (
+  imageUrls: string[],
+  existingCoverImage: string | undefined,
+  initialData: Project | undefined,
+  isEditMode: boolean
+): string[] => {
+  if (imageUrls.length > 0) {
+    return imageUrls;
+  }
+  if (existingCoverImage) {
+    return [existingCoverImage];
+  }
+  if (isEditMode && initialData) {
+    return initialData.images;
+  }
+  return [];
+};
+
+// Helper to get parsed description for edit mode
+const getParsedDescription = (
+  initialData: Project | undefined,
+  isEditMode: boolean
+): { mainDescription: string; clientRequirements: string } => {
+  if (isEditMode && initialData) {
+    return parseDescriptionForEdit(initialData.description);
+  }
+  return { mainDescription: "", clientRequirements: "" };
+};
+
+// Helper to build project from form data
+const buildProject = (
+  data: ProjectFormData,
+  imageUrls: string[],
+  existingCoverImage: string | undefined,
+  initialData: Project | undefined,
+  isEditMode: boolean
+): Omit<Project, "id" | "createdAt" | "updatedAt"> => {
+  const totalBudget = data.totalBudget ? parseFloat(data.totalBudget) : 0;
+
+  const baseData =
+    isEditMode && initialData
+      ? {
+          spentAmount: initialData.spentAmount,
+          milestones: initialData.milestones,
+          documents: initialData.documents,
+        }
+      : {
+          milestones: [],
+          documents: [],
+        };
+
+  const finalImages = getFinalImages(
+    imageUrls,
+    existingCoverImage,
+    initialData,
+    isEditMode
+  );
+  const remainingBudget =
+    isEditMode && initialData
+      ? totalBudget - (initialData.spentAmount || 0)
+      : totalBudget;
+
+  const teamMembers = data.teamMembers
+    ? data.teamMembers
+        .split(",")
+        .map((member) => member.trim())
+        .filter(Boolean)
+    : [];
+
+  return {
+    name: data.name.trim(),
+    description: `${data.description.trim()}${data.requirements ? `\n\nClient Requirements:\n${data.requirements.trim()}` : ""}`,
+    client: data.client,
+    clientId: data.clientId,
+    clientEmail: data.clientEmail || undefined,
+    clientPhone: data.clientPhone || undefined,
+    type: data.type,
+    category: data.category || undefined,
+    status: data.status,
+    priority: data.priority,
+    startDate: toUTCDateString(data.startDate) || data.startDate,
+    endDate: toUTCDateString(data.endDate) || undefined,
+    totalBudget,
+    remainingBudget,
+    spentAmount: baseData.spentAmount,
+    progressPercentage: data.progressPercentage
+      ? parseInt(data.progressPercentage)
+      : undefined,
+    currentPhase: data.currentPhase || undefined,
+    milestones: baseData.milestones,
+    projectManager: data.projectManager,
+    managerId: data.managerId,
+    teamMembers,
+    teamMemberIds: data.teamMemberIds || [],
+    location: {
+      address: data.address,
+      city: data.city,
+      state: data.state,
+      country: data.country || "India",
+    },
+    documents: baseData.documents,
+    images: finalImages,
+    coverImage: finalImages[0] || undefined,
+    createdBy: data.createdBy,
+  };
+};
 
 export function AddProjectForm({
   onSubmit,
   onCancel,
   isSubmitting = false,
+  initialData,
+  mode = "create",
 }: AddProjectFormProps) {
   const router = useRouter();
+  const isEditMode = mode === "edit" && !!initialData;
   const [expandedSection, setExpandedSection] = useState<string>("identity");
-  const [selectedClient, setSelectedClient] = useState<Client | null>(null);
+  const [selectedClient, setSelectedClient] = useState<Client | null>(() =>
+    getInitialClient(initialData, isEditMode)
+  );
   const [clientSearchTerm, setClientSearchTerm] = useState("");
   const [imageBlobToUpload, setImageBlobToUpload] = useState<Blob | null>(null);
   const [uploadProgress, setUploadProgress] = useState<number>(0);
   const [isUploading, setIsUploading] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
-  const [selectedManager, setSelectedManager] = useState<Employee | null>(null);
+  const [selectedManager, setSelectedManager] = useState<Employee | null>(() =>
+    getInitialManager(initialData, isEditMode)
+  );
   const [selectedTeamMembers, setSelectedTeamMembers] = useState<Employee[]>(
     []
   );
+  const [existingCoverImage, setExistingCoverImage] = useState<
+    string | undefined
+  >(isEditMode && initialData ? initialData.coverImage : undefined);
 
   const [getPresignedUrl] = useGetPresignedUrlMutation();
 
@@ -118,7 +364,11 @@ export function AddProjectForm({
   const handleRemoveImage = () => {
     removeCroppedImage();
     setImageBlobToUpload(null);
+    setExistingCoverImage(undefined);
   };
+
+  // Parse description for edit mode
+  const parsedDescription = getParsedDescription(initialData, isEditMode);
 
   const {
     register,
@@ -129,33 +379,11 @@ export function AddProjectForm({
   } = useForm<ProjectFormData>({
     resolver: zodResolver(projectFormSchema),
     mode: "onChange",
-    defaultValues: {
-      name: "",
-      description: "",
-      client: "",
-      clientId: "",
-      clientEmail: "",
-      clientPhone: "",
-      type: "Villa",
-      category: "",
-      status: "Planning",
-      priority: "Medium",
-      startDate: "",
-      endDate: "",
-      totalBudget: "",
-      progressPercentage: "0",
-      currentPhase: "",
-      projectManager: "",
-      managerId: "",
-      teamMembers: "",
-      teamMemberIds: [],
-      address: "",
-      city: "",
-      state: "",
-      country: "India",
-      requirements: "",
-      createdBy: "current-user",
-    },
+    defaultValues: getDefaultFormValues(
+      initialData,
+      isEditMode,
+      parsedDescription
+    ),
   });
 
   const formData = watch();
@@ -168,67 +396,11 @@ export function AddProjectForm({
     setValue("clientPhone", client.phone || "");
   };
 
-  // Helper to convert date to UTC ISO string
-  const toUTCDateString = (dateStr: string | undefined): string | undefined => {
-    if (!dateStr) {
-      return undefined;
-    }
-    const date = new Date(dateStr);
-    return date.toISOString();
-  };
-
-  const buildProjectFromFormData = (
-    data: ProjectFormData,
-    imageUrls: string[]
-  ): Omit<Project, "id" | "createdAt" | "updatedAt"> => {
-    const totalBudget = data.totalBudget ? parseFloat(data.totalBudget) : 0;
-
-    return {
-      name: data.name.trim(),
-      description: `${data.description.trim()}${data.requirements ? `\n\nClient Requirements:\n${data.requirements.trim()}` : ""}`,
-      client: data.client,
-      clientId: data.clientId,
-      clientEmail: data.clientEmail || undefined,
-      clientPhone: data.clientPhone || undefined,
-      type: data.type,
-      category: data.category || undefined,
-      status: data.status,
-      priority: data.priority,
-      startDate: toUTCDateString(data.startDate) || data.startDate,
-      endDate: toUTCDateString(data.endDate) || undefined,
-      totalBudget,
-      remainingBudget: totalBudget,
-      progressPercentage: data.progressPercentage
-        ? parseInt(data.progressPercentage)
-        : undefined,
-      currentPhase: data.currentPhase || undefined,
-      milestones: [],
-      projectManager: data.projectManager,
-      managerId: data.managerId,
-      teamMembers: data.teamMembers
-        ? data.teamMembers
-            .split(",")
-            .map((member) => member.trim())
-            .filter(Boolean)
-        : [],
-      teamMemberIds: data.teamMemberIds || [],
-      location: {
-        address: data.address,
-        city: data.city,
-        state: data.state,
-        country: data.country || "India",
-      },
-      documents: [],
-      images: imageUrls,
-      coverImage: imageUrls[0] || undefined,
-      createdBy: data.createdBy,
-    };
-  };
-
   const uploadImage = async (): Promise<string[] | null> => {
     // Use blob if available (cropped image), otherwise no image to upload
     if (!imageBlobToUpload || !imageFile) {
-      return [];
+      // Return existing image if available (edit mode with no new image)
+      return existingCoverImage ? [existingCoverImage] : [];
     }
 
     setIsUploading(true);
@@ -279,7 +451,13 @@ export function AddProjectForm({
     }
 
     // Step 2: Build project data and call API
-    const project = buildProjectFromFormData(data, imageUrls);
+    const project = buildProject(
+      data,
+      imageUrls,
+      existingCoverImage,
+      initialData,
+      isEditMode
+    );
     await onSubmit(project);
   });
 
@@ -302,7 +480,10 @@ export function AddProjectForm({
         />
       )}
 
-      <FormHeader />
+      <FormHeader
+        mode={mode}
+        projectName={isEditMode ? initialData.name : undefined}
+      />
 
       <form onSubmit={handleSubmit} className="space-y-4">
         {submitError && (
@@ -342,6 +523,7 @@ export function AddProjectForm({
                 onImageInputChange={handleImageInputChange}
                 onRemoveImage={handleRemoveImage}
                 onOpenCropDialog={openCropDialog}
+                existingCoverImage={existingCoverImage}
               />
             )}
           </div>
@@ -456,6 +638,7 @@ export function AddProjectForm({
           isLoading={isUploading || isSubmitting}
           uploadProgress={isUploading ? uploadProgress : undefined}
           onCancel={onCancel}
+          mode={mode}
         />
       </form>
     </div>

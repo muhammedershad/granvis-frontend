@@ -1,3 +1,6 @@
+"use client";
+
+import { useRouter } from "next/navigation";
 import {
   ArrowLeft,
   Download,
@@ -15,10 +18,23 @@ import {
 
 interface ProjectHeaderProps {
   projectName: string;
+  projectId: string;
   onBack: () => void;
+  basePath?: string;
 }
 
-export function ProjectHeader({ projectName, onBack }: ProjectHeaderProps) {
+export function ProjectHeader({
+  projectName,
+  projectId,
+  onBack,
+  basePath = "/super-admin/projects",
+}: ProjectHeaderProps) {
+  const router = useRouter();
+
+  const handleEditProject = () => {
+    router.push(`${basePath}/${projectId}/edit`);
+  };
+
   return (
     <div className="flex items-center justify-between">
       <div className="flex items-center gap-4">
@@ -39,6 +55,7 @@ export function ProjectHeader({ projectName, onBack }: ProjectHeaderProps) {
         <Button
           variant="outline"
           className="bg-background/50 hover:bg-muted/50"
+          onClick={handleEditProject}
         >
           <Edit className="h-4 w-4 mr-2" />
           Edit Project

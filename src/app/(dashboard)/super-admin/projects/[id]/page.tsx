@@ -16,7 +16,11 @@ export default function SuperAdminProjectDetailsPage() {
 
   return (
     <RoleGuard allowedRoles={[IAuthRoles.SUPER_ADMIN]}>
-      <ProjectDetailsPage projectId={projectId} onBack={handleBack} />
+      <ProjectDetailsPage
+        projectId={projectId}
+        onBack={handleBack}
+        basePath="/super-admin/projects"
+      />
     </RoleGuard>
   );
 }

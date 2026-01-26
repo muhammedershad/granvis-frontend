@@ -16,7 +16,11 @@ export default function AdminProjectDetailsPage() {
 
   return (
     <RoleGuard allowedRoles={[IAuthRoles.ADMIN, IAuthRoles.SUPER_ADMIN]}>
-      <ProjectDetailsPage projectId={projectId} onBack={handleBack} />
+      <ProjectDetailsPage
+        projectId={projectId}
+        onBack={handleBack}
+        basePath="/admin/projects"
+      />
     </RoleGuard>
   );
 }

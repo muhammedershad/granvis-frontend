@@ -32,6 +32,7 @@ interface IdentitySectionProps {
   onImageInputChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
   onRemoveImage: () => void;
   onOpenCropDialog: () => void;
+  existingCoverImage?: string;
 }
 
 export function IdentitySection({
@@ -45,6 +46,7 @@ export function IdentitySection({
   onImageInputChange,
   onRemoveImage,
   onOpenCropDialog,
+  existingCoverImage,
 }: IdentitySectionProps) {
   const formData = {
     type: watch("type"),
@@ -52,6 +54,9 @@ export function IdentitySection({
     status: watch("status"),
     priority: watch("priority"),
   };
+
+  // Display image: prioritize cropped image, then existing image
+  const displayImage = croppedImage || existingCoverImage;
 
   return (
     <div className="p-4 pt-2 space-y-6 animate-in fade-in slide-in-from-top-2 duration-300">
@@ -252,7 +257,7 @@ export function IdentitySection({
           </Alert>
         )}
 
-        {!croppedImage ? (
+        {!displayImage ? (
           <div className="relative">
             <input
               id="cover-image"
@@ -282,21 +287,38 @@ export function IdentitySection({
           <div className="space-y-2">
             <div className="relative w-full h-48 border-2 border-gray-200 dark:border-white/10 rounded-lg overflow-hidden bg-gray-50/50 dark:bg-white/5">
               <NextImage
-                src={croppedImage}
+                src={displayImage}
                 alt="Project cover preview"
                 fill
                 className="object-contain"
               />
               <div className="absolute top-2 right-2 flex gap-2 z-10">
-                <Button
-                  type="button"
-                  size="sm"
-                  variant="secondary"
-                  onClick={onOpenCropDialog}
-                  className="h-8 px-2 shadow-lg"
-                >
-                  <Edit2 className="h-3 w-3" />
-                </Button>
+                {croppedImage && (
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="secondary"
+                    onClick={onOpenCropDialog}
+                    className="h-8 px-2 shadow-lg"
+                  >
+                    <Edit2 className="h-3 w-3" />
+                  </Button>
+                )}
+                <input
+                  id="cover-image-replace"
+                  type="file"
+                  accept="image/jpeg,image/jpg,image/png,image/webp"
+                  onChange={onImageInputChange}
+                  className="hidden"
+                />
+                {!croppedImage && existingCoverImage && (
+                  <label
+                    htmlFor="cover-image-replace"
+                    className="inline-flex items-center justify-center h-8 px-2 text-sm font-medium rounded-md bg-secondary text-secondary-foreground shadow-lg cursor-pointer hover:bg-secondary/80"
+                  >
+                    <Edit2 className="h-3 w-3" />
+                  </label>
+                )}
                 <Button
                   type="button"
                   size="sm"
@@ -311,6 +333,11 @@ export function IdentitySection({
             {croppedBlob && (
               <p className="text-[10px] text-muted-foreground">
                 Image size: {(croppedBlob.size / 1024).toFixed(2)} KB
+              </p>
+            )}
+            {!croppedBlob && existingCoverImage && (
+              <p className="text-[10px] text-muted-foreground">
+                Existing cover image
               </p>
             )}
           </div>

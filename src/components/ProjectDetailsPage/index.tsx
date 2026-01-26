@@ -18,11 +18,13 @@ import type { TimelineItem } from "./types";
 interface ProjectDetailsPageProps {
   projectId: string;
   onBack: () => void;
+  basePath?: string;
 }
 
 export function ProjectDetailsPage({
   projectId,
   onBack,
+  basePath = "/super-admin/projects",
 }: ProjectDetailsPageProps) {
   const [selectedTimelineItem, setSelectedTimelineItem] =
     useState<TimelineItem | null>(null);
@@ -62,7 +64,12 @@ export function ProjectDetailsPage({
 
   return (
     <div className="space-y-6">
-      <ProjectHeader projectName={project.name} onBack={onBack} />
+      <ProjectHeader
+        projectName={project.name}
+        projectId={projectId}
+        onBack={onBack}
+        basePath={basePath}
+      />
 
       <QuickStatsCards project={project} />
 
