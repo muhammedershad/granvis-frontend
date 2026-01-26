@@ -37,11 +37,11 @@ import { FinancialsSection } from "./FinancialsSection";
 import { LocationSection } from "./LocationSection";
 import { FormActions } from "./FormActions";
 import {
-  checkIdentitySectionCompletion,
   checkClientSectionCompletion,
-  checkScopeSectionCompletion,
   checkFinancialsSectionCompletion,
+  checkIdentitySectionCompletion,
   checkLocationSectionCompletion,
+  checkScopeSectionCompletion,
 } from "./completionChecks";
 
 interface AddProjectFormProps {
@@ -65,9 +65,10 @@ export function AddProjectForm({
   const [uploadProgress, setUploadProgress] = useState<number>(0);
   const [isUploading, setIsUploading] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
-  const [tagsList, setTagsList] = useState<string[]>([]);
   const [selectedManager, setSelectedManager] = useState<Employee | null>(null);
-  const [selectedTeamMembers, setSelectedTeamMembers] = useState<Employee[]>([]);
+  const [selectedTeamMembers, setSelectedTeamMembers] = useState<Employee[]>(
+    []
+  );
 
   const [getPresignedUrl] = useGetPresignedUrlMutation();
 
@@ -147,8 +148,6 @@ export function AddProjectForm({
       priority: "Medium",
       startDate: "",
       endDate: "",
-      deadline: "",
-      estimatedDuration: "",
       totalBudget: "",
       progressPercentage: "0",
       currentPhase: "",
@@ -159,8 +158,7 @@ export function AddProjectForm({
       address: "",
       city: "",
       state: "",
-      country: "USA",
-      tags: "",
+      country: "India",
       requirements: "",
       createdBy: "current-user",
     },
@@ -178,7 +176,9 @@ export function AddProjectForm({
 
   // Helper to convert date to UTC ISO string
   const toUTCDateString = (dateStr: string | undefined): string | undefined => {
-    if (!dateStr) return undefined;
+    if (!dateStr) {
+      return undefined;
+    }
     const date = new Date(dateStr);
     return date.toISOString();
   };
@@ -188,13 +188,13 @@ export function AddProjectForm({
     data: ProjectFormData,
     imageUrls: string[]
   ): Omit<Project, "id" | "createdAt" | "updatedAt"> => {
-    const totalBudget = parseFloat(data.totalBudget) || 0;
+    const totalBudget = data.totalBudget ? parseFloat(data.totalBudget) : 0;
 
     return {
-      name: data.name,
-      description: `${data.description}${data.requirements ? `\n\nClient Requirements:\n${data.requirements}` : ""}`,
+      name: data.name.trim(),
+      description: `${data.description.trim()}${data.requirements ? `\n\nClient Requirements:\n${data.requirements.trim()}` : ""}`,
       client: data.client,
-      clientId: data.clientId || undefined,
+      clientId: data.clientId,
       clientEmail: data.clientEmail || undefined,
       clientPhone: data.clientPhone || undefined,
       type: data.type,
@@ -203,10 +203,6 @@ export function AddProjectForm({
       priority: data.priority,
       startDate: toUTCDateString(data.startDate) || data.startDate,
       endDate: toUTCDateString(data.endDate) || undefined,
-      deadline: toUTCDateString(data.deadline) || undefined,
-      estimatedDuration: data.estimatedDuration
-        ? parseInt(data.estimatedDuration)
-        : undefined,
       totalBudget,
       remainingBudget: totalBudget,
       progressPercentage: data.progressPercentage
@@ -215,7 +211,7 @@ export function AddProjectForm({
       currentPhase: data.currentPhase || undefined,
       milestones: [],
       projectManager: data.projectManager,
-      managerId: data.managerId || undefined,
+      managerId: data.managerId,
       teamMembers: data.teamMembers
         ? data.teamMembers
             .split(",")
@@ -224,17 +220,11 @@ export function AddProjectForm({
         : [],
       teamMemberIds: data.teamMemberIds || [],
       location: {
-        address: data.address || undefined,
-        city: data.city || undefined,
-        state: data.state || undefined,
-        country: data.country || "USA",
+        address: data.address,
+        city: data.city,
+        state: data.state,
+        country: data.country || "India",
       },
-      tags: data.tags
-        ? data.tags
-            .split(",")
-            .map((tag) => tag.trim())
-            .filter(Boolean)
-        : [],
       documents: [],
       images: imageUrls,
       coverImage: imageUrls[0] || undefined,
@@ -310,16 +300,20 @@ export function AddProjectForm({
   );
   const hasClientErrors = !!(
     errors.client ||
+    errors.clientId ||
     errors.clientEmail ||
     errors.clientPhone
   );
-  const hasScopeErrors = !!(errors.requirements || errors.projectManager);
+  const hasScopeErrors = !!(
+    errors.requirements ||
+    errors.projectManager ||
+    errors.managerId
+  );
   const hasFinancialsErrors = !!(errors.startDate || errors.totalBudget);
   const hasLocationErrors = !!(
     errors.address ||
     errors.city ||
-    errors.state ||
-    errors.country
+    errors.state
   );
 
   // Completion checks for each section
@@ -331,7 +325,10 @@ export function AddProjectForm({
     hasClientErrors,
     formData
   );
-  const isScopeCompleted = checkScopeSectionCompletion(hasScopeErrors, formData);
+  const isScopeCompleted = checkScopeSectionCompletion(
+    hasScopeErrors,
+    formData
+  );
   const isFinancialsCompleted = checkFinancialsSectionCompletion(
     hasFinancialsErrors,
     formData
@@ -477,20 +474,25 @@ export function AddProjectForm({
               onClick={setExpandedSection}
             />
             {expandedSection === "financials" && (
-              <FinancialsSection register={register} errors={errors} />
+              <FinancialsSection
+                errors={errors}
+                setValue={setValue}
+                startDate={formData.startDate}
+                endDate={formData.endDate}
+              />
             )}
           </div>
 
           <Separator className="bg-gray-100 dark:bg-white/5" />
 
-          {/* Section 5: Location & Meta */}
+          {/* Section 5: Location */}
           <div className="space-y-3">
             <SectionHeader
               id="location"
               icon={MapPin}
-              title="Location & Meta"
-              subtitle="Site address and categorization"
-              status="Optional"
+              title="Location"
+              subtitle="Site address details"
+              status="Required"
               isActive={expandedSection === "location"}
               hasErrors={hasLocationErrors}
               isCompleted={isLocationCompleted}
@@ -500,9 +502,6 @@ export function AddProjectForm({
               <LocationSection
                 register={register}
                 errors={errors}
-                setValue={setValue}
-                tagsList={tagsList}
-                setTagsList={setTagsList}
               />
             )}
           </div>
@@ -514,7 +513,6 @@ export function AddProjectForm({
           onCancel={onCancel}
         />
       </form>
-
     </div>
   );
 }

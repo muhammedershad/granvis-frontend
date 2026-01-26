@@ -100,10 +100,15 @@ export function SectionHeader({
               In Progress
             </div>
           )}
-          {!hasErrors && !isActive && (
+          {!hasErrors && !isActive && isCompleted && (
             <div className="flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-[10px] font-bold text-emerald-600 dark:text-emerald-400 uppercase tracking-wider">
               <CheckCircle2 className="w-3 h-3 text-emerald-600 dark:text-emerald-400" />
-              {isCompleted ? "Completed" : status}
+              Completed
+            </div>
+          )}
+          {!hasErrors && !isActive && !isCompleted && (
+            <div className="flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-gray-500/10 border border-gray-500/20 text-[10px] font-bold text-gray-600 dark:text-gray-400 uppercase tracking-wider">
+              {status}
             </div>
           )}
         </div>

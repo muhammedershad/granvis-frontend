@@ -2,9 +2,10 @@
 
 import { useState } from "react";
 import { Check, ChevronsUpDown, Loader2, X } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { cn } from "../ui/utils";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
   Command,
   CommandEmpty,
@@ -21,6 +22,7 @@ import {
 import { useDebounce } from "@/hooks/useDebounce";
 import { useGetEmployeesQuery } from "@/lib/api/employeesApi";
 import { Employee } from "@/types/employee";
+import { getCloudFrontUrl } from "@/lib/utils/cloudfront";
 
 interface MultiSelectEmployeeProps {
   selectedEmployees: Employee[];
@@ -127,10 +129,16 @@ export function MultiSelectEmployee({
                       className="cursor-pointer"
                     >
                       <div className="flex items-center gap-3 w-full">
-                        <div className="flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-br from-green-500 to-teal-500 text-white text-xs font-medium shrink-0">
-                          {employee.firstName?.[0]}
-                          {employee.lastName?.[0]}
-                        </div>
+                        <Avatar className="h-8 w-8 shrink-0">
+                          <AvatarImage
+                            src={getCloudFrontUrl(employee.avatarKey) || undefined}
+                            alt={getDisplayName(employee)}
+                          />
+                          <AvatarFallback className="bg-gradient-to-br from-green-500 to-teal-500 text-white text-xs font-medium">
+                            {employee.firstName?.[0]}
+                            {employee.lastName?.[0]}
+                          </AvatarFallback>
+                        </Avatar>
                         <div className="flex flex-col min-w-0 flex-1">
                           <span className="font-medium truncate">
                             {getDisplayName(employee)}
@@ -160,11 +168,7 @@ export function MultiSelectEmployee({
       {selectedEmployees.length > 0 && (
         <div className="flex flex-wrap gap-2">
           {selectedEmployees.map((employee) => (
-            <Badge
-              key={employee.id}
-              variant="secondary"
-              className="gap-1 pr-1"
-            >
+            <Badge key={employee.id} variant="secondary" className="gap-1 pr-1">
               <span className="truncate max-w-[150px]">
                 {getDisplayName(employee)}
               </span>

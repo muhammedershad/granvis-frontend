@@ -155,14 +155,16 @@ export function ProjectCardView({
                 <div className="flex items-center gap-2">
                   <DollarSign className="w-3 h-3 text-muted-foreground" />
                   <span className="text-foreground">
-                    ${(project.totalBudget / 1000000).toFixed(1)}M
+                    {project.totalBudget
+                      ? `₹${(project.totalBudget / 100000).toFixed(1)}L`
+                      : "N/A"}
                   </span>
                 </div>
                 <div className="flex items-center gap-2">
                   <Calendar className="w-3 h-3 text-muted-foreground" />
                   <span className="text-foreground">
-                    {project.deadline
-                      ? new Date(project.deadline).toLocaleDateString()
+                    {project.endDate
+                      ? new Date(project.endDate).toLocaleDateString()
                       : "N/A"}
                   </span>
                 </div>

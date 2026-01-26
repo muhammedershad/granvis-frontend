@@ -1,9 +1,10 @@
 "use client";
 
-import { useState, useMemo } from "react";
-import { Check, ChevronsUpDown, Loader2, User } from "lucide-react";
+import { useMemo, useState } from "react";
+import { Check, ChevronsUpDown, Loader2 } from "lucide-react";
 import { cn } from "@/components/ui/utils";
 import { Button } from "@/components/ui/button";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
   Command,
   CommandEmpty,
@@ -18,8 +19,12 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { useDebounce } from "@/hooks/useDebounce";
-import { useGetManagersQuery, useGetEmployeesQuery } from "@/lib/api/employeesApi";
+import {
+  useGetEmployeesQuery,
+  useGetManagersQuery,
+} from "@/lib/api/employeesApi";
 import { Employee } from "@/types/employee";
+import { getCloudFrontUrl } from "@/lib/utils/cloudfront";
 
 interface SearchableEmployeeSelectProps {
   value?: Employee | null;
@@ -48,19 +53,18 @@ export function SearchableEmployeeSelect({
   );
 
   // Use managers endpoint for manager roles, otherwise use general employees endpoint
-  const { data: managersData, isFetching: isFetchingManagers } = useGetManagersQuery(
-    undefined,
-    { skip: !open || !isManagerFilter }
-  );
+  const { data: managersData, isFetching: isFetchingManagers } =
+    useGetManagersQuery(undefined, { skip: !open || !isManagerFilter });
 
-  const { data: employeesData, isFetching: isFetchingEmployees } = useGetEmployeesQuery(
-    {
-      search: debouncedSearch || undefined,
-      limit: 20,
-      status: "Active",
-    },
-    { skip: !open || isManagerFilter }
-  );
+  const { data: employeesData, isFetching: isFetchingEmployees } =
+    useGetEmployeesQuery(
+      {
+        search: debouncedSearch || undefined,
+        limit: 20,
+        employmentStatus: "Active",
+      },
+      { skip: !open || isManagerFilter }
+    );
 
   const isFetching = isFetchingManagers || isFetchingEmployees;
 
@@ -68,7 +72,9 @@ export function SearchableEmployeeSelect({
   const employees = useMemo(() => {
     if (isManagerFilter) {
       const managers = managersData || [];
-      if (!searchTerm) return managers;
+      if (!searchTerm) {
+        return managers;
+      }
       const lowerSearch = searchTerm.toLowerCase();
       return managers.filter(
         (emp) =>
@@ -108,7 +114,16 @@ export function SearchableEmployeeSelect({
           >
             {value ? (
               <div className="flex items-center gap-2 truncate">
-                <User className="h-4 w-4 shrink-0" />
+                <Avatar className="h-5 w-5 shrink-0">
+                  <AvatarImage
+                    src={getCloudFrontUrl(value.avatarKey) || undefined}
+                    alt={getDisplayName(value)}
+                  />
+                  <AvatarFallback className="bg-gradient-to-br from-blue-500 to-purple-500 text-white text-[10px] font-medium">
+                    {value.firstName?.[0]}
+                    {value.lastName?.[0]}
+                  </AvatarFallback>
+                </Avatar>
                 <span className="truncate">{getDisplayName(value)}</span>
                 <span className="text-xs text-muted-foreground truncate">
                   ({value.position})
@@ -147,10 +162,16 @@ export function SearchableEmployeeSelect({
                       className="cursor-pointer"
                     >
                       <div className="flex items-center gap-3 w-full">
-                        <div className="flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-br from-blue-500 to-purple-500 text-white text-xs font-medium shrink-0">
-                          {employee.firstName?.[0]}
-                          {employee.lastName?.[0]}
-                        </div>
+                        <Avatar className="h-8 w-8 shrink-0">
+                          <AvatarImage
+                            src={getCloudFrontUrl(employee.avatarKey) || undefined}
+                            alt={getDisplayName(employee)}
+                          />
+                          <AvatarFallback className="bg-gradient-to-br from-blue-500 to-purple-500 text-white text-xs font-medium">
+                            {employee.firstName?.[0]}
+                            {employee.lastName?.[0]}
+                          </AvatarFallback>
+                        </Avatar>
                         <div className="flex flex-col min-w-0 flex-1">
                           <span className="font-medium truncate">
                             {getDisplayName(employee)}

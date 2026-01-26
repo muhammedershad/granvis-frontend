@@ -62,13 +62,14 @@ export function IdentitySection({
             htmlFor="name"
             className="text-xs font-medium text-muted-foreground"
           >
-            Project Name *
+            Project Name * <span className="text-[10px] text-muted-foreground/70">(3-100 characters)</span>
           </Label>
           <Input
             id="name"
             {...register("name")}
             placeholder="Modern Villa Residence"
             className="text-lg font-semibold bg-background"
+            maxLength={100}
           />
           {errors.name && (
             <p className="text-[10px] text-red-500">{errors.name.message}</p>
@@ -80,13 +81,14 @@ export function IdentitySection({
             htmlFor="description"
             className="text-xs font-medium text-muted-foreground"
           >
-            Project Description *
+            Project Description * <span className="text-[10px] text-muted-foreground/70">(10-1000 characters)</span>
           </Label>
           <Textarea
             id="description"
             {...register("description")}
             placeholder="Describe the vision and key aspects..."
-            className="min-h-[120px] bg-background"
+            className="h-32 bg-background resize-none overflow-y-auto"
+            maxLength={1000}
           />
           {errors.description && (
             <p className="text-[10px] text-red-500">
@@ -260,7 +262,9 @@ export function IdentitySection({
               <div className="flex flex-col items-center justify-center pt-5 pb-6">
                 <ImageIcon className="h-8 w-8 text-muted-foreground mb-2 group-hover:text-orange-500 transition-colors" />
                 <p className="text-xs text-muted-foreground">
-                  <span className="font-semibold">Click to upload cover image</span>
+                  <span className="font-semibold">
+                    Click to upload cover image
+                  </span>
                 </p>
                 <p className="text-[10px] text-muted-foreground mt-1">
                   JPG, PNG, WebP (Max 1MB)

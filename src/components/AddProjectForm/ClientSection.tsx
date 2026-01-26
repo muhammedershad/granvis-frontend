@@ -80,7 +80,9 @@ export function ClientSection({
         ) : clients.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-8 text-center">
             <p className="text-sm text-muted-foreground">
-              {searchTerm ? "No clients found matching your search" : "No clients available"}
+              {searchTerm
+                ? "No clients found matching your search"
+                : "No clients available"}
             </p>
             <Button
               type="button"
@@ -121,7 +123,9 @@ export function ClientSection({
                     </AvatarFallback>
                   </Avatar>
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium truncate">{client.name}</p>
+                    <p className="text-sm font-medium truncate">
+                      {client.name}
+                    </p>
                     {client.phone && (
                       <div className="flex items-center gap-1 text-xs text-muted-foreground">
                         <Phone className="h-3 w-3" />
@@ -133,12 +137,18 @@ export function ClientSection({
                     </p>
                     <div className="flex gap-1 mt-1">
                       {client.status === "Active" && (
-                        <Badge variant="outline" className="text-[9px] h-4 px-1">
+                        <Badge
+                          variant="outline"
+                          className="text-[9px] h-4 px-1"
+                        >
                           Active
                         </Badge>
                       )}
                       {client.priority && (
-                        <Badge variant="secondary" className="text-[9px] h-4 px-1">
+                        <Badge
+                          variant="secondary"
+                          className="text-[9px] h-4 px-1"
+                        >
                           {client.priority}
                         </Badge>
                       )}

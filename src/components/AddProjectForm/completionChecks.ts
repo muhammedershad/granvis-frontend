@@ -4,7 +4,9 @@ export function checkIdentitySectionCompletion(
   hasErrors: boolean,
   formData: Partial<ProjectFormData>
 ): boolean {
-  if (hasErrors) return false;
+  if (hasErrors) {
+    return false;
+  }
 
   const requiredFields = [
     formData.name,
@@ -21,9 +23,12 @@ export function checkClientSectionCompletion(
   hasErrors: boolean,
   formData: Partial<ProjectFormData>
 ): boolean {
-  if (hasErrors) return false;
+  if (hasErrors) {
+    return false;
+  }
 
-  const requiredFields = [formData.client];
+  // Client name and clientId are both required
+  const requiredFields = [formData.client, formData.clientId];
 
   return requiredFields.every((field) => field && field.trim() !== "");
 }
@@ -32,9 +37,12 @@ export function checkScopeSectionCompletion(
   hasErrors: boolean,
   formData: Partial<ProjectFormData>
 ): boolean {
-  if (hasErrors) return false;
+  if (hasErrors) {
+    return false;
+  }
 
-  const requiredFields = [formData.projectManager];
+  // Project manager name and managerId are both required
+  const requiredFields = [formData.projectManager, formData.managerId];
 
   return requiredFields.every((field) => field && field.trim() !== "");
 }
@@ -43,9 +51,12 @@ export function checkFinancialsSectionCompletion(
   hasErrors: boolean,
   formData: Partial<ProjectFormData>
 ): boolean {
-  if (hasErrors) return false;
+  if (hasErrors) {
+    return false;
+  }
 
-  const requiredFields = [formData.startDate, formData.totalBudget];
+  // Only startDate is required, budget is optional
+  const requiredFields = [formData.startDate];
 
   return requiredFields.every((field) => field && field.trim() !== "");
 }
@@ -54,14 +65,12 @@ export function checkLocationSectionCompletion(
   hasErrors: boolean,
   formData: Partial<ProjectFormData>
 ): boolean {
-  if (hasErrors) return false;
+  if (hasErrors) {
+    return false;
+  }
 
-  // Location is optional, but if any fields are filled, consider it complete
-  const hasAnyLocationData = Boolean(
-    (formData.address && formData.address.trim() !== "") ||
-    (formData.city && formData.city.trim() !== "") ||
-    (formData.state && formData.state.trim() !== "")
-  );
+  // Location is now required - address, city, and state must be filled
+  const requiredFields = [formData.address, formData.city, formData.state];
 
-  return hasAnyLocationData;
+  return requiredFields.every((field) => field && field.trim() !== "");
 }
