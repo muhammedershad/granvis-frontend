@@ -39,6 +39,7 @@ export const bgNavigationItems: NavigationItem[] = [
       IAuthRoles.SUPER_ADMIN,
       IAuthRoles.ADMIN,
       IAuthRoles.MANAGER,
+      IAuthRoles.ACCOUNTANT,
       IAuthRoles.EMPLOYEE,
     ],
   },

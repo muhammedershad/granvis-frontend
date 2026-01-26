@@ -64,7 +64,7 @@ export function ScopeSection({
           id="requirements"
           {...register("requirements")}
           placeholder="List key requirements and deliverables..."
-          className="bg-background min-h-[100px]"
+          className="bg-background h-[120px] max-h-[120px] overflow-y-auto resize-none"
         />
         {errors.requirements && (
           <p className="text-[10px] text-red-500">

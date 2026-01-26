@@ -36,13 +36,7 @@ import { ScopeSection } from "./ScopeSection";
 import { FinancialsSection } from "./FinancialsSection";
 import { LocationSection } from "./LocationSection";
 import { FormActions } from "./FormActions";
-import {
-  checkClientSectionCompletion,
-  checkFinancialsSectionCompletion,
-  checkIdentitySectionCompletion,
-  checkLocationSectionCompletion,
-  checkScopeSectionCompletion,
-} from "./completionChecks";
+import { getFormSections } from "./useFormSections";
 
 interface AddProjectFormProps {
   onSubmit: (
@@ -183,7 +177,6 @@ export function AddProjectForm({
     return date.toISOString();
   };
 
-  // eslint-disable-next-line complexity
   const buildProjectFromFormData = (
     data: ProjectFormData,
     imageUrls: string[]
@@ -290,53 +283,8 @@ export function AddProjectForm({
     await onSubmit(project);
   });
 
-  // Error checks for each section
-  const hasIdentityErrors = !!(
-    errors.name ||
-    errors.description ||
-    errors.type ||
-    errors.status ||
-    errors.priority
-  );
-  const hasClientErrors = !!(
-    errors.client ||
-    errors.clientId ||
-    errors.clientEmail ||
-    errors.clientPhone
-  );
-  const hasScopeErrors = !!(
-    errors.requirements ||
-    errors.projectManager ||
-    errors.managerId
-  );
-  const hasFinancialsErrors = !!(errors.startDate || errors.totalBudget);
-  const hasLocationErrors = !!(
-    errors.address ||
-    errors.city ||
-    errors.state
-  );
-
-  // Completion checks for each section
-  const isIdentityCompleted = checkIdentitySectionCompletion(
-    hasIdentityErrors,
-    formData
-  );
-  const isClientCompleted = checkClientSectionCompletion(
-    hasClientErrors,
-    formData
-  );
-  const isScopeCompleted = checkScopeSectionCompletion(
-    hasScopeErrors,
-    formData
-  );
-  const isFinancialsCompleted = checkFinancialsSectionCompletion(
-    hasFinancialsErrors,
-    formData
-  );
-  const isLocationCompleted = checkLocationSectionCompletion(
-    hasLocationErrors,
-    formData
-  );
+  // Get section statuses (errors and completion)
+  const sections = getFormSections(errors, formData);
 
   return (
     <div className="flex flex-col gap-6">
@@ -378,8 +326,8 @@ export function AddProjectForm({
               subtitle="Define the core details"
               status="Required"
               isActive={expandedSection === "identity"}
-              hasErrors={hasIdentityErrors}
-              isCompleted={isIdentityCompleted}
+              hasErrors={sections.identity.hasErrors}
+              isCompleted={sections.identity.isCompleted}
               onClick={setExpandedSection}
             />
             {expandedSection === "identity" && (
@@ -409,8 +357,8 @@ export function AddProjectForm({
               subtitle="Select or add client details"
               status="Required"
               isActive={expandedSection === "stakeholders"}
-              hasErrors={hasClientErrors}
-              isCompleted={isClientCompleted}
+              hasErrors={sections.client.hasErrors}
+              isCompleted={sections.client.isCompleted}
               onClick={setExpandedSection}
             />
             {expandedSection === "stakeholders" && (
@@ -441,8 +389,8 @@ export function AddProjectForm({
               subtitle="Requirements and team allocation"
               status="Required"
               isActive={expandedSection === "scope"}
-              hasErrors={hasScopeErrors}
-              isCompleted={isScopeCompleted}
+              hasErrors={sections.scope.hasErrors}
+              isCompleted={sections.scope.isCompleted}
               onClick={setExpandedSection}
             />
             {expandedSection === "scope" && (
@@ -469,8 +417,8 @@ export function AddProjectForm({
               subtitle="Schedule and budget details"
               status="Required"
               isActive={expandedSection === "financials"}
-              hasErrors={hasFinancialsErrors}
-              isCompleted={isFinancialsCompleted}
+              hasErrors={sections.financials.hasErrors}
+              isCompleted={sections.financials.isCompleted}
               onClick={setExpandedSection}
             />
             {expandedSection === "financials" && (
@@ -494,15 +442,12 @@ export function AddProjectForm({
               subtitle="Site address details"
               status="Required"
               isActive={expandedSection === "location"}
-              hasErrors={hasLocationErrors}
-              isCompleted={isLocationCompleted}
+              hasErrors={sections.location.hasErrors}
+              isCompleted={sections.location.isCompleted}
               onClick={setExpandedSection}
             />
             {expandedSection === "location" && (
-              <LocationSection
-                register={register}
-                errors={errors}
-              />
+              <LocationSection register={register} errors={errors} />
             )}
           </div>
         </div>

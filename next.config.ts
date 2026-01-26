@@ -1,5 +1,11 @@
 import type { NextConfig } from "next";
 
+// Extract hostname from CloudFront domain URL
+const cloudfrontDomain = process.env.NEXT_PUBLIC_CLOUDFRONT_DOMAIN;
+const cloudfrontHostname = cloudfrontDomain
+  ? new URL(cloudfrontDomain).hostname
+  : null;
+
 const nextConfig: NextConfig = {
   images: {
     remotePatterns: [
@@ -9,6 +15,16 @@ const nextConfig: NextConfig = {
         port: "",
         pathname: "/**",
       },
+      ...(cloudfrontHostname
+        ? [
+            {
+              protocol: "https" as const,
+              hostname: cloudfrontHostname,
+              port: "",
+              pathname: "/**",
+            },
+          ]
+        : []),
     ],
   },
   experimental: {

@@ -1,17 +1,27 @@
 import { Calendar, DollarSign, TrendingUp, Users } from "lucide-react";
 import { Card, CardContent } from "../ui/card";
-import { formatCurrency } from "./utils";
-import type { Project } from "./types";
+import type { Project } from "@/types/project";
 
 interface QuickStatsCardsProps {
   project: Project;
 }
 
+const formatCurrency = (amount: number) => {
+  if (amount >= 10000000) {
+    return `₹${(amount / 10000000).toFixed(2)}Cr`;
+  } else if (amount >= 100000) {
+    return `₹${(amount / 100000).toFixed(2)}L`;
+  }
+  return `₹${amount.toLocaleString("en-IN")}`;
+};
+
 export function QuickStatsCards({ project }: QuickStatsCardsProps) {
-  const daysLeft = Math.ceil(
-    (new Date(project.deadline).getTime() - new Date().getTime()) /
-      (1000 * 60 * 60 * 24)
-  );
+  const endDate = project.endDate ? new Date(project.endDate) : null;
+  const daysLeft = endDate
+    ? Math.ceil(
+        (endDate.getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24)
+      )
+    : null;
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -25,7 +35,7 @@ export function QuickStatsCards({ project }: QuickStatsCardsProps) {
             <div>
               <p className="text-sm text-muted-foreground">Progress</p>
               <p className="text-xl text-foreground">
-                {project.progressPercentage}%
+                {project.progressPercentage ?? 0}%
               </p>
             </div>
           </div>
@@ -42,7 +52,9 @@ export function QuickStatsCards({ project }: QuickStatsCardsProps) {
             <div>
               <p className="text-sm text-muted-foreground">Budget Spent</p>
               <p className="text-xl text-foreground">
-                {formatCurrency(project.budget.spent)}
+                {project.spentAmount
+                  ? formatCurrency(project.spentAmount)
+                  : "N/A"}
               </p>
             </div>
           </div>
@@ -58,7 +70,13 @@ export function QuickStatsCards({ project }: QuickStatsCardsProps) {
             </div>
             <div>
               <p className="text-sm text-muted-foreground">Days Left</p>
-              <p className="text-xl text-foreground">{daysLeft}</p>
+              <p className="text-xl text-foreground">
+                {daysLeft !== null
+                  ? daysLeft > 0
+                    ? daysLeft
+                    : "Overdue"
+                  : "N/A"}
+              </p>
             </div>
           </div>
         </CardContent>

@@ -8,10 +8,7 @@ interface LocationSectionProps {
   errors: FieldErrors<ProjectFormData>;
 }
 
-export function LocationSection({
-  register,
-  errors,
-}: LocationSectionProps) {
+export function LocationSection({ register, errors }: LocationSectionProps) {
   return (
     <div className="p-4 pt-2 space-y-6 animate-in fade-in slide-in-from-top-2 duration-300">
       <div className="space-y-3">

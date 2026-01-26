@@ -64,7 +64,10 @@ export function FinancialsSection({
           htmlFor="totalBudget"
           className="text-xs font-medium text-muted-foreground"
         >
-          Total Budget <span className="text-[10px] text-muted-foreground/70">(Optional)</span>
+          Total Budget{" "}
+          <span className="text-[10px] text-muted-foreground/70">
+            (Optional)
+          </span>
         </Label>
         <div className="relative">
           <IndianRupee className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />

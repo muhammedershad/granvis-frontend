@@ -164,7 +164,9 @@ export function SearchableEmployeeSelect({
                       <div className="flex items-center gap-3 w-full">
                         <Avatar className="h-8 w-8 shrink-0">
                           <AvatarImage
-                            src={getCloudFrontUrl(employee.avatarKey) || undefined}
+                            src={
+                              getCloudFrontUrl(employee.avatarKey) || undefined
+                            }
                             alt={getDisplayName(employee)}
                           />
                           <AvatarFallback className="bg-gradient-to-br from-blue-500 to-purple-500 text-white text-xs font-medium">

@@ -62,7 +62,10 @@ export function IdentitySection({
             htmlFor="name"
             className="text-xs font-medium text-muted-foreground"
           >
-            Project Name * <span className="text-[10px] text-muted-foreground/70">(3-100 characters)</span>
+            Project Name *{" "}
+            <span className="text-[10px] text-muted-foreground/70">
+              (3-100 characters)
+            </span>
           </Label>
           <Input
             id="name"
@@ -81,7 +84,10 @@ export function IdentitySection({
             htmlFor="description"
             className="text-xs font-medium text-muted-foreground"
           >
-            Project Description * <span className="text-[10px] text-muted-foreground/70">(10-1000 characters)</span>
+            Project Description *{" "}
+            <span className="text-[10px] text-muted-foreground/70">
+              (10-1000 characters)
+            </span>
           </Label>
           <Textarea
             id="description"

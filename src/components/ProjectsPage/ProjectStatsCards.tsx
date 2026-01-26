@@ -2,18 +2,19 @@ import { Card } from "../ui/card";
 import {
   Building2,
   CheckCircle,
-  DollarSign,
+  Clock,
   Pause,
   TrendingUp,
+  XCircle,
 } from "lucide-react";
 
 interface ProjectStats {
   total: number;
+  planning: number;
   inProgress: number;
   completed: number;
   onHold: number;
-  totalBudget: number;
-  avgProgress: number;
+  cancelled: number;
 }
 
 interface ProjectStatsCardsProps {
@@ -22,7 +23,7 @@ interface ProjectStatsCardsProps {
 
 export function ProjectStatsCards({ stats }: ProjectStatsCardsProps) {
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 xl:grid-cols-6 gap-4">
+    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
       <Card className="p-4 backdrop-blur-xl bg-white/70 dark:bg-black/20 border-white/20 dark:border-white/10 relative overflow-hidden shadow-xl shadow-gray-200/50 dark:shadow-black/50">
         <div className="absolute inset-0 bg-gradient-to-br from-blue-100/60 via-indigo-50/40 to-purple-50/60 opacity-100 dark:opacity-0 transition-opacity duration-300"></div>
         <div className="absolute inset-0 bg-gradient-to-br from-blue-500/5 to-purple-500/5 opacity-0 dark:opacity-100 transition-opacity duration-300"></div>
@@ -33,6 +34,20 @@ export function ProjectStatsCards({ stats }: ProjectStatsCardsProps) {
           <div>
             <p className="text-muted-foreground text-sm">Total Projects</p>
             <p className="text-foreground text-2xl">{stats.total}</p>
+          </div>
+        </div>
+      </Card>
+
+      <Card className="p-4 backdrop-blur-xl bg-white/70 dark:bg-black/20 border-white/20 dark:border-white/10 relative overflow-hidden shadow-xl shadow-gray-200/50 dark:shadow-black/50">
+        <div className="absolute inset-0 bg-gradient-to-br from-slate-100/60 to-gray-50/40 opacity-100 dark:opacity-0 transition-opacity duration-300"></div>
+        <div className="absolute inset-0 bg-gradient-to-br from-slate-500/5 to-gray-500/5 opacity-0 dark:opacity-100 transition-opacity duration-300"></div>
+        <div className="relative flex items-center space-x-3">
+          <div className="p-3 bg-slate-500/20 rounded-xl border border-slate-500/30 shadow-lg shadow-slate-200/50 dark:shadow-slate-500/20">
+            <Clock className="w-6 h-6 text-slate-600 dark:text-slate-400" />
+          </div>
+          <div>
+            <p className="text-muted-foreground text-sm">Planning</p>
+            <p className="text-foreground text-2xl">{stats.planning}</p>
           </div>
         </div>
       </Card>
@@ -52,20 +67,6 @@ export function ProjectStatsCards({ stats }: ProjectStatsCardsProps) {
       </Card>
 
       <Card className="p-4 backdrop-blur-xl bg-white/70 dark:bg-black/20 border-white/20 dark:border-white/10 relative overflow-hidden shadow-xl shadow-gray-200/50 dark:shadow-black/50">
-        <div className="absolute inset-0 bg-gradient-to-br from-purple-100/60 to-pink-50/40 opacity-100 dark:opacity-0 transition-opacity duration-300"></div>
-        <div className="absolute inset-0 bg-gradient-to-br from-purple-500/5 to-pink-500/5 opacity-0 dark:opacity-100 transition-opacity duration-300"></div>
-        <div className="relative flex items-center space-x-3">
-          <div className="p-3 bg-purple-500/20 rounded-xl border border-purple-500/30 shadow-lg shadow-purple-200/50 dark:shadow-purple-500/20">
-            <CheckCircle className="w-6 h-6 text-purple-600 dark:text-purple-400" />
-          </div>
-          <div>
-            <p className="text-muted-foreground text-sm">Completed</p>
-            <p className="text-foreground text-2xl">{stats.completed}</p>
-          </div>
-        </div>
-      </Card>
-
-      <Card className="p-4 backdrop-blur-xl bg-white/70 dark:bg-black/20 border-white/20 dark:border-white/10 relative overflow-hidden shadow-xl shadow-gray-200/50 dark:shadow-black/50">
         <div className="absolute inset-0 bg-gradient-to-br from-yellow-100/60 to-orange-50/40 opacity-100 dark:opacity-0 transition-opacity duration-300"></div>
         <div className="absolute inset-0 bg-gradient-to-br from-yellow-500/5 to-orange-500/5 opacity-0 dark:opacity-100 transition-opacity duration-300"></div>
         <div className="relative flex items-center space-x-3">
@@ -80,31 +81,29 @@ export function ProjectStatsCards({ stats }: ProjectStatsCardsProps) {
       </Card>
 
       <Card className="p-4 backdrop-blur-xl bg-white/70 dark:bg-black/20 border-white/20 dark:border-white/10 relative overflow-hidden shadow-xl shadow-gray-200/50 dark:shadow-black/50">
-        <div className="absolute inset-0 bg-gradient-to-br from-cyan-100/60 to-blue-50/40 opacity-100 dark:opacity-0 transition-opacity duration-300"></div>
-        <div className="absolute inset-0 bg-gradient-to-br from-cyan-500/5 to-blue-500/5 opacity-0 dark:opacity-100 transition-opacity duration-300"></div>
+        <div className="absolute inset-0 bg-gradient-to-br from-purple-100/60 to-pink-50/40 opacity-100 dark:opacity-0 transition-opacity duration-300"></div>
+        <div className="absolute inset-0 bg-gradient-to-br from-purple-500/5 to-pink-500/5 opacity-0 dark:opacity-100 transition-opacity duration-300"></div>
         <div className="relative flex items-center space-x-3">
-          <div className="p-3 bg-cyan-500/20 rounded-xl border border-cyan-500/30 shadow-lg shadow-cyan-200/50 dark:shadow-cyan-500/20">
-            <DollarSign className="w-6 h-6 text-cyan-600 dark:text-cyan-400" />
+          <div className="p-3 bg-purple-500/20 rounded-xl border border-purple-500/30 shadow-lg shadow-purple-200/50 dark:shadow-purple-500/20">
+            <CheckCircle className="w-6 h-6 text-purple-600 dark:text-purple-400" />
           </div>
           <div>
-            <p className="text-muted-foreground text-sm">Total Budget</p>
-            <p className="text-foreground text-xl">
-              ${(stats.totalBudget / 1000000).toFixed(1)}M
-            </p>
+            <p className="text-muted-foreground text-sm">Completed</p>
+            <p className="text-foreground text-2xl">{stats.completed}</p>
           </div>
         </div>
       </Card>
 
       <Card className="p-4 backdrop-blur-xl bg-white/70 dark:bg-black/20 border-white/20 dark:border-white/10 relative overflow-hidden shadow-xl shadow-gray-200/50 dark:shadow-black/50">
-        <div className="absolute inset-0 bg-gradient-to-br from-indigo-100/60 to-purple-50/40 opacity-100 dark:opacity-0 transition-opacity duration-300"></div>
-        <div className="absolute inset-0 bg-gradient-to-br from-indigo-500/5 to-purple-500/5 opacity-0 dark:opacity-100 transition-opacity duration-300"></div>
+        <div className="absolute inset-0 bg-gradient-to-br from-red-100/60 to-rose-50/40 opacity-100 dark:opacity-0 transition-opacity duration-300"></div>
+        <div className="absolute inset-0 bg-gradient-to-br from-red-500/5 to-rose-500/5 opacity-0 dark:opacity-100 transition-opacity duration-300"></div>
         <div className="relative flex items-center space-x-3">
-          <div className="p-3 bg-indigo-500/20 rounded-xl border border-indigo-500/30 shadow-lg shadow-indigo-200/50 dark:shadow-indigo-500/20">
-            <TrendingUp className="w-6 h-6 text-indigo-600 dark:text-indigo-400" />
+          <div className="p-3 bg-red-500/20 rounded-xl border border-red-500/30 shadow-lg shadow-red-200/50 dark:shadow-red-500/20">
+            <XCircle className="w-6 h-6 text-red-600 dark:text-red-400" />
           </div>
           <div>
-            <p className="text-muted-foreground text-sm">Avg Progress</p>
-            <p className="text-foreground text-2xl">{stats.avgProgress}%</p>
+            <p className="text-muted-foreground text-sm">Cancelled</p>
+            <p className="text-foreground text-2xl">{stats.cancelled}</p>
           </div>
         </div>
       </Card>
