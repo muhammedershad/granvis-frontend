@@ -12,7 +12,6 @@ import {
   Phone,
   Plus,
   Target,
-  TrendingUp,
   User,
   Users,
   X,
@@ -104,6 +103,210 @@ const parseDescription = (description: string) => {
   return { mainDescription: description, clientRequirements: null };
 };
 
+// Hero Section Component
+interface HeroSectionProps {
+  project: Project;
+  onViewFullImage: () => void;
+}
+
+function HeroSection({ project, onViewFullImage }: HeroSectionProps) {
+  if (project.coverImage) {
+    return (
+      <Card className="relative overflow-hidden bg-card/50 backdrop-blur-sm border-border/50">
+        <div className="relative w-full h-44 sm:h-52 md:h-60">
+          <img
+            src={project.coverImage}
+            alt={`${project.name} cover`}
+            className="w-full h-full object-cover object-center"
+          />
+          <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
+          <div className="absolute inset-0 bg-gradient-to-r from-black/40 via-transparent to-transparent" />
+          <Button
+            variant="secondary"
+            size="sm"
+            className="absolute top-4 right-4 bg-black/50 hover:bg-black/70 text-white border-0 backdrop-blur-sm"
+            onClick={onViewFullImage}
+          >
+            <Expand className="h-4 w-4 mr-2" />
+            View Full
+          </Button>
+          <HeroOverlay project={project} />
+        </div>
+      </Card>
+    );
+  }
+
+  const TypeIcon = getTypeIcon(project.type);
+  return (
+    <Card className="relative overflow-hidden bg-card/50 backdrop-blur-sm border-border/50">
+      <div className="relative w-full h-44 sm:h-52 md:h-60 bg-gradient-to-br from-gray-100 to-gray-200 dark:from-gray-800 dark:to-gray-900">
+        <div className="absolute inset-0 flex items-center justify-center">
+          <TypeIcon className="w-20 h-20 text-gray-400 dark:text-gray-600 opacity-50" />
+        </div>
+        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
+        <div className="absolute inset-0 bg-gradient-to-r from-black/40 via-transparent to-transparent" />
+        <HeroOverlay project={project} />
+      </div>
+    </Card>
+  );
+}
+
+// Hero Overlay Component
+function HeroOverlay({ project }: { project: Project }) {
+  return (
+    <div className="absolute bottom-0 left-0 right-0 p-6">
+      <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-4">
+        <div>
+          <div className="flex items-center gap-2 mb-2">
+            <Badge className={getStatusColor(project.status)}>
+              {project.status}
+            </Badge>
+            <Badge className={getPriorityColor(project.priority)}>
+              {project.priority} Priority
+            </Badge>
+          </div>
+          <h2 className="text-white text-2xl sm:text-3xl font-bold drop-shadow-lg">
+            {project.name}
+          </h2>
+          <div className="flex items-center gap-2 text-white/80 text-sm mt-2">
+            <MapPin className="h-4 w-4" />
+            <span>
+              {project.location.city}, {project.location.state}
+            </span>
+          </div>
+        </div>
+        <div className="flex flex-wrap gap-3">
+          <div className="bg-white/10 backdrop-blur-md rounded-lg px-4 py-2 border border-white/20">
+            <p className="text-white/70 text-xs uppercase tracking-wide">
+              Progress
+            </p>
+            <p className="text-white font-semibold text-lg">
+              {project.progressPercentage ?? 0}%
+            </p>
+          </div>
+          <div className="bg-white/10 backdrop-blur-md rounded-lg px-4 py-2 border border-white/20">
+            <p className="text-white/70 text-xs uppercase tracking-wide">
+              Budget
+            </p>
+            <p className="text-white font-semibold text-lg">
+              {formatCurrency(project.totalBudget)}
+            </p>
+          </div>
+          <div className="bg-white/10 backdrop-blur-md rounded-lg px-4 py-2 border border-white/20">
+            <p className="text-white/70 text-xs uppercase tracking-wide">
+              Team
+            </p>
+            <p className="text-white font-semibold text-lg">
+              {project.teamMembers.length + 1}
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// Client Card Component
+interface ClientCardProps {
+  project: Project;
+  isCompact?: boolean;
+}
+
+function ClientCard({ project, isCompact = false }: ClientCardProps) {
+  if (isCompact) {
+    return (
+      <Card className="relative overflow-hidden bg-card/50 backdrop-blur-sm border-border/50">
+        <div className="absolute inset-0 bg-gradient-to-br from-emerald-500/[0.02] to-green-500/[0.02] dark:from-emerald-400/[0.05] dark:to-green-400/[0.05]"></div>
+        <CardHeader className="relative pb-2">
+          <div className="flex items-center gap-3">
+            <div className="p-2 bg-emerald-500/10 rounded-lg border border-emerald-500/20">
+              <User className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />
+            </div>
+            <CardTitle className="text-foreground text-base">Client</CardTitle>
+          </div>
+        </CardHeader>
+        <CardContent className="relative">
+          <div className="flex items-start gap-3">
+            <Avatar className="h-10 w-10 border-2 border-border/50">
+              <AvatarImage
+                src={`https://avatar.vercel.sh/${project.client}`}
+                alt={project.client}
+              />
+              <AvatarFallback className="bg-gradient-to-br from-emerald-500/10 to-green-500/10 text-sm">
+                {getInitials(project.client)}
+              </AvatarFallback>
+            </Avatar>
+            <div className="flex-1 min-w-0">
+              <h4 className="text-foreground font-medium truncate">
+                {project.client}
+              </h4>
+              {project.clientPhone && (
+                <div className="flex items-center gap-2 text-sm text-muted-foreground mt-1">
+                  <Phone className="h-3 w-3 flex-shrink-0" />
+                  <span className="truncate">{project.clientPhone}</span>
+                </div>
+              )}
+              {project.clientEmail && (
+                <div className="flex items-center gap-2 text-sm text-muted-foreground mt-1">
+                  <Mail className="h-3 w-3 flex-shrink-0" />
+                  <span className="truncate">{project.clientEmail}</span>
+                </div>
+              )}
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  return (
+    <Card className="relative overflow-hidden bg-card/50 backdrop-blur-sm border-border/50">
+      <div className="absolute inset-0 bg-gradient-to-br from-emerald-500/[0.02] to-green-500/[0.02] dark:from-emerald-400/[0.05] dark:to-green-400/[0.05]"></div>
+      <CardHeader className="relative pb-3">
+        <div className="flex items-center gap-3">
+          <div className="p-2 bg-emerald-500/10 rounded-lg border border-emerald-500/20">
+            <User className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />
+          </div>
+          <CardTitle className="text-foreground text-base">
+            Client Information
+          </CardTitle>
+        </div>
+      </CardHeader>
+      <CardContent className="relative">
+        <div className="flex items-start gap-4">
+          <Avatar className="h-12 w-12 border-2 border-border/50">
+            <AvatarImage
+              src={`https://avatar.vercel.sh/${project.client}`}
+              alt={project.client}
+            />
+            <AvatarFallback className="bg-gradient-to-br from-emerald-500/10 to-green-500/10">
+              {getInitials(project.client)}
+            </AvatarFallback>
+          </Avatar>
+          <div className="flex-1">
+            <h4 className="text-foreground font-medium">{project.client}</h4>
+            <p className="text-sm text-muted-foreground">Client</p>
+            <div className="mt-3 space-y-2">
+              {project.clientPhone && (
+                <div className="flex items-center gap-2 text-sm">
+                  <Phone className="h-4 w-4 text-muted-foreground" />
+                  <span className="text-foreground">{project.clientPhone}</span>
+                </div>
+              )}
+              {project.clientEmail && (
+                <div className="flex items-center gap-2 text-sm">
+                  <Mail className="h-4 w-4 text-muted-foreground" />
+                  <span className="text-foreground">{project.clientEmail}</span>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
 export function OverviewTab({ project }: OverviewTabProps) {
   const [isDescriptionExpanded, setIsDescriptionExpanded] = useState(false);
   const [isRequirementsExpanded, setIsRequirementsExpanded] = useState(false);
@@ -125,153 +328,10 @@ export function OverviewTab({ project }: OverviewTabProps) {
     <div className="space-y-6">
       {/* Hero Section with Cover Image */}
       <div className="relative">
-        {project.coverImage ? (
-          <Card className="relative overflow-hidden bg-card/50 backdrop-blur-sm border-border/50">
-            {/* Aspect Ratio Container - 4:1 compact ratio */}
-            <div className="relative w-full h-44 sm:h-52 md:h-60">
-              <img
-                src={project.coverImage}
-                alt={`${project.name} cover`}
-                className="w-full h-full object-cover object-center"
-              />
-              {/* Gradient Overlay */}
-              <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
-              <div className="absolute inset-0 bg-gradient-to-r from-black/40 via-transparent to-transparent" />
-
-              {/* View Full Image Button */}
-              <Button
-                variant="secondary"
-                size="sm"
-                className="absolute top-4 right-4 bg-black/50 hover:bg-black/70 text-white border-0 backdrop-blur-sm"
-                onClick={() => setShowFullImage(true)}
-              >
-                <Expand className="h-4 w-4 mr-2" />
-                View Full
-              </Button>
-
-              {/* Project Info Overlay */}
-              <div className="absolute bottom-0 left-0 right-0 p-6">
-                <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-4">
-                  <div>
-                    <div className="flex items-center gap-2 mb-2">
-                      <Badge className={getStatusColor(project.status)}>
-                        {project.status}
-                      </Badge>
-                      <Badge className={getPriorityColor(project.priority)}>
-                        {project.priority} Priority
-                      </Badge>
-                    </div>
-                    <h2 className="text-white text-2xl sm:text-3xl font-bold drop-shadow-lg">
-                      {project.name}
-                    </h2>
-                    <div className="flex items-center gap-2 text-white/80 text-sm mt-2">
-                      <MapPin className="h-4 w-4" />
-                      <span>
-                        {project.location.city}, {project.location.state}
-                      </span>
-                    </div>
-                  </div>
-
-                  {/* Quick Stats on Hero */}
-                  <div className="flex flex-wrap gap-3">
-                    <div className="bg-white/10 backdrop-blur-md rounded-lg px-4 py-2 border border-white/20">
-                      <p className="text-white/70 text-xs uppercase tracking-wide">
-                        Progress
-                      </p>
-                      <p className="text-white font-semibold text-lg">
-                        {project.progressPercentage ?? 0}%
-                      </p>
-                    </div>
-                    <div className="bg-white/10 backdrop-blur-md rounded-lg px-4 py-2 border border-white/20">
-                      <p className="text-white/70 text-xs uppercase tracking-wide">
-                        Budget
-                      </p>
-                      <p className="text-white font-semibold text-lg">
-                        {formatCurrency(project.totalBudget)}
-                      </p>
-                    </div>
-                    <div className="bg-white/10 backdrop-blur-md rounded-lg px-4 py-2 border border-white/20">
-                      <p className="text-white/70 text-xs uppercase tracking-wide">
-                        Team
-                      </p>
-                      <p className="text-white font-semibold text-lg">
-                        {project.teamMembers.length + 1}
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </Card>
-        ) : (
-          <Card className="relative overflow-hidden bg-card/50 backdrop-blur-sm border-border/50">
-            <div className="relative w-full h-44 sm:h-52 md:h-60 bg-gradient-to-br from-gray-100 to-gray-200 dark:from-gray-800 dark:to-gray-900">
-              {/* Placeholder with Type Icon */}
-              <div className="absolute inset-0 flex items-center justify-center">
-                {(() => {
-                  const TypeIcon = getTypeIcon(project.type);
-                  return <TypeIcon className="w-20 h-20 text-gray-400 dark:text-gray-600 opacity-50" />;
-                })()}
-              </div>
-              {/* Gradient Overlay */}
-              <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
-              <div className="absolute inset-0 bg-gradient-to-r from-black/40 via-transparent to-transparent" />
-
-              {/* Project Info Overlay */}
-              <div className="absolute bottom-0 left-0 right-0 p-6">
-                <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-4">
-                  <div>
-                    <div className="flex items-center gap-2 mb-2">
-                      <Badge className={getStatusColor(project.status)}>
-                        {project.status}
-                      </Badge>
-                      <Badge className={getPriorityColor(project.priority)}>
-                        {project.priority} Priority
-                      </Badge>
-                    </div>
-                    <h2 className="text-white text-2xl sm:text-3xl font-bold drop-shadow-lg">
-                      {project.name}
-                    </h2>
-                    <div className="flex items-center gap-2 text-white/80 text-sm mt-2">
-                      <MapPin className="h-4 w-4" />
-                      <span>
-                        {project.location.city}, {project.location.state}
-                      </span>
-                    </div>
-                  </div>
-
-                  {/* Quick Stats on Hero */}
-                  <div className="flex flex-wrap gap-3">
-                    <div className="bg-white/10 backdrop-blur-md rounded-lg px-4 py-2 border border-white/20">
-                      <p className="text-white/70 text-xs uppercase tracking-wide">
-                        Progress
-                      </p>
-                      <p className="text-white font-semibold text-lg">
-                        {project.progressPercentage ?? 0}%
-                      </p>
-                    </div>
-                    <div className="bg-white/10 backdrop-blur-md rounded-lg px-4 py-2 border border-white/20">
-                      <p className="text-white/70 text-xs uppercase tracking-wide">
-                        Budget
-                      </p>
-                      <p className="text-white font-semibold text-lg">
-                        {formatCurrency(project.totalBudget)}
-                      </p>
-                    </div>
-                    <div className="bg-white/10 backdrop-blur-md rounded-lg px-4 py-2 border border-white/20">
-                      <p className="text-white/70 text-xs uppercase tracking-wide">
-                        Team
-                      </p>
-                      <p className="text-white font-semibold text-lg">
-                        {project.teamMembers.length + 1}
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </Card>
-        )}
+        <HeroSection
+          project={project}
+          onViewFullImage={() => setShowFullImage(true)}
+        />
 
         {/* Full Image Modal */}
         {showFullImage && project.coverImage && (
@@ -324,7 +384,9 @@ export function OverviewTab({ project }: OverviewTabProps) {
                   variant="link"
                   size="sm"
                   className="p-0 h-auto text-primary"
-                  onClick={() => setIsDescriptionExpanded(!isDescriptionExpanded)}
+                  onClick={() =>
+                    setIsDescriptionExpanded(!isDescriptionExpanded)
+                  }
                 >
                   {isDescriptionExpanded ? (
                     <>
@@ -483,7 +545,9 @@ export function OverviewTab({ project }: OverviewTabProps) {
             </div>
             <div className="flex justify-between items-center py-2">
               <span className="text-sm text-muted-foreground">Priority</span>
-              <Badge className={`${getPriorityColor(project.priority)} text-xs`}>
+              <Badge
+                className={`${getPriorityColor(project.priority)} text-xs`}
+              >
                 {project.priority}
               </Badge>
             </div>
@@ -498,7 +562,9 @@ export function OverviewTab({ project }: OverviewTabProps) {
               <div className="p-2 bg-emerald-500/10 rounded-lg border border-emerald-500/20">
                 <DollarSign className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />
               </div>
-              <CardTitle className="text-foreground text-base">Budget</CardTitle>
+              <CardTitle className="text-foreground text-base">
+                Budget
+              </CardTitle>
             </div>
           </CardHeader>
           <CardContent className="relative space-y-3">
@@ -567,7 +633,9 @@ export function OverviewTab({ project }: OverviewTabProps) {
               </div>
             )}
             <div className="flex justify-between items-center py-2">
-              <span className="text-sm text-muted-foreground">Last Updated</span>
+              <span className="text-sm text-muted-foreground">
+                Last Updated
+              </span>
               <span className="text-sm font-medium text-muted-foreground">
                 {formatDate(project.updatedAt)}
               </span>
