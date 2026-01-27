@@ -2,10 +2,11 @@
 
 import { useRouter } from "next/navigation";
 import {
-  ArrowLeft,
+  ChevronRight,
   Download,
   Edit,
   FileText,
+  Home,
   MoreHorizontal,
 } from "lucide-react";
 import { Button } from "../ui/button";
@@ -36,20 +37,26 @@ export function ProjectHeader({
   };
 
   return (
-    <div className="flex items-center justify-between">
-      <div className="flex items-center gap-4">
-        <Button
-          variant="ghost"
-          size="icon"
+    <div className="space-y-4">
+      {/* Breadcrumb Navigation */}
+      <div className="flex items-center gap-2 text-sm">
+        <button
           onClick={onBack}
-          className="hover:bg-muted/50"
+          className="flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors group"
         >
-          <ArrowLeft className="h-4 w-4" />
-        </Button>
-        <div>
-          <h1 className="text-foreground">{projectName}</h1>
-          <p className="text-muted-foreground">Project Details & Management</p>
-        </div>
+          <div className="p-1.5 rounded-lg bg-background/50 border border-border/50 group-hover:border-primary/50 group-hover:bg-primary/5 transition-all">
+            <Home className="h-4 w-4" />
+          </div>
+          <span className="font-medium">Projects</span>
+        </button>
+        <ChevronRight className="h-4 w-4 text-muted-foreground" />
+        <span className="text-foreground font-medium">{projectName}</span>
+      </div>
+
+      <div className="flex items-center justify-between">
+      <div>
+        <h1 className="text-foreground">{projectName}</h1>
+        <p className="text-muted-foreground">Project Details & Management</p>
       </div>
       <div className="flex items-center gap-2">
         <Button
@@ -78,6 +85,7 @@ export function ProjectHeader({
           </DropdownMenuContent>
         </DropdownMenu>
       </div>
+    </div>
     </div>
   );
 }
