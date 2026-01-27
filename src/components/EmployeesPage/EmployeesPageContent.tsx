@@ -38,6 +38,153 @@ interface EmployeesPageProps {
   onEmployeeSelect?: (employeeId: string) => void;
 }
 
+function hasActiveFilters(filters: EmployeeFilters): boolean {
+  return (
+    !!filters.search ||
+    filters.department !== "all" ||
+    filters.employmentStatus !== "all" ||
+    filters.employmentType !== "all" ||
+    filters.position !== "all"
+  );
+}
+
+function LoadingState() {
+  return (
+    <div className="space-y-6">
+      <div className="flex items-center justify-center min-h-[400px]">
+        <div className="text-center space-y-4">
+          <Loader2 className="w-12 h-12 text-purple-500 dark:text-purple-400 mx-auto animate-spin" />
+          <p className="text-muted-foreground">Loading employees...</p>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function ErrorState({ error }: { error: unknown }) {
+  return (
+    <div className="space-y-6">
+      <div className="flex flex-col space-y-4 md:flex-row md:items-center md:justify-between md:space-y-0">
+        <div>
+          <h1 className="text-foreground">Employee Management</h1>
+          <p className="text-muted-foreground">
+            Manage your team members and their information
+          </p>
+        </div>
+      </div>
+
+      <Card className="backdrop-blur-xl bg-white/70 dark:bg-black/20 border-red-300/50 dark:border-red-500/30 shadow-xl shadow-red-200/30 dark:shadow-red-500/20">
+        <div className="absolute inset-0 bg-gradient-to-br from-red-50/60 via-orange-50/40 to-red-50/60 opacity-100 dark:opacity-0 transition-opacity duration-300"></div>
+        <div className="relative p-12 text-center space-y-4">
+          <div className="w-16 h-16 mx-auto bg-gradient-to-br from-red-100 to-orange-100 dark:from-red-900/30 dark:to-orange-900/30 rounded-full flex items-center justify-center">
+            <AlertCircle className="w-8 h-8 text-red-600 dark:text-red-400" />
+          </div>
+          <h3 className="text-lg font-semibold text-foreground">
+            Error Loading Employees
+          </h3>
+          <p className="text-muted-foreground max-w-md mx-auto">
+            {(error as { data?: { message?: string } })?.data?.message ||
+              "Failed to load employees. Please try again later."}
+          </p>
+          <Button
+            onClick={() => window.location.reload()}
+            className="bg-gradient-to-r from-purple-500 to-blue-500 hover:from-purple-600 hover:to-blue-600 shadow-lg"
+          >
+            Retry
+          </Button>
+        </div>
+      </Card>
+    </div>
+  );
+}
+
+function EmployeeListSection({
+  employees,
+  filters,
+  viewType,
+  sort,
+  onSelect,
+  onDelete,
+  onSort,
+  onClearFilters,
+}: {
+  employees: Employee[];
+  filters: EmployeeFilters;
+  viewType: EmployeeViewType;
+  sort: EmployeeSort;
+  onSelect: (id: string) => void;
+  onDelete: (id: string) => void;
+  onSort: (field: keyof Employee) => void;
+  onClearFilters: () => void;
+}) {
+  if (employees.length === 0) {
+    return <EmptyState filters={filters} onClearFilters={onClearFilters} />;
+  }
+
+  if (viewType === "cards") {
+    return (
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+        {employees.map((employee) => (
+          <EmployeeCard
+            key={employee.id}
+            employee={employee}
+            onSelect={onSelect}
+            onDelete={onDelete}
+          />
+        ))}
+      </div>
+    );
+  }
+
+  return (
+    <EmployeeTableView
+      employees={employees}
+      onSelect={onSelect}
+      onDelete={onDelete}
+      sortField={sort.field}
+      sortDirection={sort.direction}
+      onSort={onSort}
+    />
+  );
+}
+
+function EmptyState({
+  filters,
+  onClearFilters,
+}: {
+  filters: EmployeeFilters;
+  onClearFilters: () => void;
+}) {
+  const active = hasActiveFilters(filters);
+  return (
+    <Card className="backdrop-blur-xl bg-white/70 dark:bg-black/20 border-white/20 dark:border-white/10 shadow-xl shadow-gray-200/50 dark:shadow-black/50">
+      <div className="absolute inset-0 bg-gradient-to-br from-blue-50/60 via-indigo-50/40 to-purple-50/60 opacity-100 dark:opacity-0 transition-opacity duration-300"></div>
+      <div className="relative p-12 text-center space-y-4">
+        <div className="w-16 h-16 mx-auto bg-gradient-to-br from-purple-100 to-blue-100 dark:from-purple-900/30 dark:to-blue-900/30 rounded-full flex items-center justify-center">
+          <AlertCircle className="w-8 h-8 text-purple-600 dark:text-purple-400" />
+        </div>
+        <h3 className="text-lg font-semibold text-foreground">
+          No Employees Found
+        </h3>
+        <p className="text-muted-foreground max-w-md mx-auto">
+          {active
+            ? "No employees match your current filters. Try adjusting your search criteria."
+            : "No employees have been added yet. Start by adding your first employee."}
+        </p>
+        {active && (
+          <Button
+            onClick={onClearFilters}
+            variant="outline"
+            className="bg-gradient-to-r from-purple-500/10 to-blue-500/10 hover:from-purple-500/20 hover:to-blue-500/20 border-purple-300 dark:border-purple-700"
+          >
+            Clear Filters
+          </Button>
+        )}
+      </div>
+    </Card>
+  );
+}
+
 function buildApiFilters(
   filters: EmployeeFilters,
   debouncedSearchTerm: string,
@@ -94,7 +241,6 @@ function buildURLParams(
   return params;
 }
 
-// eslint-disable-next-line complexity
 export function EmployeesPageContent({ onEmployeeSelect }: EmployeesPageProps) {
   const router = useRouter();
   const pathname = usePathname();
@@ -147,7 +293,6 @@ export function EmployeesPageContent({ onEmployeeSelect }: EmployeesPageProps) {
   useEffect(() => {
     const newFilters = { ...filters, search: debouncedSearchTerm };
     updateURLParams(newFilters, currentPage);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
     debouncedSearchTerm,
     currentPage,
@@ -319,53 +464,11 @@ export function EmployeesPageContent({ onEmployeeSelect }: EmployeesPageProps) {
   };
 
   if (isLoading) {
-    return (
-      <div className="space-y-6">
-        <div className="flex items-center justify-center min-h-[400px]">
-          <div className="text-center space-y-4">
-            <Loader2 className="w-12 h-12 text-purple-500 dark:text-purple-400 mx-auto animate-spin" />
-            <p className="text-muted-foreground">Loading employees...</p>
-          </div>
-        </div>
-      </div>
-    );
+    return <LoadingState />;
   }
 
   if (error) {
-    return (
-      <div className="space-y-6">
-        <div className="flex flex-col space-y-4 md:flex-row md:items-center md:justify-between md:space-y-0">
-          <div>
-            <h1 className="text-foreground">Employee Management</h1>
-            <p className="text-muted-foreground">
-              Manage your team members and their information
-            </p>
-          </div>
-        </div>
-
-        <Card className="backdrop-blur-xl bg-white/70 dark:bg-black/20 border-red-300/50 dark:border-red-500/30 shadow-xl shadow-red-200/30 dark:shadow-red-500/20">
-          <div className="absolute inset-0 bg-gradient-to-br from-red-50/60 via-orange-50/40 to-red-50/60 opacity-100 dark:opacity-0 transition-opacity duration-300"></div>
-          <div className="relative p-12 text-center space-y-4">
-            <div className="w-16 h-16 mx-auto bg-gradient-to-br from-red-100 to-orange-100 dark:from-red-900/30 dark:to-orange-900/30 rounded-full flex items-center justify-center">
-              <AlertCircle className="w-8 h-8 text-red-600 dark:text-red-400" />
-            </div>
-            <h3 className="text-lg font-semibold text-foreground">
-              Error Loading Employees
-            </h3>
-            <p className="text-muted-foreground max-w-md mx-auto">
-              {(error as { data?: { message?: string } })?.data?.message ||
-                "Failed to load employees. Please try again later."}
-            </p>
-            <Button
-              onClick={() => window.location.reload()}
-              className="bg-gradient-to-r from-purple-500 to-blue-500 hover:from-purple-600 hover:to-blue-600 shadow-lg"
-            >
-              Retry
-            </Button>
-          </div>
-        </Card>
-      </div>
-    );
+    return <ErrorState error={error} />;
   }
 
   return (
@@ -444,61 +547,16 @@ export function EmployeesPageContent({ onEmployeeSelect }: EmployeesPageProps) {
         </div>
       )}
 
-      {employees.length === 0 ? (
-        <Card className="backdrop-blur-xl bg-white/70 dark:bg-black/20 border-white/20 dark:border-white/10 shadow-xl shadow-gray-200/50 dark:shadow-black/50">
-          <div className="absolute inset-0 bg-gradient-to-br from-blue-50/60 via-indigo-50/40 to-purple-50/60 opacity-100 dark:opacity-0 transition-opacity duration-300"></div>
-          <div className="relative p-12 text-center space-y-4">
-            <div className="w-16 h-16 mx-auto bg-gradient-to-br from-purple-100 to-blue-100 dark:from-purple-900/30 dark:to-blue-900/30 rounded-full flex items-center justify-center">
-              <AlertCircle className="w-8 h-8 text-purple-600 dark:text-purple-400" />
-            </div>
-            <h3 className="text-lg font-semibold text-foreground">
-              No Employees Found
-            </h3>
-            <p className="text-muted-foreground max-w-md mx-auto">
-              {filters.search ||
-              filters.department !== "all" ||
-              filters.employmentStatus !== "all" ||
-              filters.employmentType !== "all" ||
-              filters.position !== "all"
-                ? "No employees match your current filters. Try adjusting your search criteria."
-                : "No employees have been added yet. Start by adding your first employee."}
-            </p>
-            {(filters.search ||
-              filters.department !== "all" ||
-              filters.employmentStatus !== "all" ||
-              filters.employmentType !== "all" ||
-              filters.position !== "all") && (
-              <Button
-                onClick={handleClearFilters}
-                variant="outline"
-                className="bg-gradient-to-r from-purple-500/10 to-blue-500/10 hover:from-purple-500/20 hover:to-blue-500/20 border-purple-300 dark:border-purple-700"
-              >
-                Clear Filters
-              </Button>
-            )}
-          </div>
-        </Card>
-      ) : viewType === "cards" ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-          {employees.map((employee) => (
-            <EmployeeCard
-              key={employee.id}
-              employee={employee}
-              onSelect={onEmployeeSelect || (() => {})}
-              onDelete={handleDeleteClick}
-            />
-          ))}
-        </div>
-      ) : (
-        <EmployeeTableView
-          employees={employees}
-          onSelect={onEmployeeSelect || (() => {})}
-          onDelete={handleDeleteClick}
-          sortField={sort.field}
-          sortDirection={sort.direction}
-          onSort={handleSort}
-        />
-      )}
+      <EmployeeListSection
+        employees={employees}
+        filters={filters}
+        viewType={viewType}
+        sort={sort}
+        onSelect={onEmployeeSelect || (() => {})}
+        onDelete={handleDeleteClick}
+        onSort={handleSort}
+        onClearFilters={handleClearFilters}
+      />
 
       {totalPages > 1 && (
         <EmployeePagination

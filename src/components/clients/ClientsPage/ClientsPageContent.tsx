@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useDebounce } from "@/hooks/useDebounce";
 import { AlertCircle, Grid3X3, List, Loader2, Plus } from "lucide-react";
@@ -36,6 +36,50 @@ import { ClientTableView } from "./ClientTableView";
 import { ClientPagination } from "./ClientPagination";
 
 const ITEMS_PER_PAGE = 8;
+
+const DEFAULT_FILTERS: ClientFilters = {
+  search: "",
+  companyType: "all",
+  status: "all",
+  priority: "all",
+  architecturalStyle: "all",
+  source: "all",
+};
+
+const DEFAULT_STATUSES = [
+  "Potential Lead",
+  "Active",
+  "On Hold",
+  "Inactive",
+  "Former Client",
+];
+const DEFAULT_PRIORITIES = ["Low", "Medium", "High", "VIP"];
+const DEFAULT_ARCHITECTURAL_STYLES = [
+  "Modern",
+  "Contemporary",
+  "Traditional",
+  "Industrial",
+  "Scandinavian",
+  "Minimalist",
+  "Mediterranean",
+  "Sustainable",
+  "Art Deco",
+  "Colonial",
+  "Craftsman",
+  "Victorian",
+  "Mid-Century Modern",
+  "Other",
+];
+
+const DEFAULT_STATS = {
+  total: 0,
+  active: 0,
+  potential: 0,
+  vip: 0,
+  low: 0,
+  medium: 0,
+  high: 0,
+};
 
 interface ClientsPageProps {
   onClientSelect?: (clientId: string) => void;
@@ -103,7 +147,136 @@ function buildURLParams(
   return params;
 }
 
-// eslint-disable-next-line complexity
+function hasActiveFilters(filters: ClientFilters): boolean {
+  return !!(
+    filters.search ||
+    filters.status !== "all" ||
+    filters.priority !== "all" ||
+    filters.architecturalStyle !== "all" ||
+    filters.companyType !== "all" ||
+    filters.source !== "all"
+  );
+}
+
+function ClientsLoadingState() {
+  return (
+    <div className="space-y-6">
+      <div className="flex items-center justify-center min-h-[400px]">
+        <div className="text-center space-y-4">
+          <Loader2 className="w-12 h-12 text-purple-500 dark:text-purple-400 mx-auto animate-spin" />
+          <p className="text-muted-foreground">Loading clients...</p>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function ClientsErrorState({ error }: { error: unknown }) {
+  return (
+    <div className="space-y-6">
+      <div className="flex items-center justify-center min-h-[400px]">
+        <Card className="p-8 backdrop-blur-xl bg-white/70 dark:bg-black/20 border-red-500/30">
+          <div className="text-center space-y-4">
+            <AlertCircle className="w-12 h-12 text-red-500 mx-auto" />
+            <h3 className="text-lg font-semibold text-foreground">
+              Error Loading Clients
+            </h3>
+            <p className="text-muted-foreground">
+              {(error as { data?: { message?: string } })?.data?.message ||
+                "Failed to load clients. Please try again later."}
+            </p>
+            <Button
+              onClick={() => window.location.reload()}
+              className="bg-gradient-to-r from-purple-500 to-blue-500"
+            >
+              Retry
+            </Button>
+          </div>
+        </Card>
+      </div>
+    </div>
+  );
+}
+
+function ClientsEmptyState({
+  filters,
+  onClearFilters,
+}: {
+  filters: ClientFilters;
+  onClearFilters: () => void;
+}) {
+  const filtersActive = hasActiveFilters(filters);
+  return (
+    <Card className="backdrop-blur-xl bg-white/70 dark:bg-black/20 border-white/20 dark:border-white/10 shadow-xl shadow-gray-200/50 dark:shadow-black/50">
+      <div className="absolute inset-0 bg-gradient-to-br from-blue-50/60 via-indigo-50/40 to-purple-50/60 opacity-100 dark:opacity-0 transition-opacity duration-300"></div>
+      <div className="relative p-12 text-center space-y-4">
+        <div className="w-16 h-16 mx-auto bg-gradient-to-br from-purple-100 to-blue-100 dark:from-purple-900/30 dark:to-blue-900/30 rounded-full flex items-center justify-center">
+          <AlertCircle className="w-8 h-8 text-purple-600 dark:text-purple-400" />
+        </div>
+        <h3 className="text-lg font-semibold text-foreground">
+          No Clients Found
+        </h3>
+        <p className="text-muted-foreground max-w-md mx-auto">
+          {filtersActive
+            ? "No clients match your current filters. Try adjusting your search criteria."
+            : "No clients have been added yet. Start by adding your first client."}
+        </p>
+        {filtersActive && (
+          <Button
+            onClick={onClearFilters}
+            variant="outline"
+            className="bg-gradient-to-r from-purple-500/10 to-blue-500/10 hover:from-purple-500/20 hover:to-blue-500/20 border-purple-300 dark:border-purple-700"
+          >
+            Clear Filters
+          </Button>
+        )}
+      </div>
+    </Card>
+  );
+}
+
+function ClientListView({
+  clients,
+  viewType,
+  onClientSelect,
+  onDelete,
+  sort,
+  onSort,
+}: {
+  clients: Client[];
+  viewType: ClientViewType;
+  onClientSelect: (clientId: string) => void;
+  onDelete: (clientId: string) => void;
+  sort: ClientSort;
+  onSort: (field: keyof Client) => void;
+}) {
+  if (viewType === "cards") {
+    return (
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+        {clients.map((client) => (
+          <ClientCard
+            key={client.id}
+            client={client}
+            onSelect={onClientSelect}
+            onDelete={onDelete}
+          />
+        ))}
+      </div>
+    );
+  }
+
+  return (
+    <ClientTableView
+      clients={clients}
+      onSelect={onClientSelect}
+      onDelete={onDelete}
+      sortField={sort.field}
+      sortDirection={sort.direction}
+      onSort={onSort}
+    />
+  );
+}
+
 export function ClientsPageContent({ onClientSelect }: ClientsPageProps) {
   const router = useRouter();
   const pathname = usePathname();
@@ -111,14 +284,7 @@ export function ClientsPageContent({ onClientSelect }: ClientsPageProps) {
 
   const [currentPage, setCurrentPage] = useState(1);
   const [viewType, setViewType] = useState<ClientViewType>("cards");
-  const [filters, setFilters] = useState<ClientFilters>({
-    search: "",
-    companyType: "all",
-    status: "all",
-    priority: "all",
-    architecturalStyle: "all",
-    source: "all",
-  });
+  const [filters, setFilters] = useState<ClientFilters>(DEFAULT_FILTERS);
   const [sort, setSort] = useState<ClientSort>({
     field: "name",
     direction: "asc",
@@ -165,7 +331,7 @@ export function ClientsPageContent({ onClientSelect }: ClientsPageProps) {
       router.push(queryString ? `${pathname}?${queryString}` : pathname);
       setCurrentPage(1);
     }
-  }, [debouncedSearchForUrl]);
+  }, [debouncedSearchForUrl]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const apiFilters = useMemo(
     () => buildApiFilters(filters, debouncedSearchTerm, currentPage),
@@ -189,94 +355,65 @@ export function ClientsPageContent({ onClientSelect }: ClientsPageProps) {
   const [deleteClient] = useDeleteClientMutation();
 
   const statuses = useMemo(() => {
-    if (apiStats?.byStatus) {
-      return Object.keys(apiStats.byStatus);
-    }
-    return ["Potential Lead", "Active", "On Hold", "Inactive", "Former Client"];
+    return apiStats?.byStatus
+      ? Object.keys(apiStats.byStatus)
+      : DEFAULT_STATUSES;
   }, [apiStats?.byStatus]);
 
   const priorities = useMemo(() => {
-    if (apiStats?.byPriority) {
-      return Object.keys(apiStats.byPriority);
-    }
-    return ["Low", "Medium", "High", "VIP"];
+    return apiStats?.byPriority
+      ? Object.keys(apiStats.byPriority)
+      : DEFAULT_PRIORITIES;
   }, [apiStats?.byPriority]);
 
   const architecturalStyles = useMemo(() => {
-    // Always show all available architectural interests (matching the add client form)
-    const defaultStyles = [
-      "Modern",
-      "Contemporary",
-      "Traditional",
-      "Industrial",
-      "Scandinavian",
-      "Minimalist",
-      "Mediterranean",
-      "Sustainable",
-      "Art Deco",
-      "Colonial",
-      "Craftsman",
-      "Victorian",
-      "Mid-Century Modern",
-      "Other",
-    ];
-
-    // Merge with any custom interests from API stats (excluding "Unknown")
-    if (apiStats?.byArchitecturalStyle) {
-      const apiStyles = Object.keys(apiStats.byArchitecturalStyle).filter(
-        (style) => style !== "Unknown"
-      );
-      const allStyles = new Set([...defaultStyles, ...apiStyles]);
-      return Array.from(allStyles);
+    if (!apiStats?.byArchitecturalStyle) {
+      return DEFAULT_ARCHITECTURAL_STYLES;
     }
-
-    return defaultStyles;
+    const apiStyles = Object.keys(apiStats.byArchitecturalStyle).filter(
+      (style) => style !== "Unknown"
+    );
+    return Array.from(new Set([...DEFAULT_ARCHITECTURAL_STYLES, ...apiStyles]));
   }, [apiStats?.byArchitecturalStyle]);
 
   const stats = useMemo(() => {
-    if (apiStats) {
-      return {
-        total: apiStats.totalClients,
-        active: apiStats.activeClients,
-        potential: apiStats.potentialClients,
-        vip: apiStats.vipClients,
-        low: apiStats.byPriority?.Low || 0,
-        medium: apiStats.byPriority?.Medium || 0,
-        high: apiStats.byPriority?.High || 0,
-      };
+    if (!apiStats) {
+      return DEFAULT_STATS;
     }
-
     return {
-      total: 0,
-      active: 0,
-      potential: 0,
-      vip: 0,
-      low: 0,
-      medium: 0,
-      high: 0,
+      total: apiStats.totalClients,
+      active: apiStats.activeClients,
+      potential: apiStats.potentialClients,
+      vip: apiStats.vipClients,
+      low: apiStats.byPriority?.Low || 0,
+      medium: apiStats.byPriority?.Medium || 0,
+      high: apiStats.byPriority?.High || 0,
     };
   }, [apiStats]);
 
-  const updateURLParams = (newFilters: ClientFilters, page: number = 1) => {
-    const params = buildURLParams(newFilters, page);
-    const queryString = params.toString();
-    router.push(queryString ? `${pathname}?${queryString}` : pathname);
-  };
+  const updateURLParams = useCallback(
+    (newFilters: ClientFilters, page: number = 1) => {
+      const params = buildURLParams(newFilters, page);
+      const queryString = params.toString();
+      router.push(queryString ? `${pathname}?${queryString}` : pathname);
+    },
+    [router, pathname]
+  );
 
-  const handleSort = (field: keyof Client) => {
+  const handleSort = useCallback((field: keyof Client) => {
     setSort((prev) => ({
       field,
       direction:
         prev.field === field && prev.direction === "asc" ? "desc" : "asc",
     }));
-  };
+  }, []);
 
-  const handleDeleteClick = (clientId: string) => {
+  const handleDeleteClick = useCallback((clientId: string) => {
     setClientToDelete(clientId);
     setDeleteDialogOpen(true);
-  };
+  }, []);
 
-  const handleDeleteConfirm = async () => {
+  const handleDeleteConfirm = useCallback(async () => {
     if (!clientToDelete) {
       return;
     }
@@ -291,88 +428,57 @@ export function ClientsPageContent({ onClientSelect }: ClientsPageProps) {
 
       setDeleteDialogOpen(false);
       setClientToDelete(null);
-    } catch (error) {
-      console.error("Failed to delete client:", error);
+    } catch (err) {
+      console.error("Failed to delete client:", err);
 
       toast.error("Failed to delete client", {
         description:
           "An error occurred while deleting the client. Please try again.",
       });
     }
-  };
+  }, [clientToDelete, deleteClient]);
 
-  const handleDeleteCancel = () => {
+  const handleDeleteCancel = useCallback(() => {
     setDeleteDialogOpen(false);
     setClientToDelete(null);
-  };
+  }, []);
 
-  const handleFilterChange = (key: keyof ClientFilters, value: string) => {
-    const newFilters = { ...filters, [key]: value };
-    setFilters(newFilters);
-    // For search, URL update is handled by debounced effect
-    if (key !== "search") {
-      setCurrentPage(1);
-      updateURLParams(newFilters, 1);
-    }
-  };
+  const handleFilterChange = useCallback(
+    (key: keyof ClientFilters, value: string) => {
+      setFilters((prev) => {
+        const newFilters = { ...prev, [key]: value };
+        if (key !== "search") {
+          setCurrentPage(1);
+          updateURLParams(newFilters, 1);
+        }
+        return newFilters;
+      });
+    },
+    [updateURLParams]
+  );
 
-  const handleClearFilters = () => {
-    const clearedFilters: ClientFilters = {
-      search: "",
-      companyType: "all",
-      status: "all",
-      priority: "all",
-      architecturalStyle: "all",
-      source: "all",
-    };
-    setFilters(clearedFilters);
+  const handleClearFilters = useCallback(() => {
+    setFilters(DEFAULT_FILTERS);
     setCurrentPage(1);
-    updateURLParams(clearedFilters, 1);
-  };
+    updateURLParams(DEFAULT_FILTERS, 1);
+  }, [updateURLParams]);
 
-  const handlePageChange = (page: number) => {
-    setCurrentPage(page);
-    updateURLParams(filters, page);
-  };
+  const handlePageChange = useCallback(
+    (page: number) => {
+      setCurrentPage(page);
+      updateURLParams(filters, page);
+    },
+    [updateURLParams, filters]
+  );
+
+  const selectHandler = onClientSelect || (() => {});
 
   if (isLoading) {
-    return (
-      <div className="space-y-6">
-        <div className="flex items-center justify-center min-h-[400px]">
-          <div className="text-center space-y-4">
-            <Loader2 className="w-12 h-12 text-purple-500 dark:text-purple-400 mx-auto animate-spin" />
-            <p className="text-muted-foreground">Loading clients...</p>
-          </div>
-        </div>
-      </div>
-    );
+    return <ClientsLoadingState />;
   }
 
   if (error) {
-    return (
-      <div className="space-y-6">
-        <div className="flex items-center justify-center min-h-[400px]">
-          <Card className="p-8 backdrop-blur-xl bg-white/70 dark:bg-black/20 border-red-500/30">
-            <div className="text-center space-y-4">
-              <AlertCircle className="w-12 h-12 text-red-500 mx-auto" />
-              <h3 className="text-lg font-semibold text-foreground">
-                Error Loading Clients
-              </h3>
-              <p className="text-muted-foreground">
-                {(error as { data?: { message?: string } })?.data?.message ||
-                  "Failed to load clients. Please try again later."}
-              </p>
-              <Button
-                onClick={() => window.location.reload()}
-                className="bg-gradient-to-r from-purple-500 to-blue-500"
-              >
-                Retry
-              </Button>
-            </div>
-          </Card>
-        </div>
-      </div>
-    );
+    return <ClientsErrorState error={error} />;
   }
 
   return (
@@ -451,59 +557,17 @@ export function ClientsPageContent({ onClientSelect }: ClientsPageProps) {
       )}
 
       {clients.length === 0 ? (
-        <Card className="backdrop-blur-xl bg-white/70 dark:bg-black/20 border-white/20 dark:border-white/10 shadow-xl shadow-gray-200/50 dark:shadow-black/50">
-          <div className="absolute inset-0 bg-gradient-to-br from-blue-50/60 via-indigo-50/40 to-purple-50/60 opacity-100 dark:opacity-0 transition-opacity duration-300"></div>
-          <div className="relative p-12 text-center space-y-4">
-            <div className="w-16 h-16 mx-auto bg-gradient-to-br from-purple-100 to-blue-100 dark:from-purple-900/30 dark:to-blue-900/30 rounded-full flex items-center justify-center">
-              <AlertCircle className="w-8 h-8 text-purple-600 dark:text-purple-400" />
-            </div>
-            <h3 className="text-lg font-semibold text-foreground">
-              No Clients Found
-            </h3>
-            <p className="text-muted-foreground max-w-md mx-auto">
-              {filters.search ||
-              filters.status !== "all" ||
-              filters.priority !== "all" ||
-              filters.architecturalStyle !== "all" ||
-              filters.companyType !== "all" ||
-              filters.source !== "all"
-                ? "No clients match your current filters. Try adjusting your search criteria."
-                : "No clients have been added yet. Start by adding your first client."}
-            </p>
-            {(filters.search ||
-              filters.status !== "all" ||
-              filters.priority !== "all" ||
-              filters.architecturalStyle !== "all" ||
-              filters.companyType !== "all" ||
-              filters.source !== "all") && (
-              <Button
-                onClick={handleClearFilters}
-                variant="outline"
-                className="bg-gradient-to-r from-purple-500/10 to-blue-500/10 hover:from-purple-500/20 hover:to-blue-500/20 border-purple-300 dark:border-purple-700"
-              >
-                Clear Filters
-              </Button>
-            )}
-          </div>
-        </Card>
-      ) : viewType === "cards" ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-          {clients.map((client) => (
-            <ClientCard
-              key={client.id}
-              client={client}
-              onSelect={onClientSelect || (() => {})}
-              onDelete={handleDeleteClick}
-            />
-          ))}
-        </div>
+        <ClientsEmptyState
+          filters={filters}
+          onClearFilters={handleClearFilters}
+        />
       ) : (
-        <ClientTableView
+        <ClientListView
           clients={clients}
-          onSelect={onClientSelect || (() => {})}
+          viewType={viewType}
+          onClientSelect={selectHandler}
           onDelete={handleDeleteClick}
-          sortField={sort.field}
-          sortDirection={sort.direction}
+          sort={sort}
           onSort={handleSort}
         />
       )}

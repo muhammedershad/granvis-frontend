@@ -326,7 +326,234 @@ const mockEmployeeDetails: Employee & {
   },
 };
 
-// eslint-disable-next-line max-lines-per-function
+function EmployeeProfileCard({
+  employee,
+  isEditing,
+  editedEmployee,
+  setEditedEmployee,
+  getStatusColor,
+}: {
+  employee: typeof mockEmployeeDetails;
+  isEditing: boolean;
+  editedEmployee: typeof mockEmployeeDetails;
+  setEditedEmployee: React.Dispatch<
+    React.SetStateAction<typeof mockEmployeeDetails>
+  >;
+  getStatusColor: (status: string) => string;
+}) {
+  return (
+    <Card className="bg-black/20 border-white/10 backdrop-blur-xl relative overflow-hidden">
+      <div className="absolute inset-0 bg-gradient-to-br from-purple-500/5 to-blue-500/5"></div>
+      <CardContent className="relative z-10 p-6">
+        <div className="flex flex-col md:flex-row gap-6">
+          {/* Avatar and Basic Info */}
+          <div className="flex flex-col items-center md:items-start space-y-4">
+            <div className="relative">
+              <Avatar className="w-32 h-32 border-4 border-white/10">
+                <AvatarImage src={employee.avatar} />
+                <AvatarFallback className="text-2xl bg-gradient-to-br from-purple-500 to-blue-500 text-white">
+                  {employee.name
+                    .split(" ")
+                    .map((n) => n[0])
+                    .join("")}
+                </AvatarFallback>
+              </Avatar>
+              {isEditing && (
+                <Button
+                  size="icon"
+                  className="absolute -bottom-2 -right-2 w-10 h-10 rounded-full bg-purple-500 hover:bg-purple-600"
+                >
+                  <Camera className="w-4 h-4" />
+                </Button>
+              )}
+            </div>
+
+            <div className="text-center md:text-left">
+              <Badge className={cn("mb-2", getStatusColor(employee.status))}>
+                {employee.status}
+              </Badge>
+              <p className="text-white/60 text-sm">
+                Employee ID: {employee.employeeId}
+              </p>
+              <p className="text-white/60 text-sm">
+                Joined: {new Date(employee.joinDate).toLocaleDateString()}
+              </p>
+            </div>
+          </div>
+
+          {/* Employee Details */}
+          <div className="flex-1 space-y-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {/* Personal Information */}
+              <div className="space-y-4">
+                <h3 className="text-white/90 flex items-center space-x-2">
+                  <UserCheck className="w-5 h-5" />
+                  <span>Personal Information</span>
+                </h3>
+
+                <div className="space-y-3">
+                  <div>
+                    <Label className="text-white/70 text-sm">Full Name</Label>
+                    {isEditing ? (
+                      <Input
+                        value={editedEmployee.name}
+                        onChange={(e) =>
+                          setEditedEmployee((prev) => ({
+                            ...prev,
+                            name: e.target.value,
+                          }))
+                        }
+                        className="mt-1 bg-white/5 border-white/10 text-white"
+                      />
+                    ) : (
+                      <p className="text-white/90 text-lg">{employee.name}</p>
+                    )}
+                  </div>
+
+                  <div>
+                    <Label className="text-white/70 text-sm">Position</Label>
+                    {isEditing ? (
+                      <Input
+                        value={editedEmployee.position}
+                        onChange={(e) =>
+                          setEditedEmployee((prev) => ({
+                            ...prev,
+                            position: e.target.value,
+                          }))
+                        }
+                        className="mt-1 bg-white/5 border-white/10 text-white"
+                      />
+                    ) : (
+                      <p className="text-white/90">{employee.position}</p>
+                    )}
+                  </div>
+
+                  <div>
+                    <Label className="text-white/70 text-sm">Department</Label>
+                    {isEditing ? (
+                      <Select
+                        value={editedEmployee.department}
+                        onValueChange={(value) =>
+                          setEditedEmployee((prev) => ({
+                            ...prev,
+                            department: value as Employee["department"],
+                          }))
+                        }
+                      >
+                        <SelectTrigger className="mt-1 bg-white/5 border-white/10 text-white">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="Engineering">
+                            Engineering
+                          </SelectItem>
+                          <SelectItem value="Design">Design</SelectItem>
+                          <SelectItem value="Marketing">Marketing</SelectItem>
+                          <SelectItem value="Sales">Sales</SelectItem>
+                          <SelectItem value="HR">Human Resources</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    ) : (
+                      <p className="text-white/90">{employee.department}</p>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              {/* Contact Information */}
+              <div className="space-y-4">
+                <h3 className="text-white/90 flex items-center space-x-2">
+                  <Mail className="w-5 h-5" />
+                  <span>Contact Information</span>
+                </h3>
+
+                <div className="space-y-3">
+                  <div className="flex items-center space-x-3">
+                    <Mail className="w-4 h-4 text-white/60" />
+                    {isEditing ? (
+                      <Input
+                        type="email"
+                        value={editedEmployee.email}
+                        onChange={(e) =>
+                          setEditedEmployee((prev) => ({
+                            ...prev,
+                            email: e.target.value,
+                          }))
+                        }
+                        className="bg-white/5 border-white/10 text-white"
+                      />
+                    ) : (
+                      <span className="text-white/90">{employee.email}</span>
+                    )}
+                  </div>
+
+                  <div className="flex items-center space-x-3">
+                    <Phone className="w-4 h-4 text-white/60" />
+                    {isEditing ? (
+                      <Input
+                        value={editedEmployee.phone}
+                        onChange={(e) =>
+                          setEditedEmployee((prev) => ({
+                            ...prev,
+                            phone: e.target.value,
+                          }))
+                        }
+                        className="bg-white/5 border-white/10 text-white"
+                      />
+                    ) : (
+                      <span className="text-white/90">{employee.phone}</span>
+                    )}
+                  </div>
+
+                  <div className="flex items-center space-x-3">
+                    <MapPin className="w-4 h-4 text-white/60" />
+                    {isEditing ? (
+                      <Input
+                        value={editedEmployee.location}
+                        onChange={(e) =>
+                          setEditedEmployee((prev) => ({
+                            ...prev,
+                            location: e.target.value,
+                          }))
+                        }
+                        className="bg-white/5 border-white/10 text-white"
+                      />
+                    ) : (
+                      <span className="text-white/90">{employee.location}</span>
+                    )}
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Bio */}
+            <div className="space-y-2">
+              <Label className="text-white/70 text-sm">Bio</Label>
+              {isEditing ? (
+                <Textarea
+                  value={editedEmployee.bio}
+                  onChange={(e) =>
+                    setEditedEmployee((prev) => ({
+                      ...prev,
+                      bio: e.target.value,
+                    }))
+                  }
+                  className="bg-white/5 border-white/10 text-white min-h-[100px]"
+                  placeholder="Employee bio..."
+                />
+              ) : (
+                <p className="text-white/80 text-sm leading-relaxed">
+                  {employee.bio}
+                </p>
+              )}
+            </div>
+          </div>
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
 export function EmployeeDetailsPage({
   employeeId,
   onBack,
@@ -432,219 +659,13 @@ export function EmployeeDetailsPage({
       </div>
 
       {/* Employee Profile Card */}
-      <Card className="bg-black/20 border-white/10 backdrop-blur-xl relative overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-br from-purple-500/5 to-blue-500/5"></div>
-        <CardContent className="relative z-10 p-6">
-          <div className="flex flex-col md:flex-row gap-6">
-            {/* Avatar and Basic Info */}
-            <div className="flex flex-col items-center md:items-start space-y-4">
-              <div className="relative">
-                <Avatar className="w-32 h-32 border-4 border-white/10">
-                  <AvatarImage src={employee.avatar} />
-                  <AvatarFallback className="text-2xl bg-gradient-to-br from-purple-500 to-blue-500 text-white">
-                    {employee.name
-                      .split(" ")
-                      .map((n) => n[0])
-                      .join("")}
-                  </AvatarFallback>
-                </Avatar>
-                {isEditing && (
-                  <Button
-                    size="icon"
-                    className="absolute -bottom-2 -right-2 w-10 h-10 rounded-full bg-purple-500 hover:bg-purple-600"
-                  >
-                    <Camera className="w-4 h-4" />
-                  </Button>
-                )}
-              </div>
-
-              <div className="text-center md:text-left">
-                <Badge className={cn("mb-2", getStatusColor(employee.status))}>
-                  {employee.status}
-                </Badge>
-                <p className="text-white/60 text-sm">
-                  Employee ID: {employee.employeeId}
-                </p>
-                <p className="text-white/60 text-sm">
-                  Joined: {new Date(employee.joinDate).toLocaleDateString()}
-                </p>
-              </div>
-            </div>
-
-            {/* Employee Details */}
-            <div className="flex-1 space-y-6">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                {/* Personal Information */}
-                <div className="space-y-4">
-                  <h3 className="text-white/90 flex items-center space-x-2">
-                    <UserCheck className="w-5 h-5" />
-                    <span>Personal Information</span>
-                  </h3>
-
-                  <div className="space-y-3">
-                    <div>
-                      <Label className="text-white/70 text-sm">Full Name</Label>
-                      {isEditing ? (
-                        <Input
-                          value={editedEmployee.name}
-                          onChange={(e) =>
-                            setEditedEmployee((prev) => ({
-                              ...prev,
-                              name: e.target.value,
-                            }))
-                          }
-                          className="mt-1 bg-white/5 border-white/10 text-white"
-                        />
-                      ) : (
-                        <p className="text-white/90 text-lg">{employee.name}</p>
-                      )}
-                    </div>
-
-                    <div>
-                      <Label className="text-white/70 text-sm">Position</Label>
-                      {isEditing ? (
-                        <Input
-                          value={editedEmployee.position}
-                          onChange={(e) =>
-                            setEditedEmployee((prev) => ({
-                              ...prev,
-                              position: e.target.value,
-                            }))
-                          }
-                          className="mt-1 bg-white/5 border-white/10 text-white"
-                        />
-                      ) : (
-                        <p className="text-white/90">{employee.position}</p>
-                      )}
-                    </div>
-
-                    <div>
-                      <Label className="text-white/70 text-sm">
-                        Department
-                      </Label>
-                      {isEditing ? (
-                        <Select
-                          value={editedEmployee.department}
-                          onValueChange={(value) =>
-                            setEditedEmployee((prev) => ({
-                              ...prev,
-                              department: value as Employee["department"],
-                            }))
-                          }
-                        >
-                          <SelectTrigger className="mt-1 bg-white/5 border-white/10 text-white">
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="Engineering">
-                              Engineering
-                            </SelectItem>
-                            <SelectItem value="Design">Design</SelectItem>
-                            <SelectItem value="Marketing">Marketing</SelectItem>
-                            <SelectItem value="Sales">Sales</SelectItem>
-                            <SelectItem value="HR">Human Resources</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      ) : (
-                        <p className="text-white/90">{employee.department}</p>
-                      )}
-                    </div>
-                  </div>
-                </div>
-
-                {/* Contact Information */}
-                <div className="space-y-4">
-                  <h3 className="text-white/90 flex items-center space-x-2">
-                    <Mail className="w-5 h-5" />
-                    <span>Contact Information</span>
-                  </h3>
-
-                  <div className="space-y-3">
-                    <div className="flex items-center space-x-3">
-                      <Mail className="w-4 h-4 text-white/60" />
-                      {isEditing ? (
-                        <Input
-                          type="email"
-                          value={editedEmployee.email}
-                          onChange={(e) =>
-                            setEditedEmployee((prev) => ({
-                              ...prev,
-                              email: e.target.value,
-                            }))
-                          }
-                          className="bg-white/5 border-white/10 text-white"
-                        />
-                      ) : (
-                        <span className="text-white/90">{employee.email}</span>
-                      )}
-                    </div>
-
-                    <div className="flex items-center space-x-3">
-                      <Phone className="w-4 h-4 text-white/60" />
-                      {isEditing ? (
-                        <Input
-                          value={editedEmployee.phone}
-                          onChange={(e) =>
-                            setEditedEmployee((prev) => ({
-                              ...prev,
-                              phone: e.target.value,
-                            }))
-                          }
-                          className="bg-white/5 border-white/10 text-white"
-                        />
-                      ) : (
-                        <span className="text-white/90">{employee.phone}</span>
-                      )}
-                    </div>
-
-                    <div className="flex items-center space-x-3">
-                      <MapPin className="w-4 h-4 text-white/60" />
-                      {isEditing ? (
-                        <Input
-                          value={editedEmployee.location}
-                          onChange={(e) =>
-                            setEditedEmployee((prev) => ({
-                              ...prev,
-                              location: e.target.value,
-                            }))
-                          }
-                          className="bg-white/5 border-white/10 text-white"
-                        />
-                      ) : (
-                        <span className="text-white/90">
-                          {employee.location}
-                        </span>
-                      )}
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              {/* Bio */}
-              <div className="space-y-2">
-                <Label className="text-white/70 text-sm">Bio</Label>
-                {isEditing ? (
-                  <Textarea
-                    value={editedEmployee.bio}
-                    onChange={(e) =>
-                      setEditedEmployee((prev) => ({
-                        ...prev,
-                        bio: e.target.value,
-                      }))
-                    }
-                    className="bg-white/5 border-white/10 text-white min-h-[100px]"
-                    placeholder="Employee bio..."
-                  />
-                ) : (
-                  <p className="text-white/80 text-sm leading-relaxed">
-                    {employee.bio}
-                  </p>
-                )}
-              </div>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
+      <EmployeeProfileCard
+        employee={employee}
+        isEditing={isEditing}
+        editedEmployee={editedEmployee}
+        setEditedEmployee={setEditedEmployee}
+        getStatusColor={getStatusColor}
+      />
 
       {/* Detailed Information Tabs */}
       <Tabs
