@@ -552,7 +552,7 @@ export function EmployeesPageContent({ onEmployeeSelect }: EmployeesPageProps) {
         filters={filters}
         viewType={viewType}
         sort={sort}
-        onSelect={onEmployeeSelect || (() => {})}
+        onSelect={onEmployeeSelect || ((id) => router.push(`/admin/employees/${id}`))}
         onDelete={handleDeleteClick}
         onSort={handleSort}
         onClearFilters={handleClearFilters}

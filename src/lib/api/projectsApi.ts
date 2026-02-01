@@ -125,6 +125,18 @@ export const projectsApi = apiSlice.injectEndpoints({
       keepUnusedDataFor: 300,
     }),
 
+    // Get projects by employee ID (as manager or team member)
+    getProjectsByEmployee: builder.query<Project[], string>({
+      query: (employeeId) => ({
+        url: `/projects/employee/${employeeId}`,
+        method: "GET",
+      }),
+      providesTags: (result, error, employeeId) => [
+        { type: "Project" as const, id: `EMPLOYEE_${employeeId}` },
+      ],
+      keepUnusedDataFor: 300,
+    }),
+
     // Get project statistics
     getProjectStatistics: builder.query<ProjectStatistics, void>({
       query: () => ({
@@ -221,6 +233,7 @@ export const {
   useGetAllProjectsQuery,
   useGetProjectByIdQuery,
   useGetProjectsByClientQuery,
+  useGetProjectsByEmployeeQuery,
   useGetProjectStatisticsQuery,
   useCreateProjectMutation,
   useUpdateProjectMutation,
