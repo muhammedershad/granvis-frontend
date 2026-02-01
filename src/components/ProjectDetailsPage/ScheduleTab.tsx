@@ -5,13 +5,16 @@ import {
   Clock,
   Flag,
   MapPin,
-  Plus,
   Target,
+  DollarSign,
+  TrendingUp,
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
 import { Badge } from "../ui/badge";
-import { Button } from "../ui/button";
+import { Progress } from "../ui/progress";
 import type { Project } from "@/types/project";
+import { useGetMilestonesByProjectQuery } from "@/lib/api/milestonesApi";
+import { Milestone, MilestoneStatus, MilestonePaymentStatus } from "@/types/milestone";
 
 interface ScheduleTabProps {
   project: Project;
@@ -38,15 +41,51 @@ const getDaysUntil = (dateString: string) => {
   return diff;
 };
 
-export function ScheduleTab({ project }: ScheduleTabProps) {
-  const milestones = project.milestones || [];
-  const upcomingMilestones = milestones
-    .filter((m) => !m.completed)
-    .sort(
-      (a, b) => new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime()
-    );
+const formatCurrency = (amount: number): string => {
+  if (amount >= 10000000) {
+    return `₹${(amount / 10000000).toFixed(2)}Cr`;
+  } else if (amount >= 100000) {
+    return `₹${(amount / 100000).toFixed(2)}L`;
+  }
+  return `₹${amount.toLocaleString("en-IN")}`;
+};
 
-  const completedMilestones = milestones.filter((m) => m.completed);
+const getPaymentStatusColor = (status: MilestonePaymentStatus) => {
+  switch (status) {
+    case MilestonePaymentStatus.PAID:
+      return "bg-green-100 text-green-800 border-green-200 dark:bg-green-900/30 dark:text-green-400";
+    case MilestonePaymentStatus.PARTIALLY_PAID:
+      return "bg-yellow-100 text-yellow-800 border-yellow-200 dark:bg-yellow-900/30 dark:text-yellow-400";
+    case MilestonePaymentStatus.UNPAID:
+      return "bg-red-100 text-red-800 border-red-200 dark:bg-red-900/30 dark:text-red-400";
+  }
+};
+
+const getStatusColor = (status: MilestoneStatus) => {
+  switch (status) {
+    case MilestoneStatus.COMPLETED:
+      return "bg-emerald-100 text-emerald-800 border-emerald-200 dark:bg-emerald-900/30 dark:text-emerald-400";
+    case MilestoneStatus.IN_PROGRESS:
+      return "bg-blue-100 text-blue-800 border-blue-200 dark:bg-blue-900/30 dark:text-blue-400";
+    case MilestoneStatus.NOT_STARTED:
+      return "bg-gray-100 text-gray-800 border-gray-200 dark:bg-gray-900/30 dark:text-gray-400";
+  }
+};
+
+export function ScheduleTab({ project }: ScheduleTabProps) {
+  const { data: milestones = [] } = useGetMilestonesByProjectQuery(project.id);
+
+  const upcomingMilestones = milestones
+    .filter((m: Milestone) => m.status !== MilestoneStatus.COMPLETED)
+    .sort((a: Milestone, b: Milestone) => {
+      if (!a.dueDate) return 1;
+      if (!b.dueDate) return -1;
+      return new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime();
+    });
+
+  const completedMilestones = milestones.filter(
+    (m: Milestone) => m.status === MilestoneStatus.COMPLETED
+  );
 
   return (
     <div className="space-y-6">
@@ -134,41 +173,33 @@ export function ScheduleTab({ project }: ScheduleTabProps) {
                 <Calendar className="h-5 w-5 text-blue-600 dark:text-blue-400" />
               </div>
               <CardTitle className="text-foreground">
-                Upcoming Milestones
+                Upcoming Milestones ({upcomingMilestones.length})
               </CardTitle>
             </div>
-            <Button
-              variant="outline"
-              size="sm"
-              className="bg-background/50 hover:bg-muted/50"
-            >
-              <Plus className="h-4 w-4 mr-2" />
-              Add Milestone
-            </Button>
           </div>
         </CardHeader>
         <CardContent className="relative">
           {upcomingMilestones.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-8 text-muted-foreground">
               <CheckCircle className="h-10 w-10 mb-3 opacity-50" />
-              <p className="text-sm">No upcoming milestones</p>
+              <p className="text-sm">All milestones completed!</p>
             </div>
           ) : (
             <div className="space-y-4">
-              {upcomingMilestones.map((milestone) => {
-                const daysUntil = getDaysUntil(milestone.dueDate);
-                const isOverdue = daysUntil < 0;
+              {upcomingMilestones.map((milestone: Milestone) => {
+                const daysUntil = milestone.dueDate ? getDaysUntil(milestone.dueDate) : null;
+                const isOverdue = daysUntil !== null && daysUntil < 0;
                 return (
                   <Card
                     key={milestone.id}
                     className="border-border/50 bg-card/30"
                   >
                     <CardContent className="p-4">
-                      <div className="flex items-start justify-between">
-                        <div className="flex-1">
-                          <div className="flex items-center gap-3 mb-2">
+                      <div className="flex items-start justify-between gap-4">
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-3 mb-2 flex-wrap">
                             <div
-                              className={`p-1.5 rounded border ${
+                              className={`p-1.5 rounded border flex-shrink-0 ${
                                 isOverdue
                                   ? "bg-red-500/10 border-red-500/20"
                                   : "bg-blue-500/10 border-blue-500/20"
@@ -180,33 +211,59 @@ export function ScheduleTab({ project }: ScheduleTabProps) {
                                 }`}
                               />
                             </div>
-                            <h4 className="text-foreground font-medium">
+                            <h4 className="text-foreground font-medium truncate">
                               {milestone.title}
                             </h4>
-                            <Badge
-                              className={
-                                isOverdue
-                                  ? "bg-red-100 text-red-800 border-red-200 dark:bg-red-900/30 dark:text-red-300 dark:border-red-800"
-                                  : "bg-yellow-100 text-yellow-800 border-yellow-200 dark:bg-yellow-900/30 dark:text-yellow-300 dark:border-yellow-800"
-                              }
-                            >
-                              {isOverdue ? "Overdue" : "Pending"}
+                            <Badge variant="outline" className={getStatusColor(milestone.status)}>
+                              {milestone.status === MilestoneStatus.IN_PROGRESS
+                                ? "In Progress"
+                                : "Not Started"}
+                            </Badge>
+                            <Badge variant="outline" className={getPaymentStatusColor(milestone.paymentStatus)}>
+                              <DollarSign className="h-3 w-3 mr-1" />
+                              {milestone.paymentStatus === MilestonePaymentStatus.PAID
+                                ? "Paid"
+                                : milestone.paymentStatus === MilestonePaymentStatus.PARTIALLY_PAID
+                                ? "Partially Paid"
+                                : "Unpaid"}
                             </Badge>
                           </div>
-                          <p className="text-sm text-muted-foreground mb-3">
-                            {milestone.description}
-                          </p>
-                          <div className="flex items-center gap-4 text-xs text-muted-foreground">
+
+                          {milestone.description && (
+                            <p className="text-sm text-muted-foreground mb-3 line-clamp-2">
+                              {milestone.description}
+                            </p>
+                          )}
+
+                          <div className="space-y-2">
+                            <div className="flex items-center justify-between text-sm">
+                              <div className="flex items-center gap-2 text-muted-foreground">
+                                <TrendingUp className="h-4 w-4" />
+                                <span>Progress</span>
+                              </div>
+                              <span className="font-semibold">{milestone.progressPercentage}%</span>
+                            </div>
+                            <Progress value={milestone.progressPercentage} className="h-1.5" />
+                          </div>
+
+                          <div className="flex items-center gap-4 text-xs text-muted-foreground mt-3 flex-wrap">
+                            {milestone.dueDate && (
+                              <div className="flex items-center gap-1">
+                                <Clock className="h-3 w-3" />
+                                <span>
+                                  Due: {formatDate(milestone.dueDate)}
+                                  {daysUntil !== null &&
+                                    (isOverdue
+                                      ? ` (${Math.abs(daysUntil)} days overdue)`
+                                      : daysUntil === 0
+                                      ? " (Due today)"
+                                      : ` (${daysUntil} days left)`)}
+                                </span>
+                              </div>
+                            )}
                             <div className="flex items-center gap-1">
-                              <Clock className="h-3 w-3" />
-                              <span>
-                                Due: {formatDate(milestone.dueDate)}
-                                {isOverdue
-                                  ? ` (${Math.abs(daysUntil)} days overdue)`
-                                  : daysUntil === 0
-                                    ? " (Due today)"
-                                    : ` (${daysUntil} days left)`}
-                              </span>
+                              <DollarSign className="h-3 w-3" />
+                              <span>Amount: {formatCurrency(milestone.totalAmount)}</span>
                             </div>
                           </div>
                         </div>
@@ -236,28 +293,43 @@ export function ScheduleTab({ project }: ScheduleTabProps) {
           </CardHeader>
           <CardContent className="relative">
             <div className="space-y-4">
-              {completedMilestones.map((milestone) => (
+              {completedMilestones.map((milestone: Milestone) => (
                 <Card
                   key={milestone.id}
                   className="border-border/50 bg-card/30"
                 >
                   <CardContent className="p-4">
                     <div className="flex items-start gap-3">
-                      <div className="p-1.5 bg-emerald-500/10 rounded border border-emerald-500/20">
+                      <div className="p-1.5 bg-emerald-500/10 rounded border border-emerald-500/20 flex-shrink-0">
                         <CheckCircle className="h-4 w-4 text-emerald-600" />
                       </div>
-                      <div className="flex-1">
-                        <h4 className="text-foreground font-medium">
-                          {milestone.title}
-                        </h4>
-                        <p className="text-sm text-muted-foreground mt-1">
-                          {milestone.description}
-                        </p>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 mb-1 flex-wrap">
+                          <h4 className="text-foreground font-medium">
+                            {milestone.title}
+                          </h4>
+                          <Badge variant="outline" className={getPaymentStatusColor(milestone.paymentStatus)}>
+                            <DollarSign className="h-3 w-3 mr-1" />
+                            {milestone.paymentStatus === MilestonePaymentStatus.PAID
+                              ? "Paid"
+                              : milestone.paymentStatus === MilestonePaymentStatus.PARTIALLY_PAID
+                              ? "Partially Paid"
+                              : "Unpaid"}
+                          </Badge>
+                        </div>
+                        {milestone.description && (
+                          <p className="text-sm text-muted-foreground mt-1 line-clamp-2">
+                            {milestone.description}
+                          </p>
+                        )}
                         {milestone.completedDate && (
                           <p className="text-xs text-muted-foreground mt-2">
                             Completed on {formatDate(milestone.completedDate)}
                           </p>
                         )}
+                        <p className="text-xs text-muted-foreground mt-1">
+                          Amount: {formatCurrency(milestone.totalAmount)} • Paid: {formatCurrency(milestone.paidAmount)}
+                        </p>
                       </div>
                     </div>
                   </CardContent>

@@ -116,10 +116,7 @@ export function ProjectDetailsPage({
         </TabsContent>
 
         <TabsContent value="timeline" className="space-y-6">
-          <TimelineTab
-            milestones={project.milestones}
-            onSelectItem={setSelectedTimelineItem}
-          />
+          <TimelineTab project={project} />
         </TabsContent>
 
         <TabsContent value="schedule" className="space-y-6">
