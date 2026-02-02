@@ -52,6 +52,7 @@ import {
 import { PaymentScheduleManager } from "./PaymentScheduleManager";
 import { PaymentReports } from "./PaymentReports";
 import { PaymentStatistics } from "./PaymentStatistics";
+import { InvoiceGenerationModal } from "./InvoiceGenerationModal";
 
 // Types
 interface PaymentTarget {
@@ -169,6 +170,7 @@ const quickStats = {
 export function PaymentPage() {
   const [activeTab, setActiveTab] = useState("overview");
   const [showCreatePayment, setShowCreatePayment] = useState(false);
+  const [showInvoiceModal, setShowInvoiceModal] = useState(false);
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -239,6 +241,13 @@ export function PaymentPage() {
           <Button variant="outline">
             <Download className="w-4 h-4 mr-2" />
             Export
+          </Button>
+          <Button
+            onClick={() => setShowInvoiceModal(true)}
+            className="bg-gradient-to-r from-green-600 to-teal-600 hover:from-green-700 hover:to-teal-700 text-white shadow-lg shadow-green-500/25"
+          >
+            <FileText className="w-4 h-4 mr-2" />
+            Generate Invoice
           </Button>
           <Dialog open={showCreatePayment} onOpenChange={setShowCreatePayment}>
             <DialogTrigger asChild>
@@ -659,6 +668,12 @@ export function PaymentPage() {
           </Card>
         </TabsContent>
       </Tabs>
+
+      {/* Invoice Generation Modal */}
+      <InvoiceGenerationModal
+        open={showInvoiceModal}
+        onOpenChange={setShowInvoiceModal}
+      />
     </div>
   );
 }

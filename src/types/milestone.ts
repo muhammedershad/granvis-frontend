@@ -35,6 +35,16 @@ export interface AdditionalCharge {
   amount: number;
 }
 
+// Attachment
+export interface MilestoneAttachment {
+  id: string;
+  fileName: string;
+  fileUrl: string;
+  fileSize?: number;
+  fileType?: string;
+  uploadedAt?: string;
+}
+
 // Main Milestone Interface
 export interface Milestone {
   id: string;
@@ -42,6 +52,13 @@ export interface Milestone {
   stageNumber: number;
   title: string;
   description?: string;
+
+  // Assignment and Category
+  assignedTo?: string;
+  category?: string;
+
+  // Attachments
+  attachments: MilestoneAttachment[];
 
   // Scope of Work
   scopeOfWork: ScopeOfWorkItem[];
@@ -103,6 +120,9 @@ export interface CreateMilestoneDto {
   stageNumber: number;
   title: string;
   description?: string;
+  assignedTo?: string;
+  category?: string;
+  attachments?: MilestoneAttachment[];
   scopeOfWork?: CreateScopeOfWorkItemDto[];
   additionalCharges?: CreateAdditionalChargeDto[];
   useProjectBuiltUpArea?: boolean;
@@ -118,6 +138,9 @@ export interface UpdateMilestoneDto {
   stageNumber?: number;
   title?: string;
   description?: string;
+  assignedTo?: string;
+  category?: string;
+  attachments?: MilestoneAttachment[];
   scopeOfWork?: CreateScopeOfWorkItemDto[];
   additionalCharges?: CreateAdditionalChargeDto[];
   useProjectBuiltUpArea?: boolean;

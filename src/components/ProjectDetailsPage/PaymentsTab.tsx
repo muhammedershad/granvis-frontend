@@ -1,3 +1,4 @@
+import { useState } from "react";
 import {
   CheckCircle,
   Clock,
@@ -5,10 +6,13 @@ import {
   DollarSign,
   TrendingUp,
   Wallet,
+  FileText,
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
 import { Progress } from "../ui/progress";
+import { Button } from "../ui/button";
 import type { Project } from "@/types/project";
+import { InvoiceGenerationModal } from "../InvoiceGenerationModal";
 
 interface PaymentsTabProps {
   project: Project;
@@ -27,6 +31,8 @@ const formatCurrency = (amount: number | undefined) => {
 };
 
 export function PaymentsTab({ project }: PaymentsTabProps) {
+  const [showInvoiceModal, setShowInvoiceModal] = useState(false);
+
   const totalBudget = project.totalBudget || 0;
   const spentAmount = project.spentAmount || 0;
   const remainingBudget = project.remainingBudget || 0;
@@ -34,6 +40,22 @@ export function PaymentsTab({ project }: PaymentsTabProps) {
 
   return (
     <div className="space-y-6">
+      {/* Header with Generate Invoice Button */}
+      <div className="flex items-center justify-between">
+        <div>
+          <h2 className="text-xl font-semibold text-foreground">Project Payments</h2>
+          <p className="text-sm text-muted-foreground">
+            Manage budget, payments, and generate invoices
+          </p>
+        </div>
+        <Button
+          onClick={() => setShowInvoiceModal(true)}
+          className="bg-gradient-to-r from-green-600 to-teal-600 hover:from-green-700 hover:to-teal-700 text-white shadow-lg shadow-green-500/25"
+        >
+          <FileText className="w-4 h-4 mr-2" />
+          Generate Invoice
+        </Button>
+      </div>
       {/* Budget Summary Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         <Card className="relative overflow-hidden bg-card/50 backdrop-blur-sm border-border/50">
@@ -44,7 +66,7 @@ export function PaymentsTab({ project }: PaymentsTabProps) {
                 <Wallet className="h-5 w-5 text-blue-600 dark:text-blue-400" />
               </div>
               <div>
-                <p className="text-sm text-muted-foreground">Total Budget</p>
+                <p className="text-sm text-muted-foreground">Total Amount</p>
                 <p className="text-xl text-foreground font-medium">
                   {formatCurrency(totalBudget)}
                 </p>
@@ -61,7 +83,7 @@ export function PaymentsTab({ project }: PaymentsTabProps) {
                 <CheckCircle className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />
               </div>
               <div>
-                <p className="text-sm text-muted-foreground">Spent Amount</p>
+                <p className="text-sm text-muted-foreground">Paid Amount</p>
                 <p className="text-xl text-foreground font-medium">
                   {formatCurrency(spentAmount)}
                 </p>
@@ -105,125 +127,6 @@ export function PaymentsTab({ project }: PaymentsTabProps) {
         </Card>
       </div>
 
-      {/* Budget Overview Card */}
-      <Card className="relative overflow-hidden bg-card/50 backdrop-blur-sm border-border/50">
-        <div className="absolute inset-0 bg-gradient-to-br from-blue-500/[0.02] to-purple-500/[0.02] dark:from-blue-400/[0.05] dark:to-purple-400/[0.05]"></div>
-        <CardHeader className="relative">
-          <div className="flex items-center gap-3">
-            <div className="p-2 bg-blue-500/10 rounded-lg border border-blue-500/20">
-              <CreditCard className="h-5 w-5 text-blue-600 dark:text-blue-400" />
-            </div>
-            <CardTitle className="text-foreground">Budget Overview</CardTitle>
-          </div>
-        </CardHeader>
-        <CardContent className="relative space-y-6">
-          {/* Budget Progress */}
-          <div>
-            <div className="flex items-center justify-between mb-2">
-              <span className="text-sm text-muted-foreground">
-                Budget Utilization
-              </span>
-              <span className="text-sm text-foreground font-medium">
-                {formatCurrency(spentAmount)} / {formatCurrency(totalBudget)}
-              </span>
-            </div>
-            <Progress value={utilization} className="h-3" />
-            <div className="flex items-center justify-between mt-2">
-              <span className="text-xs text-muted-foreground">
-                {utilization.toFixed(1)}% used
-              </span>
-              <span className="text-xs text-muted-foreground">
-                {(100 - utilization).toFixed(1)}% remaining
-              </span>
-            </div>
-          </div>
-
-          {/* Budget Breakdown */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 pt-4 border-t border-border/50">
-            <div className="space-y-2">
-              <div className="flex items-center gap-2">
-                <div className="w-3 h-3 rounded-full bg-blue-500"></div>
-                <span className="text-sm text-muted-foreground">
-                  Total Budget
-                </span>
-              </div>
-              <p className="text-lg text-foreground font-medium pl-5">
-                {formatCurrency(totalBudget)}
-              </p>
-            </div>
-
-            <div className="space-y-2">
-              <div className="flex items-center gap-2">
-                <div className="w-3 h-3 rounded-full bg-emerald-500"></div>
-                <span className="text-sm text-muted-foreground">
-                  Amount Spent
-                </span>
-              </div>
-              <p className="text-lg text-foreground font-medium pl-5">
-                {formatCurrency(spentAmount)}
-              </p>
-            </div>
-
-            <div className="space-y-2">
-              <div className="flex items-center gap-2">
-                <div className="w-3 h-3 rounded-full bg-yellow-500"></div>
-                <span className="text-sm text-muted-foreground">
-                  Remaining Budget
-                </span>
-              </div>
-              <p className="text-lg text-foreground font-medium pl-5">
-                {formatCurrency(remainingBudget)}
-              </p>
-            </div>
-          </div>
-
-          {/* Budget vs Progress Comparison */}
-          <div className="pt-4 border-t border-border/50">
-            <h4 className="text-foreground font-medium mb-4">
-              Budget vs Progress Comparison
-            </h4>
-            <div className="space-y-4">
-              <div>
-                <div className="flex items-center justify-between mb-1">
-                  <span className="text-sm text-muted-foreground">
-                    Project Progress
-                  </span>
-                  <span className="text-sm text-foreground">
-                    {project.progressPercentage ?? 0}%
-                  </span>
-                </div>
-                <Progress
-                  value={project.progressPercentage ?? 0}
-                  className="h-2"
-                />
-              </div>
-              <div>
-                <div className="flex items-center justify-between mb-1">
-                  <span className="text-sm text-muted-foreground">
-                    Budget Utilization
-                  </span>
-                  <span className="text-sm text-foreground">
-                    {utilization.toFixed(1)}%
-                  </span>
-                </div>
-                <Progress value={utilization} className="h-2" />
-              </div>
-            </div>
-            {utilization > (project.progressPercentage ?? 0) + 10 && (
-              <p className="text-sm text-yellow-600 dark:text-yellow-400 mt-3">
-                Budget utilization is higher than project progress. Consider
-                reviewing expenses.
-              </p>
-            )}
-            {utilization < (project.progressPercentage ?? 0) - 10 && (
-              <p className="text-sm text-emerald-600 dark:text-emerald-400 mt-3">
-                Good budget management! Spending is below project progress.
-              </p>
-            )}
-          </div>
-        </CardContent>
-      </Card>
-
       {/* Payment Information Placeholder */}
       <Card className="relative overflow-hidden bg-card/50 backdrop-blur-sm border-border/50">
         <div className="absolute inset-0 bg-gradient-to-br from-purple-500/[0.02] to-indigo-500/[0.02] dark:from-purple-400/[0.05] dark:to-indigo-400/[0.05]"></div>
@@ -247,6 +150,13 @@ export function PaymentsTab({ project }: PaymentsTabProps) {
           </div>
         </CardContent>
       </Card>
+
+      {/* Invoice Generation Modal */}
+      <InvoiceGenerationModal
+        open={showInvoiceModal}
+        onOpenChange={setShowInvoiceModal}
+        preSelectedProjectId={project.id}
+      />
     </div>
   );
 }

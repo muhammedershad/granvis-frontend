@@ -192,76 +192,8 @@ export function TimelineTab({ project }: TimelineTabProps) {
 
   return (
     <div className="space-y-6">
-      {/* Project Progress Summary */}
-      {summary && (
-        <Card className="relative overflow-hidden bg-card/50 backdrop-blur-sm border-border/50">
-          <div className="absolute inset-0 bg-gradient-to-br from-purple-500/[0.02] to-blue-500/[0.02] dark:from-purple-400/[0.05] dark:to-blue-400/[0.05]"></div>
-          <CardHeader className="relative">
-            <CardTitle className="flex items-center gap-2">
-              <TrendingUp className="h-5 w-5 text-purple-600" />
-              Project Progress Summary
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="relative">
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-              <div className="space-y-2">
-                <p className="text-sm text-muted-foreground">Overall Progress</p>
-                <div className="space-y-2">
-                  <div className="flex items-center justify-between">
-                    <span className="text-2xl font-bold text-foreground">
-                      {Math.round(summary.projectProgress)}%
-                    </span>
-                  </div>
-                  <Progress value={summary.projectProgress} className="h-2" />
-                </div>
-              </div>
-
-              <div className="space-y-2">
-                <p className="text-sm text-muted-foreground">Milestone Status</p>
-                <div className="flex flex-wrap gap-2">
-                  <Badge variant="outline" className="bg-emerald-100 text-emerald-800 border-emerald-200 dark:bg-emerald-900/30">
-                    <CheckCircle2 className="h-3 w-3 mr-1" />
-                    {summary.completedCount} Completed
-                  </Badge>
-                  <Badge variant="outline" className="bg-blue-100 text-blue-800 border-blue-200 dark:bg-blue-900/30">
-                    <Clock className="h-3 w-3 mr-1" />
-                    {summary.inProgressCount} In Progress
-                  </Badge>
-                  <Badge variant="outline" className="bg-gray-100 text-gray-800 border-gray-200 dark:bg-gray-900/30">
-                    <Circle className="h-3 w-3 mr-1" />
-                    {summary.notStartedCount} Not Started
-                  </Badge>
-                </div>
-              </div>
-
-              <div className="space-y-2">
-                <p className="text-sm text-muted-foreground">Total Amount</p>
-                <p className="text-2xl font-bold text-foreground">
-                  {formatCurrency(summary.totalAmount)}
-                </p>
-              </div>
-
-              <div className="space-y-2">
-                <p className="text-sm text-muted-foreground">Financial Status</p>
-                <div className="space-y-1">
-                  <div className="flex items-center justify-between text-sm">
-                    <span className="text-green-600 dark:text-green-400">Paid:</span>
-                    <span className="font-semibold">{formatCurrency(summary.paidAmount)}</span>
-                  </div>
-                  <div className="flex items-center justify-between text-sm">
-                    <span className="text-amber-600 dark:text-amber-400">Pending:</span>
-                    <span className="font-semibold">{formatCurrency(summary.pendingAmount)}</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      )}
-
       {/* Milestones List */}
-      <Card className="relative overflow-hidden bg-card/50 backdrop-blur-sm border-border/50">
-        <div className="absolute inset-0 bg-gradient-to-br from-blue-500/[0.02] to-purple-500/[0.02] dark:from-blue-400/[0.05] dark:to-purple-400/[0.05]"></div>
+      <Card className="relative overflow-hidden bg-transparent border-none shadow-none">
         <CardHeader className="relative">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
@@ -285,7 +217,7 @@ export function TimelineTab({ project }: TimelineTabProps) {
             )}
           </div>
         </CardHeader>
-        <CardContent className="relative">
+        <CardContent className="relative px-0">
           {sortedMilestones.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-12 text-muted-foreground">
               <Flag className="h-12 w-12 mb-4 opacity-50" />
@@ -300,7 +232,7 @@ export function TimelineTab({ project }: TimelineTabProps) {
             </div>
           ) : (
             <div className="space-y-4">
-              {sortedMilestones.map((milestone) => (
+              {sortedMilestones.map((milestone, index) => (
                 <MilestoneCard
                   key={milestone.id}
                   milestone={milestone}
@@ -313,6 +245,7 @@ export function TimelineTab({ project }: TimelineTabProps) {
                   onDrop={handleDrop}
                   isDragging={draggedId === milestone.id}
                   isDragOver={dragOverId === milestone.id}
+                  isLast={index === sortedMilestones.length - 1}
                 />
               ))}
             </div>

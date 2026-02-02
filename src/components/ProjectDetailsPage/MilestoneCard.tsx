@@ -1,27 +1,26 @@
 "use client";
 
-import { useState } from "react";
 import { useSelector } from "react-redux";
 import {
-  GripVertical,
   Pencil,
   Trash2,
   TrendingUp,
-  DollarSign,
   Calendar,
-  CheckCircle2,
   Clock,
   Circle,
-  ChevronDown,
-  ChevronUp,
+  CheckCircle2,
+  User,
+  Tag,
+  FileText,
+  Eye,
+  ClipboardList,
+  FileIcon,
 } from "lucide-react";
-import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
+import { Card, CardContent } from "../ui/card";
 import { Badge } from "../ui/badge";
 import { Button } from "../ui/button";
-import { Progress } from "../ui/progress";
-import { Separator } from "../ui/separator";
 import { getAuthDetails, IAuthRoles } from "@/store/slices/authSlice";
-import { Milestone, MilestoneStatus, MilestonePaymentStatus } from "@/types/milestone";
+import { Milestone, MilestoneStatus } from "@/types/milestone";
 import { formatDate } from "./utils";
 
 interface MilestoneCardProps {
@@ -35,77 +34,43 @@ interface MilestoneCardProps {
   onDrop?: (e: React.DragEvent, milestoneId: string) => void;
   isDragging?: boolean;
   isDragOver?: boolean;
+  isLast?: boolean;
 }
-
-const formatCurrency = (amount: number): string => {
-  if (amount >= 10000000) {
-    return `₹${(amount / 10000000).toFixed(2)}Cr`;
-  } else if (amount >= 100000) {
-    return `₹${(amount / 100000).toFixed(2)}L`;
-  }
-  return `₹${amount.toLocaleString("en-IN")}`;
-};
 
 const getStatusColor = (status: MilestoneStatus) => {
   switch (status) {
     case MilestoneStatus.COMPLETED:
-      return "bg-emerald-100 text-emerald-800 border-emerald-200 dark:bg-emerald-900/30 dark:text-emerald-400 dark:border-emerald-800";
+      return "bg-emerald-500/10 text-emerald-400 border-emerald-500/20";
     case MilestoneStatus.IN_PROGRESS:
-      return "bg-blue-100 text-blue-800 border-blue-200 dark:bg-blue-900/30 dark:text-blue-400 dark:border-blue-800";
+      return "bg-blue-500/10 text-blue-400 border-blue-500/20";
     case MilestoneStatus.NOT_STARTED:
-      return "bg-gray-100 text-gray-800 border-gray-200 dark:bg-gray-900/30 dark:text-gray-400 dark:border-gray-800";
+      return "bg-orange-500/10 text-orange-400 border-orange-500/20";
     default:
-      return "bg-gray-100 text-gray-800 border-gray-200 dark:bg-gray-900/30 dark:text-gray-400 dark:border-gray-800";
-  }
-};
-
-const getPaymentStatusColor = (status: MilestonePaymentStatus) => {
-  switch (status) {
-    case MilestonePaymentStatus.PAID:
-      return "bg-green-100 text-green-800 border-green-200 dark:bg-green-900/30 dark:text-green-400 dark:border-green-800";
-    case MilestonePaymentStatus.PARTIALLY_PAID:
-      return "bg-yellow-100 text-yellow-800 border-yellow-200 dark:bg-yellow-900/30 dark:text-yellow-400 dark:border-yellow-800";
-    case MilestonePaymentStatus.UNPAID:
-      return "bg-red-100 text-red-800 border-red-200 dark:bg-red-900/30 dark:text-red-400 dark:border-red-800";
-    default:
-      return "bg-gray-100 text-gray-800 border-gray-200 dark:bg-gray-900/30 dark:text-gray-400 dark:border-gray-800";
+      return "bg-gray-500/10 text-gray-400 border-gray-500/20";
   }
 };
 
 const getStatusIcon = (status: MilestoneStatus) => {
   switch (status) {
     case MilestoneStatus.COMPLETED:
-      return <CheckCircle2 className="h-3.5 w-3.5" />;
+      return <CheckCircle2 className="h-3 w-3" />;
     case MilestoneStatus.IN_PROGRESS:
-      return <Clock className="h-3.5 w-3.5" />;
+      return <Clock className="h-3 w-3" />;
     case MilestoneStatus.NOT_STARTED:
-      return <Circle className="h-3.5 w-3.5" />;
+      return <Circle className="h-3 w-3" />;
     default:
-      return <Circle className="h-3.5 w-3.5" />;
+      return <Circle className="h-3 w-3" />;
   }
 };
 
 const formatStatus = (status: MilestoneStatus) => {
   switch (status) {
     case MilestoneStatus.NOT_STARTED:
-      return "Not Started";
+      return "pending";
     case MilestoneStatus.IN_PROGRESS:
-      return "In Progress";
+      return "in progress";
     case MilestoneStatus.COMPLETED:
-      return "Completed";
-    default:
-      return status;
-  }
-};
-
-const formatPaymentStatus = (status: MilestonePaymentStatus) => {
-  switch (status) {
-    case MilestonePaymentStatus.UNPAID:
-      return "Unpaid";
-    case MilestonePaymentStatus.PARTIALLY_PAID:
-      return "Partially Paid";
-    case MilestonePaymentStatus.PAID:
-      return "Paid";
+      return "completed";
     default:
       return status;
   }
@@ -122,9 +87,9 @@ export function MilestoneCard({
   onDrop,
   isDragging = false,
   isDragOver = false,
+  isLast = false,
 }: MilestoneCardProps) {
   const { user } = useSelector(getAuthDetails);
-  const [showScopeOfWork, setShowScopeOfWork] = useState(false);
 
   const canEdit = user?.role && [
     IAuthRoles.SUPER_ADMIN,
@@ -132,237 +97,128 @@ export function MilestoneCard({
     IAuthRoles.MANAGER,
   ].includes(user.role);
 
-  const canDelete = user?.role && [
-    IAuthRoles.SUPER_ADMIN,
-    IAuthRoles.ADMIN,
-  ].includes(user.role);
-
   return (
-    <Card
-      className={`relative overflow-hidden bg-card/50 backdrop-blur-sm border-border/50 transition-all duration-200 ${
-        isDragging ? "opacity-50" : ""
-      } ${
-        isDragOver ? "border-purple-500 border-2" : ""
-      } hover:shadow-md`}
+    <div 
+      className={`relative flex gap-6 ${isDragging ? "opacity-50" : ""} ${isDragOver ? "scale-[1.01]" : ""} transition-all duration-200`}
       draggable={draggable && canEdit}
       onDragStart={(e) => onDragStart?.(e, milestone.id)}
       onDragOver={(e) => onDragOver?.(e, milestone.id)}
       onDrop={(e) => onDrop?.(e, milestone.id)}
     >
-      <div className="absolute inset-0 bg-gradient-to-br from-blue-500/[0.02] to-purple-500/[0.02] dark:from-blue-400/[0.05] dark:to-purple-400/[0.05]"></div>
+      {/* Timeline Connector */}
+      <div className="flex flex-col items-center">
+        <div className={`flex-shrink-0 w-10 h-10 rounded-full flex items-center justify-center bg-[#1a1a1a] border border-white/10 ring-1 ring-white/5 transition-all duration-300 ${isDragOver ? "border-blue-500/50" : ""}`}>
+          <FileIcon className="h-5 w-5 text-gray-400" />
+        </div>
+        {!isLast && (
+          <div className="w-px flex-1 bg-gradient-to-b from-white/10 to-transparent my-2" />
+        )}
+      </div>
 
-      <CardHeader className="relative pb-3">
-        <div className="flex items-start justify-between gap-3">
-          <div className="flex items-start gap-3 flex-1 min-w-0">
-            {draggable && canEdit && (
-              <div className="cursor-grab active:cursor-grabbing mt-1 text-muted-foreground hover:text-foreground transition-colors">
-                <GripVertical className="h-5 w-5" />
-              </div>
-            )}
-
-            <div className="flex-1 min-w-0">
-              <div className="flex items-center gap-2 mb-2 flex-wrap">
-                <Badge
-                  variant="outline"
-                  className="bg-gradient-to-r from-purple-500/10 to-indigo-500/10 border-purple-300/50 text-purple-700 dark:text-purple-300 font-semibold"
-                >
-                  Stage {milestone.stageNumber}
-                </Badge>
-
-                <Badge variant="outline" className={getStatusColor(milestone.status)}>
+      {/* Card Content */}
+      <Card
+        className={`flex-1 bg-[#0a0a0a]/60 border-white/5 backdrop-blur-xl shadow-2xl transition-all duration-200 ${
+          isDragOver ? "border-blue-500/30 bg-blue-500/5" : ""
+        } hover:bg-[#0a0a0a]/80 group mb-6 overflow-hidden`}
+      >
+        <CardContent className="p-6">
+          <div className="flex items-start justify-between">
+            <div className="flex-1 space-y-4">
+              {/* Header: Title and Status */}
+              <div className="flex items-center gap-3">
+                <h3 className="text-lg font-semibold text-[#f0f0f0] tracking-tight group-hover:text-blue-400 transition-colors">
+                  {milestone.title}
+                </h3>
+                <Badge variant="outline" className={`rounded-full px-2 py-0 h-5 text-[10px] font-medium uppercase tracking-wider ${getStatusColor(milestone.status)}`}>
                   <span className="flex items-center gap-1">
                     {getStatusIcon(milestone.status)}
                     {formatStatus(milestone.status)}
                   </span>
                 </Badge>
-
-                <Badge variant="outline" className={getPaymentStatusColor(milestone.paymentStatus)}>
-                  <DollarSign className="h-3 w-3 mr-1" />
-                  {formatPaymentStatus(milestone.paymentStatus)}
-                </Badge>
               </div>
 
-              <CardTitle className="text-lg font-semibold mb-1">
-                {milestone.title}
-              </CardTitle>
-
+              {/* Description */}
               {milestone.description && (
-                <p className="text-sm text-muted-foreground line-clamp-2">
+                <p className="text-sm text-gray-500 leading-relaxed font-normal">
                   {milestone.description}
                 </p>
               )}
-            </div>
-          </div>
 
-          {canEdit && (
-            <div className="flex items-center gap-1 flex-shrink-0">
+              {/* Details Grid */}
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-x-12 gap-y-4">
+                {milestone.assignedTo && (
+                  <div className="space-y-1">
+                    <p className="text-[11px] text-gray-600 uppercase tracking-widest font-medium">Assigned to:</p>
+                    <p className="text-sm font-semibold text-[#d0d0d0]">{milestone.assignedTo}</p>
+                  </div>
+                )}
+
+                {milestone.startDate && (
+                  <div className="space-y-1">
+                    <p className="text-[11px] text-gray-600 uppercase tracking-widest font-medium">Start Date:</p>
+                    <p className="text-sm font-semibold text-[#d0d0d0]">{formatDate(milestone.startDate)}</p>
+                  </div>
+                )}
+
+                {milestone.dueDate && (
+                  <div className="space-y-1">
+                    <p className="text-[11px] text-gray-600 uppercase tracking-widest font-medium">End Date:</p>
+                    <p className="text-sm font-semibold text-[#d0d0d0]">{formatDate(milestone.dueDate)}</p>
+                  </div>
+                )}
+
+                {milestone.category && (
+                  <div className="space-y-1">
+                    <p className="text-[11px] text-gray-600 uppercase tracking-widest font-medium">Category:</p>
+                    <p className="text-sm font-semibold text-[#d0d0d0]">{milestone.category}</p>
+                  </div>
+                )}
+              </div>
+
+              {/* Attachments */}
+              {milestone.attachments && milestone.attachments.length > 0 && (
+                <div className="space-y-2 pt-2 border-t border-white/5">
+                  <p className="text-[11px] text-gray-600 uppercase tracking-widest font-medium">Attachments:</p>
+                  <div className="flex flex-wrap gap-2">
+                    {milestone.attachments.map((attachment) => (
+                      <div
+                        key={attachment.id}
+                        className="flex items-center gap-1.5 px-2 py-1 rounded-md bg-white/5 border border-white/5 hover:bg-white/10 transition-colors cursor-pointer"
+                      >
+                        <FileText className="h-3 w-3 text-gray-400" />
+                        <span className="text-xs text-gray-400">{attachment.fileName}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Actions */}
+            <div className="flex flex-col items-center gap-2">
               <Button
                 variant="ghost"
                 size="icon"
-                className="h-8 w-8"
-                onClick={() => onEdit(milestone)}
+                className="h-8 w-8 rounded-full text-gray-600 hover:text-white hover:bg-white/10 transition-all"
               >
-                <Pencil className="h-4 w-4" />
+                <Eye className="h-4 w-4" />
               </Button>
-              {canDelete && (
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="h-8 w-8 text-red-600 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-950"
-                  onClick={() => onDelete(milestone)}
-                >
-                  <Trash2 className="h-4 w-4" />
-                </Button>
+              {canEdit && (
+                <>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => onEdit(milestone)}
+                    className="h-8 w-8 rounded-full text-gray-600 hover:text-white hover:bg-white/10 transition-all"
+                  >
+                    <Pencil className="h-4 w-4" />
+                  </Button>
+                </>
               )}
             </div>
-          )}
-        </div>
-      </CardHeader>
-
-      <CardContent className="relative space-y-4">
-        {/* Progress Section */}
-        <div className="space-y-2">
-          <div className="flex items-center justify-between text-sm">
-            <div className="flex items-center gap-2 text-muted-foreground">
-              <TrendingUp className="h-4 w-4" />
-              <span>Progress</span>
-            </div>
-            <span className="font-semibold text-foreground">
-              {milestone.progressPercentage}%
-            </span>
           </div>
-          <Progress value={milestone.progressPercentage} className="h-2" />
-          {canEdit && (
-            <Button
-              variant="outline"
-              size="sm"
-              className="w-full text-xs"
-              onClick={() => onUpdateProgress(milestone)}
-            >
-              Update Progress
-            </Button>
-          )}
-        </div>
-
-        <Separator />
-
-        {/* Financial Summary */}
-        <div className="grid grid-cols-2 gap-3">
-          <div className="space-y-1">
-            <p className="text-xs text-muted-foreground">Total Amount</p>
-            <p className="text-sm font-semibold text-foreground">
-              {formatCurrency(milestone.totalAmount)}
-            </p>
-          </div>
-          <div className="space-y-1">
-            <p className="text-xs text-muted-foreground">Paid Amount</p>
-            <p className="text-sm font-semibold text-green-600 dark:text-green-400">
-              {formatCurrency(milestone.paidAmount)}
-            </p>
-          </div>
-          <div className="space-y-1">
-            <p className="text-xs text-muted-foreground">Pending Amount</p>
-            <p className="text-sm font-semibold text-amber-600 dark:text-amber-400">
-              {formatCurrency(milestone.pendingAmount)}
-            </p>
-          </div>
-          <div className="space-y-1">
-            <p className="text-xs text-muted-foreground">Scope Amount</p>
-            <p className="text-sm font-semibold text-foreground">
-              {formatCurrency(milestone.scopeAmount)}
-            </p>
-          </div>
-        </div>
-
-        {/* Dates Section */}
-        {(milestone.startDate || milestone.dueDate || milestone.completedDate) && (
-          <>
-            <Separator />
-            <div className="space-y-2">
-              {milestone.startDate && (
-                <div className="flex items-center gap-2 text-sm">
-                  <Calendar className="h-4 w-4 text-muted-foreground" />
-                  <span className="text-muted-foreground">Start:</span>
-                  <span className="font-medium">{formatDate(milestone.startDate)}</span>
-                </div>
-              )}
-              {milestone.dueDate && (
-                <div className="flex items-center gap-2 text-sm">
-                  <Calendar className="h-4 w-4 text-muted-foreground" />
-                  <span className="text-muted-foreground">Due:</span>
-                  <span className="font-medium">{formatDate(milestone.dueDate)}</span>
-                </div>
-              )}
-              {milestone.completedDate && (
-                <div className="flex items-center gap-2 text-sm">
-                  <CheckCircle2 className="h-4 w-4 text-green-600" />
-                  <span className="text-muted-foreground">Completed:</span>
-                  <span className="font-medium">{formatDate(milestone.completedDate)}</span>
-                </div>
-              )}
-            </div>
-          </>
-        )}
-
-        {/* Scope of Work Section */}
-        {milestone.scopeOfWork && milestone.scopeOfWork.length > 0 && (
-          <>
-            <Separator />
-            <div className="space-y-2">
-              <Button
-                variant="ghost"
-                size="sm"
-                className="w-full justify-between p-2 h-auto"
-                onClick={() => setShowScopeOfWork(!showScopeOfWork)}
-              >
-                <span className="text-sm font-medium">
-                  Scope of Work ({milestone.scopeOfWork.length} items)
-                </span>
-                {showScopeOfWork ? (
-                  <ChevronUp className="h-4 w-4" />
-                ) : (
-                  <ChevronDown className="h-4 w-4" />
-                )}
-              </Button>
-
-              {showScopeOfWork && (
-                <div className="space-y-2 pt-2">
-                  {milestone.scopeOfWork.map((item) => (
-                    <div
-                      key={item.id}
-                      className="flex items-start justify-between gap-2 p-2 rounded-md bg-muted/30"
-                    >
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium truncate">
-                          {item.description}
-                        </p>
-                        <p className="text-xs text-muted-foreground">
-                          {item.rateType === "per_sqft" ? "Per Sq.Ft" : "Fixed"} •
-                          ₹{item.rate.toLocaleString("en-IN")}
-                          {item.rateType === "per_sqft" ? "/sq.ft" : ""}
-                          {item.quantity > 1 && ` × ${item.quantity}`}
-                        </p>
-                      </div>
-                      <div className="text-sm font-semibold text-foreground flex-shrink-0">
-                        {formatCurrency(item.amount)}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-          </>
-        )}
-
-        {/* Additional Charges */}
-        {milestone.additionalCharges && milestone.additionalCharges.length > 0 && (
-          <div className="pt-2">
-            <p className="text-xs text-muted-foreground mb-2">
-              Additional Charges: {formatCurrency(milestone.additionalChargesAmount)}
-            </p>
-          </div>
-        )}
-      </CardContent>
-    </Card>
+        </CardContent>
+      </Card>
+    </div>
   );
 }
