@@ -19,6 +19,9 @@ export interface Project {
   startDate: string;
   endDate?: string;
 
+  // Built-up Area (in square feet)
+  builtUpArea?: number;
+
   // Budget (optional)
   totalBudget?: number;
   spentAmount?: number;

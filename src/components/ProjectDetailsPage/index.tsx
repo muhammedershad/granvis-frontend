@@ -11,6 +11,7 @@ import { TimelineTab } from "./TimelineTab";
 import { ScheduleTab } from "./ScheduleTab";
 import { PaymentsTab } from "./PaymentsTab";
 import { DocumentsTab } from "./DocumentsTab";
+import { InvoicesTab } from "./InvoicesTab";
 import { TimelineItemModal } from "./TimelineItemModal";
 import { useGetProjectByIdQuery } from "@/lib/api/projectsApi";
 import type { TimelineItem } from "./types";
@@ -78,7 +79,7 @@ export function ProjectDetailsPage({
         onValueChange={setActiveTab}
         className="space-y-6"
       >
-        <TabsList className="grid grid-cols-5 w-full bg-muted/30 p-1 rounded-xl">
+        <TabsList className="grid grid-cols-6 w-full bg-muted/30 p-1 rounded-xl">
           <TabsTrigger
             value="overview"
             className="data-[state=active]:bg-background"
@@ -109,6 +110,12 @@ export function ProjectDetailsPage({
           >
             Documents
           </TabsTrigger>
+          <TabsTrigger
+            value="invoices"
+            className="data-[state=active]:bg-background"
+          >
+            Invoices
+          </TabsTrigger>
         </TabsList>
 
         <TabsContent value="overview" className="space-y-6">
@@ -124,11 +131,18 @@ export function ProjectDetailsPage({
         </TabsContent>
 
         <TabsContent value="payments" className="space-y-6">
-          <PaymentsTab project={project} />
+          <PaymentsTab
+            project={project}
+            onNavigateToInvoices={() => setActiveTab('invoices')}
+          />
         </TabsContent>
 
         <TabsContent value="documents" className="space-y-6">
           <DocumentsTab documents={project.documents} />
+        </TabsContent>
+
+        <TabsContent value="invoices" className="space-y-6">
+          <InvoicesTab project={project} basePath={basePath} />
         </TabsContent>
       </Tabs>
 

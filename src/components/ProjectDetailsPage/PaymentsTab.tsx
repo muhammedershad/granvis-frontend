@@ -1,4 +1,3 @@
-import { useState } from "react";
 import {
   CheckCircle,
   Clock,
@@ -12,10 +11,10 @@ import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
 import { Progress } from "../ui/progress";
 import { Button } from "../ui/button";
 import type { Project } from "@/types/project";
-import { InvoiceGenerationModal } from "../InvoiceGenerationModal";
 
 interface PaymentsTabProps {
   project: Project;
+  onNavigateToInvoices?: () => void;
 }
 
 const formatCurrency = (amount: number | undefined) => {
@@ -30,9 +29,7 @@ const formatCurrency = (amount: number | undefined) => {
   return `₹${amount.toLocaleString("en-IN")}`;
 };
 
-export function PaymentsTab({ project }: PaymentsTabProps) {
-  const [showInvoiceModal, setShowInvoiceModal] = useState(false);
-
+export function PaymentsTab({ project, onNavigateToInvoices }: PaymentsTabProps) {
   const totalBudget = project.totalBudget || 0;
   const spentAmount = project.spentAmount || 0;
   const remainingBudget = project.remainingBudget || 0;
@@ -49,11 +46,11 @@ export function PaymentsTab({ project }: PaymentsTabProps) {
           </p>
         </div>
         <Button
-          onClick={() => setShowInvoiceModal(true)}
+          onClick={onNavigateToInvoices}
           className="bg-gradient-to-r from-green-600 to-teal-600 hover:from-green-700 hover:to-teal-700 text-white shadow-lg shadow-green-500/25"
         >
           <FileText className="w-4 h-4 mr-2" />
-          Generate Invoice
+          Create Invoice
         </Button>
       </div>
       {/* Budget Summary Cards */}
@@ -150,13 +147,6 @@ export function PaymentsTab({ project }: PaymentsTabProps) {
           </div>
         </CardContent>
       </Card>
-
-      {/* Invoice Generation Modal */}
-      <InvoiceGenerationModal
-        open={showInvoiceModal}
-        onOpenChange={setShowInvoiceModal}
-        preSelectedProjectId={project.id}
-      />
     </div>
   );
 }

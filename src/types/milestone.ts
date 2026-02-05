@@ -13,6 +13,7 @@ export enum MilestonePaymentStatus {
 
 export enum RateType {
   PER_SQFT = 'per_sqft',
+  PER_VISIT = 'per_visit',
   FIXED = 'fixed',
 }
 
