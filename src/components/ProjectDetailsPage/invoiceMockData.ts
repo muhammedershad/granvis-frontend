@@ -60,6 +60,7 @@ export interface InvoiceFormState {
 
 export type InvoiceFormAction =
   | { type: 'SET_INVOICE_DATE'; payload: string }
+  | { type: 'SET_INVOICE_REFERENCE'; payload: string }
   | { type: 'SET_NOTES'; payload: string }
   | { type: 'TOGGLE_MILESTONE'; payload: { milestoneId: string; milestone: Milestone } }
   | { type: 'UPDATE_MILESTONE_RATE'; payload: { milestoneId: string; rateType: string; rate: number; quantity: number } }
@@ -67,7 +68,7 @@ export type InvoiceFormAction =
   | { type: 'SET_DISCOUNT'; payload: { type: 'percentage' | 'flat'; value: number } }
   | { type: 'SET_PAID_AMOUNT'; payload: number }
   | { type: 'RESET_FORM' }
-  | { type: 'LOAD_DRAFT'; payload: Invoice };
+  | { type: 'LOAD_DRAFT'; payload: Invoice | unknown };
 
 // ==================== HELPER FUNCTIONS ====================
 
@@ -165,6 +166,12 @@ export function invoiceFormReducer(
       return {
         ...state,
         invoiceDate: action.payload,
+      };
+
+    case 'SET_INVOICE_REFERENCE':
+      return {
+        ...state,
+        invoiceReference: action.payload,
       };
 
     case 'SET_NOTES':
@@ -305,14 +312,30 @@ export function invoiceFormReducer(
       };
 
     case 'LOAD_DRAFT': {
-      const invoice = action.payload;
+      const invoice = action.payload as Invoice & { milestoneItems?: MilestoneInvoiceItem[] };
       const selectedMilestones = new Map<string, MilestoneInvoiceItem>();
-      invoice.milestoneItems.forEach(item => {
-        selectedMilestones.set(item.milestoneId, item);
-      });
+
+      if (invoice.milestoneItems) {
+        invoice.milestoneItems.forEach(item => {
+          const milestoneItem: MilestoneInvoiceItem = {
+            id: item.id || `mi-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+            milestoneId: item.milestoneId,
+            milestoneTitle: item.milestoneTitle,
+            milestoneStageNumber: item.milestoneStageNumber,
+            rateType: item.rateType,
+            rate: item.rate,
+            quantity: item.quantity,
+            calculatedAmount: item.calculatedAmount,
+            editableAmount: item.editableAmount,
+          };
+          selectedMilestones.set(item.milestoneId, milestoneItem);
+        });
+      }
 
       return {
-        invoiceDate: invoice.invoiceDate,
+        invoiceDate: typeof invoice.invoiceDate === 'string'
+          ? invoice.invoiceDate.split('T')[0]
+          : new Date(invoice.invoiceDate).toISOString().split('T')[0],
         invoiceReference: invoice.invoiceNumber,
         notes: invoice.notes || '',
         selectedMilestones,

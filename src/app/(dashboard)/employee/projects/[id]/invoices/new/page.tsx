@@ -11,10 +11,7 @@ export default function EmployeeCreateInvoicePage() {
 
   return (
     <RoleGuard allowedRoles={[IAuthRoles.EMPLOYEE]}>
-      <CreateInvoicePage
-        projectId={projectId}
-        basePath="/employee/projects"
-      />
+      <CreateInvoicePage projectId={projectId} basePath="/employee/projects" />
     </RoleGuard>
   );
 }

@@ -133,7 +133,7 @@ export function ProjectDetailsPage({
         <TabsContent value="payments" className="space-y-6">
           <PaymentsTab
             project={project}
-            onNavigateToInvoices={() => setActiveTab('invoices')}
+            onNavigateToInvoices={() => setActiveTab("invoices")}
           />
         </TabsContent>
 

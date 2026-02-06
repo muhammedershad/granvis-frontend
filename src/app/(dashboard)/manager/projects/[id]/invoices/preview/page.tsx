@@ -11,10 +11,7 @@ export default function ManagerInvoicePreviewPage() {
 
   return (
     <RoleGuard allowedRoles={[IAuthRoles.MANAGER]}>
-      <InvoicePreviewPage
-        projectId={projectId}
-        basePath="/manager/projects"
-      />
+      <InvoicePreviewPage projectId={projectId} basePath="/manager/projects" />
     </RoleGuard>
   );
 }

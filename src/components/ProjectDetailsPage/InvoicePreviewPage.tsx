@@ -18,8 +18,15 @@ import { useGetProjectByIdQuery } from "@/lib/api/projectsApi";
 import { useGetMilestonesByProjectQuery } from "@/lib/api/milestonesApi";
 import { useGetDefaultFirmSettingsQuery } from "@/lib/api/firmSettingsApi";
 import { useGetClientByIdQuery } from "@/lib/api/clientsApi";
+import {
+  CreateInvoiceDto,
+  InvoiceMilestoneItem,
+  useCreateInvoiceMutation,
+} from "@/lib/api/invoicesApi";
+import { useAppSelector } from "@/store/hooks";
 import { toast } from "sonner";
 import { FirmSettings } from "@/types/firm-settings";
+import { RateType } from "@/types/milestone";
 
 interface InvoicePreviewPageProps {
   projectId: string;
@@ -57,6 +64,12 @@ export function InvoicePreviewPage({
   const searchParams = useSearchParams();
   const printRef = useRef<HTMLDivElement>(null);
   const [isGenerating, setIsGenerating] = useState(false);
+
+  // Get current user from auth state
+  const user = useAppSelector((state) => state.auth.user);
+
+  // API mutations
+  const [createInvoice, { isLoading: isCreating }] = useCreateInvoiceMutation();
 
   // Get selected milestone IDs from URL params
   const selectedMilestoneIds = searchParams.get("milestones")?.split(",") || [];
@@ -104,6 +117,7 @@ export function InvoicePreviewPage({
     : milestonesData;
 
   const isLoading = isLoadingProject || isLoadingMilestones || isLoadingFirmSettings || (project?.clientId ? isLoadingClient : false);
+  const isBusy = isGenerating || isCreating;
 
   const handlePrint = () => {
     window.print();
@@ -129,8 +143,43 @@ export function InvoicePreviewPage({
   const handleFinalize = async () => {
     setIsGenerating(true);
     try {
-      // Simulate API call to finalize invoice
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      // Build milestone items from selected milestones
+      const milestoneItems: InvoiceMilestoneItem[] = selectedMilestones.map(m => {
+        const primaryScope = m.scopeOfWork?.[0];
+        return {
+          milestoneId: m.id,
+          milestoneTitle: m.title,
+          milestoneStageNumber: m.stageNumber,
+          rateType: (primaryScope?.rateType || RateType.FIXED) as "per_sqft" | "per_visit" | "fixed",
+          rate: primaryScope?.rate || m.totalAmount || 0,
+          quantity: primaryScope?.quantity || 1,
+          calculatedAmount: m.totalAmount || 0,
+          editableAmount: m.totalAmount || 0,
+        };
+      });
+
+      const subtotal = milestoneItems.reduce((sum, item) => sum + item.editableAmount, 0);
+
+      const invoiceData: CreateInvoiceDto = {
+        projectId,
+        clientId: project?.clientId || "",
+        invoiceDate,
+        milestoneItems,
+        subtotal,
+        discountType: "percentage",
+        discountValue: 0,
+        discountAmount: 0,
+        netTotal: subtotal,
+        paidAmount: 0,
+        notes: notes?.join("\n"),
+        defaultNotes: firmSettings.defaultNotes,
+        status: "sent",
+        firmSettingsId: firmSettingsData?.id,
+        createdBy: user ? `${user.firstName} ${user.lastName}`.trim() || user.email : "Unknown User",
+        createdById: user?._id,
+      };
+
+      await createInvoice(invoiceData).unwrap();
       toast.success("Invoice finalized successfully");
       router.push(`${basePath}/${projectId}?tab=invoices`);
     } catch {
@@ -238,7 +287,7 @@ export function InvoicePreviewPage({
             <Button
               variant="outline"
               onClick={handleEdit}
-              disabled={isGenerating}
+              disabled={isBusy}
             >
               <Edit className="h-4 w-4 mr-2" />
               Edit
@@ -246,7 +295,7 @@ export function InvoicePreviewPage({
             <Button
               variant="outline"
               onClick={handlePrint}
-              disabled={isGenerating}
+              disabled={isBusy}
             >
               <Printer className="h-4 w-4 mr-2" />
               Print
@@ -254,9 +303,9 @@ export function InvoicePreviewPage({
             <Button
               variant="outline"
               onClick={handleDownloadPdf}
-              disabled={isGenerating}
+              disabled={isBusy}
             >
-              {isGenerating ? (
+              {isBusy ? (
                 <Loader2 className="h-4 w-4 mr-2 animate-spin" />
               ) : (
                 <Download className="h-4 w-4 mr-2" />
@@ -265,10 +314,10 @@ export function InvoicePreviewPage({
             </Button>
             <Button
               onClick={handleFinalize}
-              disabled={isGenerating}
+              disabled={isBusy}
               className="bg-gradient-to-r from-green-600 to-teal-600 hover:from-green-700 hover:to-teal-700"
             >
-              {isGenerating ? (
+              {isBusy ? (
                 <Loader2 className="h-4 w-4 mr-2 animate-spin" />
               ) : (
                 <CheckCircle className="h-4 w-4 mr-2" />

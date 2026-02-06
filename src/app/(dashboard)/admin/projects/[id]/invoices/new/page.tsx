@@ -11,10 +11,7 @@ export default function AdminCreateInvoicePage() {
 
   return (
     <RoleGuard allowedRoles={[IAuthRoles.ADMIN]}>
-      <CreateInvoicePage
-        projectId={projectId}
-        basePath="/admin/projects"
-      />
+      <CreateInvoicePage projectId={projectId} basePath="/admin/projects" />
     </RoleGuard>
   );
 }

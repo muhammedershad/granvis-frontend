@@ -19,16 +19,24 @@ import { Textarea } from "../ui/textarea";
 import { MilestoneSelectionTable } from "./MilestoneSelectionTable";
 import { InvoiceSummaryPanel } from "./InvoiceSummaryPanel";
 import {
-  Invoice,
-  invoiceFormReducer,
-  initialInvoiceFormState,
-  generateInvoiceNumber,
   calculateMilestoneInvoicingStatus,
+  initialInvoiceFormState,
+  invoiceFormReducer,
   MilestoneWithInvoicing,
-  mockInvoices,
 } from "./invoiceMockData";
 import { useGetMilestonesByProjectQuery } from "@/lib/api/milestonesApi";
 import { useGetProjectByIdQuery } from "@/lib/api/projectsApi";
+import { useGetDefaultFirmSettingsQuery } from "@/lib/api/firmSettingsApi";
+import {
+  CreateInvoiceDto,
+  InvoiceMilestoneItem,
+  useCreateInvoiceMutation,
+  useGetInvoiceByIdQuery,
+  useGetInvoicesByProjectQuery,
+  useLazyGenerateInvoiceNumberQuery,
+  useUpdateInvoiceMutation,
+} from "@/lib/api/invoicesApi";
+import { useAppSelector } from "@/store/hooks";
 import { toast } from "sonner";
 
 interface CreateInvoicePageProps {
@@ -42,17 +50,18 @@ export function CreateInvoicePage({
 }: CreateInvoicePageProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const [state, dispatch] = useReducer(invoiceFormReducer, initialInvoiceFormState);
+  const [state, dispatch] = useReducer(
+    invoiceFormReducer,
+    initialInvoiceFormState
+  );
   const [expandedMilestones, setExpandedMilestones] = useState<Set<string>>(new Set());
-  const [isSaving, setIsSaving] = useState(false);
-  const [existingInvoices] = useState<Invoice[]>(mockInvoices);
+
+  // Get current user from auth state
+  const user = useAppSelector((state) => state.auth.user);
 
   // Determine if we're editing an existing invoice (from query param)
-  const invoiceId = searchParams.get('edit');
+  const invoiceId = searchParams.get("edit");
   const isEditMode = !!invoiceId;
-  const existingInvoice = isEditMode
-    ? existingInvoices.find(inv => inv.id === invoiceId)
-    : null;
 
   // Fetch project details
   const {
@@ -70,16 +79,42 @@ export function CreateInvoicePage({
     skip: !projectId,
   });
 
+  // Fetch existing invoices for the project
+  const { data: existingInvoices = [], isLoading: isLoadingInvoices } =
+    useGetInvoicesByProjectQuery(projectId, {
+      skip: !projectId,
+    });
+
+  // Fetch existing invoice if editing
+  const { data: existingInvoice, isLoading: isLoadingExistingInvoice } =
+    useGetInvoiceByIdQuery(invoiceId || "", {
+      skip: !invoiceId,
+    });
+
+  // Fetch default firm settings
+  const {
+    data: firmSettings,
+  } = useGetDefaultFirmSettingsQuery();
+
+  // Generate invoice number
+  const [generateInvoiceNumber] = useLazyGenerateInvoiceNumberQuery();
+
+  // API mutations
+  const [createInvoice, { isLoading: isCreating }] = useCreateInvoiceMutation();
+  const [updateInvoice, { isLoading: isUpdating }] = useUpdateInvoiceMutation();
+
+  const isSaving = isCreating || isUpdating;
+
   // Calculate invoicing status for each milestone
   const milestonesWithStatus: MilestoneWithInvoicing[] = milestonesData.map(milestone => {
     // Filter out the current invoice being edited to avoid double-counting
-    const invoicesToConsider = existingInvoices.filter(inv => inv.id !== (invoiceId || ''));
+    const invoicesToConsider = existingInvoices.filter(
+      (inv) => inv.id !== (invoiceId || "")
+    );
 
     // Calculate based on existing finalized invoices
-    const { status, totalBilled, remainingAmount } = calculateMilestoneInvoicingStatus(
-      milestone,
-      invoicesToConsider
-    );
+    const { status, totalBilled, remainingAmount } =
+      calculateMilestoneInvoicingStatus(milestone, invoicesToConsider);
 
     return {
       ...milestone,
@@ -89,20 +124,39 @@ export function CreateInvoicePage({
     };
   });
 
-  // Initialize form
+  // Initialize form with generated invoice number
   useEffect(() => {
-    if (isEditMode && existingInvoice) {
-      // Load existing invoice for editing
-      dispatch({ type: 'LOAD_DRAFT', payload: existingInvoice });
-      // Auto-expand selected milestones
-      const selectedIds = new Set(existingInvoice.milestoneItems.map(item => item.milestoneId));
-      setExpandedMilestones(selectedIds);
-    } else {
-      // Reset for new invoice
-      dispatch({ type: 'RESET_FORM' });
-      setExpandedMilestones(new Set());
-    }
-  }, [isEditMode, existingInvoice]);
+    const initForm = async () => {
+      if (isEditMode && existingInvoice) {
+        // Load existing invoice for editing
+        dispatch({ type: "LOAD_DRAFT", payload: existingInvoice });
+        // Auto-expand selected milestones
+        const selectedIds = new Set(
+          existingInvoice.milestoneItems.map((item) => item.milestoneId)
+        );
+        setExpandedMilestones(selectedIds);
+      } else if (!isEditMode) {
+        // Reset for new invoice
+        dispatch({ type: "RESET_FORM" });
+        setExpandedMilestones(new Set());
+
+        // Generate invoice number
+        try {
+          const result = await generateInvoiceNumber(firmSettings?.id).unwrap();
+          dispatch({
+            type: "SET_INVOICE_REFERENCE",
+            payload: result.invoiceNumber,
+          });
+        } catch {
+          // Use fallback invoice number
+          const fallbackNumber = `INV-${new Date().getFullYear()}-${String(Date.now()).slice(-4)}`;
+          dispatch({ type: "SET_INVOICE_REFERENCE", payload: fallbackNumber });
+        }
+      }
+    };
+
+    initForm();
+  }, [isEditMode, existingInvoice, firmSettings?.id, generateInvoiceNumber]);
 
   const handleToggleExpand = (milestoneId: string) => {
     setExpandedMilestones(prev => {
@@ -118,10 +172,10 @@ export function CreateInvoicePage({
 
   const validateDraft = (): string | null => {
     if (!state.invoiceDate) {
-      return 'Invoice date is required';
+      return "Invoice date is required";
     }
     if (state.selectedMilestones.size === 0) {
-      return 'Please select at least one milestone';
+      return "Please select at least one milestone";
     }
     return null;
   };
@@ -139,33 +193,48 @@ export function CreateInvoicePage({
 
     // Check discount validity
     if (state.discountValue < 0) {
-      return 'Discount value cannot be negative';
+      return "Discount value cannot be negative";
     }
-    if (state.discountType === 'percentage' && state.discountValue > 100) {
-      return 'Percentage discount cannot exceed 100%';
+    if (state.discountType === "percentage" && state.discountValue > 100) {
+      return "Percentage discount cannot exceed 100%";
     }
 
     return null;
   };
 
-  const createInvoiceObject = (status: 'draft' | 'sent'): Invoice => {
+  const buildInvoiceDto = (status: "draft" | "sent"): CreateInvoiceDto => {
+    const milestoneItems: InvoiceMilestoneItem[] = Array.from(
+      state.selectedMilestones.values()
+    ).map((item) => ({
+      milestoneId: item.milestoneId,
+      milestoneTitle: item.milestoneTitle,
+      milestoneStageNumber: item.milestoneStageNumber,
+      rateType: item.rateType,
+      rate: item.rate,
+      quantity: item.quantity,
+      calculatedAmount: item.calculatedAmount,
+      editableAmount: item.editableAmount,
+    }));
+
     return {
-      id: existingInvoice?.id || `inv-${Date.now()}`,
-      invoiceNumber: state.invoiceReference,
+      projectId,
+      clientId: project?.clientId || "",
       invoiceDate: state.invoiceDate,
-      notes: state.notes,
-      milestoneItems: Array.from(state.selectedMilestones.values()),
+      milestoneItems,
       subtotal: state.subtotal,
       discountType: state.discountType,
       discountValue: state.discountValue,
       discountAmount: state.discountAmount,
       netTotal: state.netTotal,
       paidAmount: state.paidAmount,
-      balance: state.balance,
+      notes: state.notes || undefined,
+      defaultNotes: firmSettings?.defaultNotes,
       status,
-      createdAt: existingInvoice?.createdAt || new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-      createdBy: existingInvoice?.createdBy || 'Current User',
+      firmSettingsId: firmSettings?.id,
+      createdBy: user
+        ? `${user.firstName} ${user.lastName}`.trim() || user.email
+        : "Unknown User",
+      createdById: user?._id,
     };
   };
 
@@ -176,21 +245,34 @@ export function CreateInvoicePage({
       return;
     }
 
-    setIsSaving(true);
     try {
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 500));
-      const invoice = createInvoiceObject('draft');
+      const invoiceData = buildInvoiceDto("draft");
 
-      // In real implementation, this would be an API call
-      console.log('Saving draft invoice:', invoice);
+      if (isEditMode && invoiceId) {
+        await updateInvoice({
+          id: invoiceId,
+          data: {
+            invoiceDate: invoiceData.invoiceDate,
+            milestoneItems: invoiceData.milestoneItems,
+            subtotal: invoiceData.subtotal,
+            discountType: invoiceData.discountType,
+            discountValue: invoiceData.discountValue,
+            discountAmount: invoiceData.discountAmount,
+            netTotal: invoiceData.netTotal,
+            paidAmount: invoiceData.paidAmount,
+            notes: invoiceData.notes,
+            defaultNotes: invoiceData.defaultNotes,
+          },
+        }).unwrap();
+        toast.success("Invoice updated successfully");
+      } else {
+        await createInvoice(invoiceData).unwrap();
+        toast.success("Invoice saved as draft");
+      }
 
-      toast.success('Invoice saved as draft');
       router.push(`${basePath}/${projectId}?tab=invoices`);
-    } catch (error) {
-      toast.error('Failed to save invoice');
-    } finally {
-      setIsSaving(false);
+    } catch {
+      toast.error("Failed to save invoice");
     }
   };
 
@@ -201,21 +283,35 @@ export function CreateInvoicePage({
       return;
     }
 
-    setIsSaving(true);
     try {
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 500));
-      const invoice = createInvoiceObject('sent');
+      const invoiceData = buildInvoiceDto("sent");
 
-      // In real implementation, this would be an API call
-      console.log('Finalizing invoice:', invoice);
+      if (isEditMode && invoiceId) {
+        await updateInvoice({
+          id: invoiceId,
+          data: {
+            invoiceDate: invoiceData.invoiceDate,
+            milestoneItems: invoiceData.milestoneItems,
+            subtotal: invoiceData.subtotal,
+            discountType: invoiceData.discountType,
+            discountValue: invoiceData.discountValue,
+            discountAmount: invoiceData.discountAmount,
+            netTotal: invoiceData.netTotal,
+            paidAmount: invoiceData.paidAmount,
+            notes: invoiceData.notes,
+            defaultNotes: invoiceData.defaultNotes,
+            status: "sent",
+          },
+        }).unwrap();
+        toast.success("Invoice finalized successfully");
+      } else {
+        await createInvoice(invoiceData).unwrap();
+        toast.success("Invoice finalized successfully");
+      }
 
-      toast.success('Invoice finalized successfully');
       router.push(`${basePath}/${projectId}?tab=invoices`);
-    } catch (error) {
-      toast.error('Failed to finalize invoice');
-    } finally {
-      setIsSaving(false);
+    } catch {
+      toast.error("Failed to finalize invoice");
     }
   };
 
@@ -239,13 +335,18 @@ export function CreateInvoicePage({
       params.set("notes", state.notes.split("\n").join("|"));
     }
 
-    router.push(`${basePath}/${projectId}/invoices/preview?${params.toString()}`);
+    router.push(
+      `${basePath}/${projectId}/invoices/preview?${params.toString()}`
+    );
   };
 
   // Prevent editing finalized invoices
-  const isEditable = !existingInvoice || existingInvoice.status === 'draft';
+  const isEditable = !existingInvoice || existingInvoice.status === "draft";
 
-  if (isLoadingProject || isLoadingMilestones) {
+  const isLoading = isLoadingProject || isLoadingMilestones || isLoadingInvoices ||
+    (isEditMode && isLoadingExistingInvoice);
+
+  if (isLoading) {
     return (
       <div className="flex items-center justify-center py-16">
         <Loader2 className="w-8 h-8 animate-spin text-purple-500" />
@@ -274,7 +375,7 @@ export function CreateInvoicePage({
               <div className="p-2 bg-blue-500/10 rounded-lg border border-blue-500/20">
                 <FileText className="h-6 w-6 text-blue-600 dark:text-blue-400" />
               </div>
-              {isEditMode ? 'Edit Invoice' : 'Create New Invoice'}
+              {isEditMode ? "Edit Invoice" : "Create New Invoice"}
             </h1>
             <p className="text-sm text-muted-foreground mt-1">
               {project?.name} • {state.invoiceReference}
@@ -356,7 +457,9 @@ export function CreateInvoicePage({
                     id="invoiceDate"
                     type="date"
                     value={state.invoiceDate}
-                    onChange={(e) => dispatch({ type: 'SET_INVOICE_DATE', payload: e.target.value })}
+                    onChange={(e) =>
+                      dispatch({ type: "SET_INVOICE_DATE", payload: e.target.value })
+                    }
                     disabled={!isEditable}
                     className="text-sm"
                   />
@@ -382,7 +485,9 @@ export function CreateInvoicePage({
                 <Textarea
                   id="notes"
                   value={state.notes}
-                  onChange={(e) => dispatch({ type: 'SET_NOTES', payload: e.target.value })}
+                  onChange={(e) =>
+                    dispatch({ type: "SET_NOTES", payload: e.target.value })
+                  }
                   placeholder="Add any notes or special terms..."
                   rows={3}
                   disabled={!isEditable}
@@ -416,13 +521,16 @@ export function CreateInvoicePage({
                 selectedMilestones={state.selectedMilestones}
                 onToggleMilestone={(id, milestone) => {
                   if (isEditable) {
-                    dispatch({ type: 'TOGGLE_MILESTONE', payload: { milestoneId: id, milestone } });
+                    dispatch({
+                      type: "TOGGLE_MILESTONE",
+                      payload: { milestoneId: id, milestone },
+                    });
                   }
                 }}
                 onUpdateRate={(id, data) => {
                   if (isEditable) {
                     dispatch({
-                      type: 'UPDATE_MILESTONE_RATE',
+                      type: "UPDATE_MILESTONE_RATE",
                       payload: { milestoneId: id, ...data },
                     });
                   }
@@ -430,7 +538,7 @@ export function CreateInvoicePage({
                 onUpdateAmount={(id, amount) => {
                   if (isEditable) {
                     dispatch({
-                      type: 'UPDATE_MILESTONE_AMOUNT',
+                      type: "UPDATE_MILESTONE_AMOUNT",
                       payload: { milestoneId: id, amount },
                     });
                   }
@@ -454,12 +562,12 @@ export function CreateInvoicePage({
             balance={state.balance}
             onSetDiscount={(type, value) => {
               if (isEditable) {
-                dispatch({ type: 'SET_DISCOUNT', payload: { type, value } });
+                dispatch({ type: "SET_DISCOUNT", payload: { type, value } });
               }
             }}
             onSetPaidAmount={(amount) => {
               if (isEditable) {
-                dispatch({ type: 'SET_PAID_AMOUNT', payload: amount });
+                dispatch({ type: "SET_PAID_AMOUNT", payload: amount });
               }
             }}
           />

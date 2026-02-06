@@ -14,11 +14,10 @@ import { Textarea } from "../ui/textarea";
 import { MilestoneSelectionTable } from "./MilestoneSelectionTable";
 import { InvoiceSummaryPanel } from "./InvoiceSummaryPanel";
 import {
-  Invoice,
-  invoiceFormReducer,
-  initialInvoiceFormState,
-  generateInvoiceNumber,
   calculateMilestoneInvoicingStatus,
+  Invoice,
+  initialInvoiceFormState,
+  invoiceFormReducer,
   MilestoneWithInvoicing,
 } from "./invoiceMockData";
 import { useGetMilestonesByProjectQuery } from "@/lib/api/milestonesApi";
@@ -41,7 +40,10 @@ export function InvoiceFormDialog({
   existingInvoices,
   onSave,
 }: InvoiceFormDialogProps) {
-  const [state, dispatch] = useReducer(invoiceFormReducer, initialInvoiceFormState);
+  const [state, dispatch] = useReducer(
+    invoiceFormReducer,
+    initialInvoiceFormState
+  );
   const [expandedMilestones, setExpandedMilestones] = useState<Set<string>>(new Set());
 
   // Fetch milestones for the project
@@ -55,13 +57,13 @@ export function InvoiceFormDialog({
   // Calculate invoicing status for each milestone
   const milestonesWithStatus: MilestoneWithInvoicing[] = milestonesData.map(milestone => {
     // Filter out the current invoice being edited to avoid double-counting
-    const invoicesToConsider = existingInvoices.filter(inv => inv.id !== invoice?.id);
+    const invoicesToConsider = existingInvoices.filter(
+      (inv) => inv.id !== invoice?.id
+    );
 
     // Calculate based on existing finalized invoices
-    const { status, totalBilled, remainingAmount } = calculateMilestoneInvoicingStatus(
-      milestone,
-      invoicesToConsider
-    );
+    const { status, totalBilled, remainingAmount } =
+      calculateMilestoneInvoicingStatus(milestone, invoicesToConsider);
 
     return {
       ...milestone,
@@ -76,20 +78,22 @@ export function InvoiceFormDialog({
     if (open) {
       if (invoice) {
         // Load existing invoice for editing
-        dispatch({ type: 'LOAD_DRAFT', payload: invoice });
+        dispatch({ type: "LOAD_DRAFT", payload: invoice });
         // Auto-expand selected milestones
-        const selectedIds = new Set(invoice.milestoneItems.map(item => item.milestoneId));
+        const selectedIds = new Set(
+          invoice.milestoneItems.map((item) => item.milestoneId)
+        );
         setExpandedMilestones(selectedIds);
       } else {
         // Reset for new invoice
-        dispatch({ type: 'RESET_FORM' });
+        dispatch({ type: "RESET_FORM" });
         setExpandedMilestones(new Set());
       }
     }
   }, [open, invoice]);
 
   const handleToggleExpand = (milestoneId: string) => {
-    setExpandedMilestones(prev => {
+    setExpandedMilestones((prev) => {
       const next = new Set(prev);
       if (next.has(milestoneId)) {
         next.delete(milestoneId);
@@ -102,10 +106,10 @@ export function InvoiceFormDialog({
 
   const validateDraft = (): string | null => {
     if (!state.invoiceDate) {
-      return 'Invoice date is required';
+      return "Invoice date is required";
     }
     if (state.selectedMilestones.size === 0) {
-      return 'Please select at least one milestone';
+      return "Please select at least one milestone";
     }
     return null;
   };
@@ -123,10 +127,10 @@ export function InvoiceFormDialog({
 
     // Check discount validity
     if (state.discountValue < 0) {
-      return 'Discount value cannot be negative';
+      return "Discount value cannot be negative";
     }
-    if (state.discountType === 'percentage' && state.discountValue > 100) {
-      return 'Percentage discount cannot exceed 100%';
+    if (state.discountType === "percentage" && state.discountValue > 100) {
+      return "Percentage discount cannot exceed 100%";
     }
 
     return null;
@@ -152,14 +156,14 @@ export function InvoiceFormDialog({
       netTotal: state.netTotal,
       paidAmount: state.paidAmount,
       balance: state.balance,
-      status: 'draft',
+      status: "draft",
       createdAt: invoice?.createdAt || new Date().toISOString(),
       updatedAt: new Date().toISOString(),
-      createdBy: invoice?.createdBy || 'Current User',
+      createdBy: invoice?.createdBy || "Current User",
     };
 
     onSave(newInvoice);
-    toast.success('Invoice saved as draft');
+    toast.success("Invoice saved as draft");
   };
 
   const handleFinalize = () => {
@@ -182,14 +186,14 @@ export function InvoiceFormDialog({
       netTotal: state.netTotal,
       paidAmount: state.paidAmount,
       balance: state.balance,
-      status: 'sent',
+      status: "sent",
       createdAt: invoice?.createdAt || new Date().toISOString(),
       updatedAt: new Date().toISOString(),
-      createdBy: invoice?.createdBy || 'Current User',
+      createdBy: invoice?.createdBy || "Current User",
     };
 
     onSave(newInvoice);
-    toast.success('Invoice finalized successfully');
+    toast.success("Invoice finalized successfully");
   };
 
   const handleClose = () => {
@@ -197,7 +201,7 @@ export function InvoiceFormDialog({
   };
 
   // Prevent editing finalized invoices
-  const isEditable = !invoice || invoice.status === 'draft';
+  const isEditable = !invoice || invoice.status === "draft";
 
   return (
     <Dialog open={open} onOpenChange={handleClose}>
@@ -208,7 +212,11 @@ export function InvoiceFormDialog({
               <FileText className="h-5 w-5 text-blue-600 dark:text-blue-400" />
             </div>
             <DialogTitle className="text-xl">
-              {invoice ? (invoice.status === 'draft' ? 'Edit Invoice' : 'View Invoice') : 'Create New Invoice'}
+              {invoice
+                ? invoice.status === "draft"
+                  ? "Edit Invoice"
+                  : "View Invoice"
+                : "Create New Invoice"}
             </DialogTitle>
           </div>
         </DialogHeader>
@@ -233,7 +241,12 @@ export function InvoiceFormDialog({
                       id="invoiceDate"
                       type="date"
                       value={state.invoiceDate}
-                      onChange={(e) => dispatch({ type: 'SET_INVOICE_DATE', payload: e.target.value })}
+                      onChange={(e) =>
+                        dispatch({
+                          type: "SET_INVOICE_DATE",
+                          payload: e.target.value,
+                        })
+                      }
                       disabled={!isEditable}
                       className="text-sm"
                     />
@@ -259,7 +272,9 @@ export function InvoiceFormDialog({
                   <Textarea
                     id="notes"
                     value={state.notes}
-                    onChange={(e) => dispatch({ type: 'SET_NOTES', payload: e.target.value })}
+                    onChange={(e) =>
+                      dispatch({ type: "SET_NOTES", payload: e.target.value })
+                    }
                     placeholder="Add any notes or special terms..."
                     rows={3}
                     disabled={!isEditable}
@@ -289,13 +304,16 @@ export function InvoiceFormDialog({
                     selectedMilestones={state.selectedMilestones}
                     onToggleMilestone={(id, milestone) => {
                       if (isEditable) {
-                        dispatch({ type: 'TOGGLE_MILESTONE', payload: { milestoneId: id, milestone } });
+                        dispatch({
+                          type: "TOGGLE_MILESTONE",
+                          payload: { milestoneId: id, milestone },
+                        });
                       }
                     }}
                     onUpdateRate={(id, data) => {
                       if (isEditable) {
                         dispatch({
-                          type: 'UPDATE_MILESTONE_RATE',
+                          type: "UPDATE_MILESTONE_RATE",
                           payload: { milestoneId: id, ...data },
                         });
                       }
@@ -303,7 +321,7 @@ export function InvoiceFormDialog({
                     onUpdateAmount={(id, amount) => {
                       if (isEditable) {
                         dispatch({
-                          type: 'UPDATE_MILESTONE_AMOUNT',
+                          type: "UPDATE_MILESTONE_AMOUNT",
                           payload: { milestoneId: id, amount },
                         });
                       }
@@ -327,12 +345,12 @@ export function InvoiceFormDialog({
                 balance={state.balance}
                 onSetDiscount={(type, value) => {
                   if (isEditable) {
-                    dispatch({ type: 'SET_DISCOUNT', payload: { type, value } });
+                    dispatch({ type: "SET_DISCOUNT", payload: { type, value } });
                   }
                 }}
                 onSetPaidAmount={(amount) => {
                   if (isEditable) {
-                    dispatch({ type: 'SET_PAID_AMOUNT', payload: amount });
+                    dispatch({ type: "SET_PAID_AMOUNT", payload: amount });
                   }
                 }}
               />
