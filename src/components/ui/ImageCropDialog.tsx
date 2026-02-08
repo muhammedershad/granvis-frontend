@@ -6,16 +6,19 @@ import "react-image-crop/dist/ReactCrop.css";
 import {
   Dialog,
   DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
 } from "./dialog";
 import { Button } from "./button";
 import { Slider } from "./slider";
 import { Label } from "./label";
 import { Alert, AlertDescription } from "./alert";
-import { AlertCircle, ZoomIn, ZoomOut } from "lucide-react";
+import {
+  AlertCircle,
+  Crop as CropIcon,
+  Loader2,
+  RotateCw,
+  ZoomIn,
+  ZoomOut,
+} from "lucide-react";
 
 interface ImageCropDialogProps {
   open: boolean;
@@ -53,15 +56,29 @@ export function ImageCropDialog({
   const [isCropping, setIsCropping] = useState(false);
 
   const handleImageLoad = useCallback(() => {
+    const img = imgRef.current;
+    if (!img) return;
+
     const cropWidthPercent = aspectRatio >= 1 ? 80 : 80 * aspectRatio;
     const cropHeightPercent = aspectRatio <= 1 ? 80 : 80 / aspectRatio;
+    const xPercent = (100 - cropWidthPercent) / 2;
+    const yPercent = (100 - cropHeightPercent) / 2;
 
     setCrop({
       unit: "%",
       width: cropWidthPercent,
       height: cropHeightPercent,
-      x: (100 - cropWidthPercent) / 2,
-      y: (100 - cropHeightPercent) / 2,
+      x: xPercent,
+      y: yPercent,
+    });
+
+    // Set initial completedCrop in pixels so "Apply" works without requiring user drag
+    setCompletedCrop({
+      unit: "px",
+      width: Math.round((cropWidthPercent / 100) * img.width),
+      height: Math.round((cropHeightPercent / 100) * img.height),
+      x: Math.round((xPercent / 100) * img.width),
+      y: Math.round((yPercent / 100) * img.height),
     });
   }, [aspectRatio]);
 
@@ -189,88 +206,113 @@ export function ImageCropDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle>{title}</DialogTitle>
-          <DialogDescription>{description}</DialogDescription>
-        </DialogHeader>
-
-        <div className="space-y-4">
-          {error && (
-            <Alert variant="destructive">
-              <AlertCircle className="h-4 w-4" />
-              <AlertDescription>{error}</AlertDescription>
-            </Alert>
-          )}
-
-          <div className="flex justify-center items-center bg-gray-100 dark:bg-gray-900 rounded-lg p-4">
-            <ReactCrop
-              crop={crop}
-              onChange={(c) => setCrop(c)}
-              onComplete={(c) => setCompletedCrop(c)}
-              aspect={aspectRatio}
-              circularCrop={circularCrop}
-            >
-              <img
-                ref={imgRef}
-                alt="Crop preview"
-                src={imageSrc}
-                onLoad={handleImageLoad}
-                style={{
-                  transform: `scale(${scale}) rotate(${rotate}deg)`,
-                  maxHeight: "60vh",
-                  maxWidth: "100%",
-                }}
-              />
-            </ReactCrop>
-          </div>
-
-          {/* Zoom Control */}
-          <div className="space-y-2">
-            <div className="flex items-center justify-between">
-              <Label className="text-sm font-medium flex items-center gap-2">
-                <ZoomOut className="h-4 w-4" />
-                Zoom
-                <ZoomIn className="h-4 w-4" />
-              </Label>
-              <span className="text-xs text-muted-foreground">
-                {Math.round(scale * 100)}%
-              </span>
+      <DialogContent className="sm:max-w-[700px] max-h-[calc(100%-2rem)] sm:max-h-[85vh] md:max-h-[85vh] overflow-hidden p-0 gap-0 flex flex-col">
+        {/* Header - pinned */}
+        <div className="relative overflow-hidden p-4 sm:p-6 bg-gradient-to-br from-orange-50/50 to-pink-50/50 dark:from-white/5 dark:to-white/10 border-b border-orange-100/50 dark:border-white/10 flex-shrink-0">
+          <div className="absolute top-0 right-0 w-64 h-64 bg-gradient-to-br from-orange-500/10 to-pink-500/10 dark:from-orange-400/10 dark:to-pink-400/10 blur-3xl -mr-16 -mt-16 rounded-full pointer-events-none"></div>
+          <div className="relative flex items-center gap-3 sm:gap-4">
+            <div className="p-2.5 sm:p-3 rounded-2xl bg-gradient-to-br from-orange-500 to-pink-600 shadow-lg shadow-orange-500/20">
+              <CropIcon className="w-6 h-6 sm:w-7 sm:h-7 text-white" />
             </div>
-            <Slider
-              value={[scale]}
-              onValueChange={(value) => setScale(value[0])}
-              min={0.5}
-              max={3}
-              step={0.1}
-              className="w-full"
-            />
-          </div>
-
-          {/* Rotate Control */}
-          <div className="space-y-2">
-            <div className="flex items-center justify-between">
-              <Label className="text-sm font-medium">Rotate</Label>
-              <span className="text-xs text-muted-foreground">{rotate}°</span>
+            <div>
+              <h2 className="text-lg sm:text-xl font-bold text-gray-900 dark:text-white tracking-tight">
+                {title}
+              </h2>
+              <p className="text-xs sm:text-sm text-gray-500 dark:text-muted-foreground font-medium">
+                {description}
+              </p>
             </div>
-            <Slider
-              value={[rotate]}
-              onValueChange={(value) => setRotate(value[0])}
-              min={-180}
-              max={180}
-              step={1}
-              className="w-full"
-            />
-          </div>
-
-          <div className="text-xs text-muted-foreground space-y-1">
-            <p>• Drag the corners to adjust the crop area</p>
-            <p>• Final image must be under 1MB</p>
-            <p>• Supported formats: JPG, PNG, WebP</p>
           </div>
         </div>
 
-        <DialogFooter>
+        {/* Scrollable body */}
+        <div className="flex-1 overflow-y-auto p-4 sm:p-6 custom-scrollbar">
+          <div className="space-y-4 bg-white dark:bg-black/40 p-3 sm:p-4 rounded-2xl border border-gray-100 dark:border-white/5 shadow-sm dark:shadow-none">
+            {error && (
+              <Alert variant="destructive">
+                <AlertCircle className="h-4 w-4" />
+                <AlertDescription>{error}</AlertDescription>
+              </Alert>
+            )}
+
+            {/* Crop Area */}
+            <div className="flex justify-center items-center bg-gray-50/50 dark:bg-white/5 rounded-xl border-2 border-dashed border-gray-200 dark:border-white/10 p-4">
+              <ReactCrop
+                crop={crop}
+                onChange={(c) => setCrop(c)}
+                onComplete={(c) => setCompletedCrop(c)}
+                aspect={aspectRatio}
+                circularCrop={circularCrop}
+              >
+                <img
+                  ref={imgRef}
+                  alt="Crop preview"
+                  src={imageSrc}
+                  onLoad={handleImageLoad}
+                  style={{
+                    transform: `scale(${scale}) rotate(${rotate}deg)`,
+                    maxHeight: "50vh",
+                    maxWidth: "100%",
+                  }}
+                />
+              </ReactCrop>
+            </div>
+
+            {/* Controls */}
+            <div className="space-y-4 p-4 bg-gray-50/50 dark:bg-white/5 rounded-xl border border-gray-100 dark:border-white/5">
+              {/* Zoom Control */}
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <Label className="text-xs font-medium text-muted-foreground flex items-center gap-2">
+                    <ZoomOut className="h-3.5 w-3.5" />
+                    Zoom
+                    <ZoomIn className="h-3.5 w-3.5" />
+                  </Label>
+                  <span className="text-xs font-medium text-orange-600 dark:text-orange-400 bg-orange-500/10 px-2 py-0.5 rounded-full">
+                    {Math.round(scale * 100)}%
+                  </span>
+                </div>
+                <Slider
+                  value={[scale]}
+                  onValueChange={(value) => setScale(value[0])}
+                  min={0.5}
+                  max={3}
+                  step={0.1}
+                  className="w-full"
+                />
+              </div>
+
+              {/* Rotate Control */}
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <Label className="text-xs font-medium text-muted-foreground flex items-center gap-2">
+                    <RotateCw className="h-3.5 w-3.5" />
+                    Rotate
+                  </Label>
+                  <span className="text-xs font-medium text-orange-600 dark:text-orange-400 bg-orange-500/10 px-2 py-0.5 rounded-full">
+                    {rotate}°
+                  </span>
+                </div>
+                <Slider
+                  value={[rotate]}
+                  onValueChange={(value) => setRotate(value[0])}
+                  min={-180}
+                  max={180}
+                  step={1}
+                  className="w-full"
+                />
+              </div>
+            </div>
+
+            {/* Help text */}
+            <div className="text-xs text-muted-foreground space-y-1 px-1">
+              <p>Drag the corners to adjust the crop area. Final image must be under 1MB.</p>
+            </div>
+          </div>
+        </div>
+
+        {/* Footer - pinned */}
+        <div className="flex items-center justify-end gap-3 px-4 sm:px-6 py-3 sm:py-4 border-t flex-shrink-0">
           <Button
             type="button"
             variant="outline"
@@ -284,9 +326,16 @@ export function ImageCropDialog({
             onClick={handleCropConfirm}
             disabled={isCropping}
           >
-            {isCropping ? "Cropping..." : "Apply Crop"}
+            {isCropping ? (
+              <>
+                <Loader2 className="w-4 h-4 animate-spin" />
+                Cropping...
+              </>
+            ) : (
+              "Apply Crop"
+            )}
           </Button>
-        </DialogFooter>
+        </div>
       </DialogContent>
     </Dialog>
   );

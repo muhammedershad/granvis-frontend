@@ -15,8 +15,10 @@ import {
 import { Button } from "../ui/button";
 import { InvoicePreview, InvoicePreviewData } from "./InvoicePreview";
 import { useGetProjectByIdQuery } from "@/lib/api/projectsApi";
-import { useGetMilestonesByProjectQuery } from "@/lib/api/milestonesApi";
-import { useGetDefaultFirmSettingsQuery } from "@/lib/api/firmSettingsApi";
+import {
+  useGetDefaultFirmSettingsQuery,
+  useGetFirmSettingsByIdQuery,
+} from "@/lib/api/firmSettingsApi";
 import { useGetClientByIdQuery } from "@/lib/api/clientsApi";
 import {
   CreateInvoiceDto,
@@ -26,7 +28,6 @@ import {
 import { useAppSelector } from "@/store/hooks";
 import { toast } from "sonner";
 import { FirmSettings } from "@/types/firm-settings";
-import { RateType } from "@/types/milestone";
 
 interface InvoicePreviewPageProps {
   projectId: string;
@@ -71,11 +72,33 @@ export function InvoicePreviewPage({
   // API mutations
   const [createInvoice, { isLoading: isCreating }] = useCreateInvoiceMutation();
 
-  // Get selected milestone IDs from URL params
-  const selectedMilestoneIds = searchParams.get("milestones")?.split(",") || [];
+  // Parse form state from URL params
   const invoiceDate = searchParams.get("date") || new Date().toISOString().split("T")[0];
+  const invoiceRef = searchParams.get("invoiceRef") || "";
   const notesParam = searchParams.get("notes");
   const notes = notesParam ? notesParam.split("|") : undefined;
+
+  // Parse milestone items with custom rates/amounts
+  const itemsParam = searchParams.get("items");
+  const milestoneItems: InvoiceMilestoneItem[] = (() => {
+    if (!itemsParam) return [];
+    try {
+      return JSON.parse(atob(itemsParam));
+    } catch {
+      return [];
+    }
+  })();
+
+  // Parse financial summary
+  const subtotal = parseFloat(searchParams.get("subtotal") || "0");
+  const discountType = (searchParams.get("discountType") || "percentage") as "percentage" | "flat";
+  const discountValue = parseFloat(searchParams.get("discountValue") || "0");
+  const discountAmount = parseFloat(searchParams.get("discountAmount") || "0");
+  const netTotal = parseFloat(searchParams.get("netTotal") || "0");
+  const paidAmount = parseFloat(searchParams.get("paidAmount") || "0");
+
+  // Parse selected firm settings ID
+  const firmSettingsId = searchParams.get("firmSettingsId") || "";
 
   // Fetch project details
   const {
@@ -86,19 +109,23 @@ export function InvoicePreviewPage({
     skip: !projectId,
   });
 
-  // Fetch milestones for the project
+  // Fetch selected firm settings by ID, or fall back to default
   const {
-    data: milestonesData = [],
-    isLoading: isLoadingMilestones,
-  } = useGetMilestonesByProjectQuery(projectId, {
-    skip: !projectId,
+    data: selectedFirmData,
+    isLoading: isLoadingSelectedFirm,
+  } = useGetFirmSettingsByIdQuery(firmSettingsId, {
+    skip: !firmSettingsId,
   });
 
-  // Fetch firm settings
   const {
-    data: firmSettingsData,
-    isLoading: isLoadingFirmSettings,
-  } = useGetDefaultFirmSettingsQuery();
+    data: defaultFirmData,
+    isLoading: isLoadingDefaultFirm,
+  } = useGetDefaultFirmSettingsQuery(undefined, {
+    skip: !!firmSettingsId,
+  });
+
+  const isLoadingFirmSettings = firmSettingsId ? isLoadingSelectedFirm : isLoadingDefaultFirm;
+  const firmSettingsData = selectedFirmData || defaultFirmData;
 
   // Use fetched firm settings or fallback
   const firmSettings = firmSettingsData || defaultFirmSettingsFallback;
@@ -111,12 +138,7 @@ export function InvoicePreviewPage({
     skip: !project?.clientId,
   });
 
-  // Filter milestones based on selection
-  const selectedMilestones = selectedMilestoneIds.length > 0
-    ? milestonesData.filter(m => selectedMilestoneIds.includes(m.id))
-    : milestonesData;
-
-  const isLoading = isLoadingProject || isLoadingMilestones || isLoadingFirmSettings || (project?.clientId ? isLoadingClient : false);
+  const isLoading = isLoadingProject || isLoadingFirmSettings || (project?.clientId ? isLoadingClient : false);
   const isBusy = isGenerating || isCreating;
 
   const handlePrint = () => {
@@ -141,40 +163,28 @@ export function InvoicePreviewPage({
   };
 
   const handleFinalize = async () => {
+    if (milestoneItems.length === 0) {
+      toast.error("No milestone items found");
+      return;
+    }
+
     setIsGenerating(true);
     try {
-      // Build milestone items from selected milestones
-      const milestoneItems: InvoiceMilestoneItem[] = selectedMilestones.map(m => {
-        const primaryScope = m.scopeOfWork?.[0];
-        return {
-          milestoneId: m.id,
-          milestoneTitle: m.title,
-          milestoneStageNumber: m.stageNumber,
-          rateType: (primaryScope?.rateType || RateType.FIXED) as "per_sqft" | "per_visit" | "fixed",
-          rate: primaryScope?.rate || m.totalAmount || 0,
-          quantity: primaryScope?.quantity || 1,
-          calculatedAmount: m.totalAmount || 0,
-          editableAmount: m.totalAmount || 0,
-        };
-      });
-
-      const subtotal = milestoneItems.reduce((sum, item) => sum + item.editableAmount, 0);
-
       const invoiceData: CreateInvoiceDto = {
         projectId,
         clientId: project?.clientId || "",
         invoiceDate,
         milestoneItems,
         subtotal,
-        discountType: "percentage",
-        discountValue: 0,
-        discountAmount: 0,
-        netTotal: subtotal,
-        paidAmount: 0,
+        discountType,
+        discountValue,
+        discountAmount,
+        netTotal,
+        paidAmount,
         notes: notes?.join("\n"),
         defaultNotes: firmSettings.defaultNotes,
         status: "sent",
-        firmSettingsId: firmSettingsData?.id,
+        firmSettingsId: firmSettingsData?.id || firmSettingsId || undefined,
         createdBy: user ? `${user.firstName} ${user.lastName}`.trim() || user.email : "Unknown User",
         createdById: user?._id,
       };
@@ -222,7 +232,7 @@ export function InvoicePreviewPage({
     );
   }
 
-  if (selectedMilestones.length === 0) {
+  if (milestoneItems.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center min-h-screen gap-4">
         <div className="flex items-center gap-2 text-amber-600">
@@ -244,9 +254,15 @@ export function InvoicePreviewPage({
     firmSettings,
     project,
     client: client || null,
-    milestones: selectedMilestones,
+    milestoneItems,
     invoiceDate,
+    invoiceRef,
     notes,
+    subtotal,
+    discountType,
+    discountValue,
+    discountAmount,
+    netTotal,
   };
 
   const isUsingFallbackFirmSettings = !firmSettingsData;

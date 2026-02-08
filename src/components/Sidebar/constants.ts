@@ -1,5 +1,6 @@
 import {
   Bell,
+  Briefcase,
   Building2,
   CreditCard,
   Home,
@@ -59,6 +60,12 @@ export const bgNavigationItems: NavigationItem[] = [
     title: "Employees",
     icon: UserCheck,
     page: "employees",
+    roles: [IAuthRoles.SUPER_ADMIN, IAuthRoles.ADMIN],
+  },
+  {
+    title: "Firm Settings",
+    icon: Briefcase,
+    page: "firm-settings",
     roles: [IAuthRoles.SUPER_ADMIN, IAuthRoles.ADMIN],
   },
 ];

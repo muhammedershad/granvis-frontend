@@ -10,12 +10,24 @@ import {
   CheckCircle,
   Loader2,
   Eye,
+  Briefcase,
+  Phone,
+  Mail,
+  MapPin,
+  ExternalLink,
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
 import { Button } from "../ui/button";
 import { Input } from "../ui/input";
 import { Label } from "../ui/label";
 import { Textarea } from "../ui/textarea";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "../ui/select";
 import { MilestoneSelectionTable } from "./MilestoneSelectionTable";
 import { InvoiceSummaryPanel } from "./InvoiceSummaryPanel";
 import {
@@ -26,7 +38,10 @@ import {
 } from "./invoiceMockData";
 import { useGetMilestonesByProjectQuery } from "@/lib/api/milestonesApi";
 import { useGetProjectByIdQuery } from "@/lib/api/projectsApi";
-import { useGetDefaultFirmSettingsQuery } from "@/lib/api/firmSettingsApi";
+import { useGetFirmSettingsQuery } from "@/lib/api/firmSettingsApi";
+import { getCloudFrontUrl } from "@/lib/utils/cloudfront";
+import Link from "next/link";
+import { FirmSettings } from "@/types/firm-settings";
 import {
   CreateInvoiceDto,
   InvoiceMilestoneItem,
@@ -91,10 +106,22 @@ export function CreateInvoicePage({
       skip: !invoiceId,
     });
 
-  // Fetch default firm settings
+  // Fetch all firm settings for selection
   const {
-    data: firmSettings,
-  } = useGetDefaultFirmSettingsQuery();
+    data: allFirmSettings = [],
+  } = useGetFirmSettingsQuery();
+
+  // Selected firm state — defaults to the default firm or first available
+  const [selectedFirmId, setSelectedFirmId] = useState<string>("");
+
+  // Derive the selected firm object
+  const selectedFirm: FirmSettings | undefined =
+    allFirmSettings.find((f) => f.id === selectedFirmId) ||
+    allFirmSettings.find((f) => f.isDefault) ||
+    allFirmSettings[0];
+
+  // Keep firmSettings as alias for backward compatibility in the rest of the file
+  const firmSettings = selectedFirm;
 
   // Generate invoice number
   const [generateInvoiceNumber] = useLazyGenerateInvoiceNumberQuery();
@@ -157,6 +184,18 @@ export function CreateInvoicePage({
 
     initForm();
   }, [isEditMode, existingInvoice, firmSettings?.id, generateInvoiceNumber]);
+
+  // Set selected firm when firms load or when editing an invoice
+  useEffect(() => {
+    if (allFirmSettings.length > 0 && !selectedFirmId) {
+      if (isEditMode && existingInvoice?.firmSettingsId) {
+        setSelectedFirmId(existingInvoice.firmSettingsId);
+      } else {
+        const defaultFirm = allFirmSettings.find((f) => f.isDefault);
+        setSelectedFirmId(defaultFirm?.id || allFirmSettings[0].id);
+      }
+    }
+  }, [allFirmSettings, selectedFirmId, isEditMode, existingInvoice?.firmSettingsId]);
 
   const handleToggleExpand = (milestoneId: string) => {
     setExpandedMilestones(prev => {
@@ -326,13 +365,40 @@ export function CreateInvoicePage({
       return;
     }
 
-    // Build URL params for preview
+    // Build URL params for preview with complete form state
     const params = new URLSearchParams();
-    const milestoneIds = Array.from(state.selectedMilestones.keys());
-    params.set("milestones", milestoneIds.join(","));
     params.set("date", state.invoiceDate);
+    params.set("invoiceRef", state.invoiceReference);
     if (state.notes) {
       params.set("notes", state.notes.split("\n").join("|"));
+    }
+
+    // Serialize selected milestone items with custom rates/amounts
+    const milestoneItems = Array.from(state.selectedMilestones.values()).map(
+      (item) => ({
+        milestoneId: item.milestoneId,
+        milestoneTitle: item.milestoneTitle,
+        milestoneStageNumber: item.milestoneStageNumber,
+        rateType: item.rateType,
+        rate: item.rate,
+        quantity: item.quantity,
+        calculatedAmount: item.calculatedAmount,
+        editableAmount: item.editableAmount,
+      })
+    );
+    params.set("items", btoa(JSON.stringify(milestoneItems)));
+
+    // Pass financial summary
+    params.set("subtotal", String(state.subtotal));
+    params.set("discountType", state.discountType);
+    params.set("discountValue", String(state.discountValue));
+    params.set("discountAmount", String(state.discountAmount));
+    params.set("netTotal", String(state.netTotal));
+    params.set("paidAmount", String(state.paidAmount));
+
+    // Pass selected firm settings ID
+    if (selectedFirm?.id) {
+      params.set("firmSettingsId", selectedFirm.id);
     }
 
     router.push(
@@ -436,6 +502,107 @@ export function CreateInvoicePage({
       <div className="flex flex-col lg:flex-row gap-6">
         {/* Left Column - Form */}
         <div className="flex-1 space-y-6">
+          {/* Firm Details Card */}
+          <Card className="relative overflow-hidden bg-card/50 backdrop-blur-sm border-border/50">
+            <div className="absolute inset-0 bg-gradient-to-br from-amber-500/[0.02] to-orange-500/[0.02] dark:from-amber-400/[0.05] dark:to-orange-400/[0.05]"></div>
+            <CardHeader className="relative">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="p-2 bg-amber-500/10 rounded-lg border border-amber-500/20">
+                    <Briefcase className="h-5 w-5 text-amber-600 dark:text-amber-400" />
+                  </div>
+                  <CardTitle className="text-foreground">Firm Details</CardTitle>
+                </div>
+                <Link
+                  href={`/${basePath.split("/")[1]}/firm-settings`}
+                  className="text-xs text-muted-foreground hover:text-foreground flex items-center gap-1 transition-colors"
+                >
+                  Manage Firms
+                  <ExternalLink className="h-3 w-3" />
+                </Link>
+              </div>
+            </CardHeader>
+            <CardContent className="relative space-y-4">
+              {allFirmSettings.length === 0 ? (
+                <div className="text-center py-4">
+                  <p className="text-sm text-muted-foreground mb-2">
+                    No firm settings configured yet.
+                  </p>
+                  <Link
+                    href={`/${basePath.split("/")[1]}/firm-settings`}
+                    className="text-sm text-purple-600 hover:text-purple-700 underline"
+                  >
+                    Add firm details
+                  </Link>
+                </div>
+              ) : (
+                <>
+                  <div className="space-y-2">
+                    <Label className="text-sm">
+                      Select Firm <span className="text-red-500">*</span>
+                    </Label>
+                    <Select
+                      value={selectedFirm?.id || ""}
+                      onValueChange={(value) => setSelectedFirmId(value)}
+                      disabled={!isEditable}
+                    >
+                      <SelectTrigger className="text-sm">
+                        <SelectValue placeholder="Select a firm..." />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {allFirmSettings.map((firm) => (
+                          <SelectItem key={firm.id} value={firm.id}>
+                            {firm.name}
+                            {firm.isDefault ? " (Default)" : ""}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  {/* Selected Firm Preview */}
+                  {selectedFirm && (
+                    <div className="flex items-start gap-4 p-3 rounded-lg bg-muted/50 border border-border/50">
+                      {/* Logo */}
+                      {(selectedFirm.logo || selectedFirm.logoKey) ? (
+                        <img
+                          src={selectedFirm.logo || getCloudFrontUrl(selectedFirm.logoKey) || ""}
+                          alt={selectedFirm.name}
+                          className="w-12 h-12 object-contain rounded-lg border border-gray-200 dark:border-gray-700 bg-white flex-shrink-0"
+                        />
+                      ) : (
+                        <div className="w-12 h-12 bg-gradient-to-br from-purple-500 to-blue-500 rounded-lg flex items-center justify-center flex-shrink-0">
+                          <span className="text-sm font-bold text-white">
+                            {selectedFirm.name.substring(0, 2).toUpperCase()}
+                          </span>
+                        </div>
+                      )}
+                      <div className="min-w-0 flex-1 space-y-1">
+                        <p className="font-medium text-sm text-foreground truncate">
+                          {selectedFirm.name}
+                        </p>
+                        <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                          <Phone className="h-3 w-3 flex-shrink-0" />
+                          <span className="truncate">{selectedFirm.phone}</span>
+                        </div>
+                        <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                          <Mail className="h-3 w-3 flex-shrink-0" />
+                          <span className="truncate">{selectedFirm.email}</span>
+                        </div>
+                        <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                          <MapPin className="h-3 w-3 flex-shrink-0" />
+                          <span className="truncate">
+                            {selectedFirm.address}, {selectedFirm.city}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </>
+              )}
+            </CardContent>
+          </Card>
+
           {/* Basic Info Card */}
           <Card className="relative overflow-hidden bg-card/50 backdrop-blur-sm border-border/50">
             <div className="absolute inset-0 bg-gradient-to-br from-blue-500/[0.02] to-purple-500/[0.02] dark:from-blue-400/[0.05] dark:to-purple-400/[0.05]"></div>

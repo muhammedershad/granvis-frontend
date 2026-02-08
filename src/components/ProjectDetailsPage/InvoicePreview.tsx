@@ -4,55 +4,47 @@ import { Phone, Mail, MapPin } from "lucide-react";
 import { FirmSettings } from "@/types/firm-settings";
 import { Project } from "@/types/project";
 import { Client } from "@/types/client";
-import { Milestone, RateType, MilestonePaymentStatus } from "@/types/milestone";
+import { InvoiceMilestoneItem } from "@/lib/api/invoicesApi";
 
 export interface InvoicePreviewData {
   firmSettings: FirmSettings;
   project: Project;
   client: Client | null;
-  milestones: Milestone[];
+  milestoneItems: InvoiceMilestoneItem[];
   invoiceDate: string;
+  invoiceRef?: string;
   notes?: string[];
+  subtotal: number;
+  discountType: "percentage" | "flat";
+  discountValue: number;
+  discountAmount: number;
+  netTotal: number;
 }
 
 interface MilestoneTableRow {
   phase: string;
   phaseName: string;
-  scopeOfWork: string;
+  rateType: string;
   rate: string;
+  quantity: number;
   amount: number;
-  totalAmount: number;
-  paymentDate: string;
-  totalPaid: number;
-  isPending: boolean;
-  isSubRow?: boolean;
 }
 
 function formatCurrency(amount: number): string {
   return `Rs.${amount.toLocaleString("en-IN")}`;
 }
 
-function formatRate(rateType: RateType, rate: number): string {
+function formatRate(rateType: string, rate: number): string {
   switch (rateType) {
-    case RateType.PER_SQFT:
+    case "per_sqft":
       return `${rate} / SQFT`;
-    case RateType.PER_VISIT:
+    case "per_visit":
       return `${rate}/ per visit`;
-    case RateType.FIXED:
+    case "fixed":
       return "Fixed";
     default:
       return `${rate}`;
   }
-}
-
-function formatDate(dateString?: string): string {
-  if (!dateString) return "pending";
-  const date = new Date(dateString);
-  return `as on ${date.toLocaleDateString("en-IN", {
-    day: "2-digit",
-    month: "2-digit",
-    year: "2-digit",
-  })}`;
 }
 
 function formatInvoiceDate(dateString: string): string {
@@ -64,66 +56,39 @@ function formatInvoiceDate(dateString: string): string {
   }).toUpperCase().replace(",", "");
 }
 
-function buildTableRows(milestones: Milestone[]): MilestoneTableRow[] {
-  const rows: MilestoneTableRow[] = [];
+function buildTableRows(milestoneItems: InvoiceMilestoneItem[]): MilestoneTableRow[] {
+  // Sort by stage number
+  const sorted = [...milestoneItems].sort(
+    (a, b) => a.milestoneStageNumber - b.milestoneStageNumber
+  );
 
-  // Sort milestones by stage number
-  const sortedMilestones = [...milestones].sort((a, b) => a.stageNumber - b.stageNumber);
-
-  sortedMilestones.forEach((milestone) => {
-    // Build scope of work text from scope items
-    const scopeTexts = milestone.scopeOfWork?.map(item => item.description) || [];
-    const scopeOfWorkText = scopeTexts.join(", ");
-
-    // Main milestone row
-    const mainRate = milestone.scopeOfWork?.[0]?.rateType
-      ? formatRate(milestone.scopeOfWork[0].rateType, milestone.scopeOfWork[0].rate)
-      : "";
-
-    rows.push({
-      phase: `STAGE ${milestone.stageNumber}`,
-      phaseName: milestone.title.toUpperCase(),
-      scopeOfWork: scopeOfWorkText || milestone.description || "",
-      rate: mainRate,
-      amount: milestone.scopeAmount,
-      totalAmount: milestone.scopeAmount,
-      paymentDate: milestone.paymentStatus === MilestonePaymentStatus.PAID
-        ? formatDate(milestone.lastPaymentDate)
-        : "pending",
-      totalPaid: milestone.paidAmount,
-      isPending: milestone.paymentStatus !== MilestonePaymentStatus.PAID,
-    });
-
-    // Additional charges as sub-rows
-    if (milestone.additionalCharges && milestone.additionalCharges.length > 0) {
-      milestone.additionalCharges.forEach((charge) => {
-        rows.push({
-          phase: "",
-          phaseName: "",
-          scopeOfWork: charge.description,
-          rate: `${charge.ratePerUnit}/ per visit`,
-          amount: charge.amount,
-          totalAmount: charge.amount,
-          paymentDate: milestone.paymentStatus === MilestonePaymentStatus.PAID
-            ? formatDate(milestone.lastPaymentDate)
-            : "pending",
-          totalPaid: 0,
-          isPending: milestone.paymentStatus !== MilestonePaymentStatus.PAID,
-          isSubRow: true,
-        });
-      });
-    }
-  });
-
-  return rows;
+  return sorted.map((item) => ({
+    phase: `STAGE ${item.milestoneStageNumber}`,
+    phaseName: item.milestoneTitle.toUpperCase(),
+    rateType: item.rateType,
+    rate: formatRate(item.rateType, item.rate),
+    quantity: item.quantity,
+    amount: item.editableAmount,
+  }));
 }
 
 export function InvoicePreview({ data }: { data: InvoicePreviewData }) {
-  const { firmSettings, project, client, milestones, invoiceDate, notes } = data;
+  const {
+    firmSettings,
+    project,
+    client,
+    milestoneItems,
+    invoiceDate,
+    invoiceRef,
+    notes,
+    subtotal,
+    discountType,
+    discountValue,
+    discountAmount,
+    netTotal,
+  } = data;
 
-  const tableRows = buildTableRows(milestones);
-  const grandTotal = milestones.reduce((sum, m) => sum + m.totalAmount, 0);
-  const totalPaid = milestones.reduce((sum, m) => sum + m.paidAmount, 0);
+  const tableRows = buildTableRows(milestoneItems);
 
   // Get client name
   const clientName = client?.name || project.client || "N/A";
@@ -205,7 +170,10 @@ export function InvoicePreview({ data }: { data: InvoicePreviewData }) {
               <span className="font-bold">Total Built-up Area: {builtUpArea.toLocaleString()} ~{Math.round(builtUpArea / 10) * 10} Sq.Ft</span>
             </p>
           </div>
-          <div className="text-right">
+          <div className="text-right space-y-1">
+            {invoiceRef && (
+              <p className="font-bold text-sm text-[#1e3a5f]">{invoiceRef}</p>
+            )}
             <p className="font-bold text-sm">{formatInvoiceDate(invoiceDate)}</p>
           </div>
         </div>
@@ -218,49 +186,66 @@ export function InvoicePreview({ data }: { data: InvoicePreviewData }) {
                 <th className="border border-gray-300 px-2 py-2 text-left font-semibold w-24">PHASES</th>
                 <th className="border border-gray-300 px-2 py-2 text-left font-semibold">SCOPE OF WORK</th>
                 <th className="border border-gray-300 px-2 py-2 text-center font-semibold w-24">RATE</th>
-                <th className="border border-gray-300 px-2 py-2 text-right font-semibold w-20">AMOUNT</th>
-                <th className="border border-gray-300 px-2 py-2 text-right font-semibold w-24">TOTAL AMOUNT</th>
-                <th className="border border-gray-300 px-2 py-2 text-center font-semibold w-28">PAYMENT DATE</th>
-                <th className="border border-gray-300 px-2 py-2 text-right font-semibold w-24">TOTAL PAID</th>
+                <th className="border border-gray-300 px-2 py-2 text-center font-semibold w-20">QTY</th>
+                <th className="border border-gray-300 px-2 py-2 text-right font-semibold w-24">AMOUNT</th>
               </tr>
             </thead>
             <tbody>
               {tableRows.map((row, index) => (
                 <tr key={index} className={index % 2 === 0 ? "bg-white" : "bg-gray-50"}>
                   <td className="border border-gray-300 px-2 py-2 align-top">
-                    {row.phase && (
-                      <div>
-                        <div className="font-semibold text-[#1e3a5f] text-[10px]">{row.phase}</div>
-                        <div className="font-semibold text-[#1e3a5f] text-[10px]">{row.phaseName}</div>
-                      </div>
-                    )}
+                    <div>
+                      <div className="font-semibold text-[#1e3a5f] text-[10px]">{row.phase}</div>
+                      <div className="font-semibold text-[#1e3a5f] text-[10px]">{row.phaseName}</div>
+                    </div>
                   </td>
                   <td className="border border-gray-300 px-2 py-2 align-top text-[11px]">
-                    {row.isSubRow ? (
-                      <span className="italic">{row.scopeOfWork}</span>
-                    ) : (
-                      row.scopeOfWork
-                    )}
+                    {row.phaseName}
                   </td>
                   <td className="border border-gray-300 px-2 py-2 text-center align-top text-[11px]">
                     {row.rate}
                   </td>
-                  <td className="border border-gray-300 px-2 py-2 text-right align-top font-mono text-[11px]">
-                    {row.amount > 0 ? formatCurrency(row.amount) : "NA"}
-                  </td>
-                  <td className="border border-gray-300 px-2 py-2 text-right align-top font-mono text-[11px]">
-                    {row.totalAmount > 0 ? row.totalAmount.toLocaleString("en-IN") : ""}
-                  </td>
                   <td className="border border-gray-300 px-2 py-2 text-center align-top text-[11px]">
-                    {row.paymentDate}
+                    {row.rateType !== "fixed" ? row.quantity : "-"}
                   </td>
-                  <td className={`border border-gray-300 px-2 py-2 text-right align-top font-mono font-semibold text-[11px] ${row.isPending ? "text-red-600" : "text-green-600"}`}>
-                    {row.isPending && !row.isSubRow ? "" : (row.totalPaid > 0 ? formatCurrency(row.totalPaid) : "")}
+                  <td className="border border-gray-300 px-2 py-2 text-right align-top font-mono text-[11px]">
+                    {formatCurrency(row.amount)}
                   </td>
                 </tr>
               ))}
             </tbody>
           </table>
+        </div>
+
+        {/* Financial Summary */}
+        <div className="flex justify-end mb-6">
+          <div className="w-72">
+            <table className="w-full text-sm">
+              <tbody>
+                <tr>
+                  <td className="py-1 text-gray-600">Subtotal</td>
+                  <td className="py-1 text-right font-mono">{formatCurrency(subtotal)}</td>
+                </tr>
+                {discountAmount > 0 && (
+                  <tr>
+                    <td className="py-1 text-gray-600">
+                      Discount
+                      {discountType === "percentage" ? ` (${discountValue}%)` : ""}
+                    </td>
+                    <td className="py-1 text-right font-mono text-red-600">
+                      -{formatCurrency(discountAmount)}
+                    </td>
+                  </tr>
+                )}
+                <tr className="border-t-2 border-[#1e3a5f]">
+                  <td className="py-2 font-bold text-[#1e3a5f]">Net Total</td>
+                  <td className="py-2 text-right font-mono font-bold text-[#1e3a5f]">
+                    {formatCurrency(netTotal)}
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
         </div>
 
         {/* Notes Section */}
