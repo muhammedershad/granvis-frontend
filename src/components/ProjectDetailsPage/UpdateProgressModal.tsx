@@ -39,7 +39,9 @@ export function UpdateProgressModal({
   }, [open, milestone]);
 
   const handleSave = async () => {
-    if (!milestone) return;
+    if (!milestone) {
+      return;
+    }
 
     try {
       await updateProgress({
@@ -57,12 +59,18 @@ export function UpdateProgressModal({
   };
 
   const getStatusFromProgress = (progress: number): string => {
-    if (progress === 0) return "Not Started";
-    if (progress === 100) return "Completed";
+    if (progress === 0) {
+      return "Not Started";
+    }
+    if (progress === 100) {
+      return "Completed";
+    }
     return "In Progress";
   };
 
-  if (!milestone) return null;
+  if (!milestone) {
+    return null;
+  }
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -73,7 +81,8 @@ export function UpdateProgressModal({
             Update Progress
           </DialogTitle>
           <DialogDescription>
-            Update the progress percentage for <span className="font-semibold">{milestone.title}</span>
+            Update the progress percentage for{" "}
+            <span className="font-semibold">{milestone.title}</span>
           </DialogDescription>
         </DialogHeader>
 
@@ -82,7 +91,9 @@ export function UpdateProgressModal({
           <div className="space-y-2">
             <div className="flex items-center justify-between text-sm">
               <span className="text-muted-foreground">Current Progress</span>
-              <span className="font-semibold">{milestone.progressPercentage}%</span>
+              <span className="font-semibold">
+                {milestone.progressPercentage}%
+              </span>
             </div>
             <Progress value={milestone.progressPercentage} className="h-2" />
           </div>
@@ -130,27 +141,35 @@ export function UpdateProgressModal({
           {progressPercentage !== milestone.progressPercentage && (
             <div className="p-3 rounded-lg bg-blue-50 dark:bg-blue-950/30 text-sm">
               <p className="text-blue-900 dark:text-blue-200">
-                {progressPercentage === 100 && milestone.status !== MilestoneStatus.COMPLETED && (
-                  "The milestone status will be automatically set to Completed."
-                )}
+                {progressPercentage === 100 &&
+                  milestone.status !== MilestoneStatus.COMPLETED &&
+                  "The milestone status will be automatically set to Completed."}
                 {progressPercentage > 0 &&
                   progressPercentage < 100 &&
-                  milestone.status === MilestoneStatus.NOT_STARTED && (
-                    "The milestone status will be automatically set to In Progress."
-                  )}
-                {progressPercentage === 0 && milestone.status !== MilestoneStatus.NOT_STARTED && (
-                  "The milestone status will remain unchanged."
-                )}
+                  milestone.status === MilestoneStatus.NOT_STARTED &&
+                  "The milestone status will be automatically set to In Progress."}
+                {progressPercentage === 0 &&
+                  milestone.status !== MilestoneStatus.NOT_STARTED &&
+                  "The milestone status will remain unchanged."}
               </p>
             </div>
           )}
         </div>
 
         <DialogFooter>
-          <Button variant="outline" onClick={() => onOpenChange(false)} disabled={isLoading}>
+          <Button
+            variant="outline"
+            onClick={() => onOpenChange(false)}
+            disabled={isLoading}
+          >
             Cancel
           </Button>
-          <Button onClick={handleSave} disabled={isLoading || progressPercentage === milestone.progressPercentage}>
+          <Button
+            onClick={handleSave}
+            disabled={
+              isLoading || progressPercentage === milestone.progressPercentage
+            }
+          >
             {isLoading ? (
               <>
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { AlertCircle, Plus, Loader2, Building2 } from "lucide-react";
+import { AlertCircle, Building2, Loader2, Plus } from "lucide-react";
 import { Button } from "../ui/button";
 import { Card } from "../ui/card";
 import { FirmSettingsCard } from "./FirmSettingsCard";

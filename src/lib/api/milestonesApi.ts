@@ -1,12 +1,12 @@
 import { apiSlice } from "./apiSlice";
 import {
-  Milestone,
   CreateMilestoneDto,
+  Milestone,
+  ProjectProgressSummary,
+  ReorderMilestonesDto,
   UpdateMilestoneDto,
   UpdateMilestoneProgressDto,
   UpdateMilestoneStatusDto,
-  ReorderMilestonesDto,
-  ProjectProgressSummary,
 } from "@/types/milestone";
 
 export const milestonesApi = apiSlice.injectEndpoints({
@@ -16,7 +16,8 @@ export const milestonesApi = apiSlice.injectEndpoints({
       query: (projectId) => `/milestones/project/${projectId}`,
       providesTags: (result, _error, projectId) => [
         { type: "Milestone" as const, id: `PROJECT_${projectId}` },
-        ...(result?.map(({ id }) => ({ type: "Milestone" as const, id })) || []),
+        ...(result?.map(({ id }) => ({ type: "Milestone" as const, id })) ||
+          []),
       ],
     }),
 
@@ -31,7 +32,9 @@ export const milestonesApi = apiSlice.injectEndpoints({
     // Get single milestone
     getMilestoneById: builder.query<Milestone, string>({
       query: (id) => `/milestones/${id}`,
-      providesTags: (_result, _error, id) => [{ type: "Milestone" as const, id }],
+      providesTags: (_result, _error, id) => [
+        { type: "Milestone" as const, id },
+      ],
     }),
 
     // Create milestone
@@ -43,7 +46,10 @@ export const milestonesApi = apiSlice.injectEndpoints({
       }),
       invalidatesTags: (result) => [
         { type: "Milestone" as const, id: `PROJECT_${result?.projectId}` },
-        { type: "Milestone" as const, id: `PROJECT_${result?.projectId}_SUMMARY` },
+        {
+          type: "Milestone" as const,
+          id: `PROJECT_${result?.projectId}_SUMMARY`,
+        },
         { type: "Project" as const, id: result?.projectId },
       ],
     }),
@@ -61,7 +67,10 @@ export const milestonesApi = apiSlice.injectEndpoints({
       invalidatesTags: (result, _error, { id }) => [
         { type: "Milestone" as const, id },
         { type: "Milestone" as const, id: `PROJECT_${result?.projectId}` },
-        { type: "Milestone" as const, id: `PROJECT_${result?.projectId}_SUMMARY` },
+        {
+          type: "Milestone" as const,
+          id: `PROJECT_${result?.projectId}_SUMMARY`,
+        },
         { type: "Project" as const, id: result?.projectId },
       ],
     }),
@@ -79,7 +88,10 @@ export const milestonesApi = apiSlice.injectEndpoints({
       invalidatesTags: (result, _error, { id }) => [
         { type: "Milestone" as const, id },
         { type: "Milestone" as const, id: `PROJECT_${result?.projectId}` },
-        { type: "Milestone" as const, id: `PROJECT_${result?.projectId}_SUMMARY` },
+        {
+          type: "Milestone" as const,
+          id: `PROJECT_${result?.projectId}_SUMMARY`,
+        },
         { type: "Project" as const, id: result?.projectId },
       ],
     }),
@@ -97,7 +109,10 @@ export const milestonesApi = apiSlice.injectEndpoints({
       invalidatesTags: (result, _error, { id }) => [
         { type: "Milestone" as const, id },
         { type: "Milestone" as const, id: `PROJECT_${result?.projectId}` },
-        { type: "Milestone" as const, id: `PROJECT_${result?.projectId}_SUMMARY` },
+        {
+          type: "Milestone" as const,
+          id: `PROJECT_${result?.projectId}_SUMMARY`,
+        },
         { type: "Project" as const, id: result?.projectId },
       ],
     }),
@@ -119,7 +134,10 @@ export const milestonesApi = apiSlice.injectEndpoints({
     }),
 
     // Reorder milestones
-    reorderMilestones: builder.mutation<Milestone[], ReorderMilestonesDto & { projectId: string }>({
+    reorderMilestones: builder.mutation<
+      Milestone[],
+      ReorderMilestonesDto & { projectId: string }
+    >({
       query: ({ milestoneIds }) => ({
         url: "/milestones/reorder",
         method: "POST",

@@ -3,9 +3,9 @@ import {
   Clock,
   CreditCard,
   DollarSign,
+  FileText,
   TrendingUp,
   Wallet,
-  FileText,
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
 import { Progress } from "../ui/progress";
@@ -29,7 +29,10 @@ const formatCurrency = (amount: number | undefined) => {
   return `₹${amount.toLocaleString("en-IN")}`;
 };
 
-export function PaymentsTab({ project, onNavigateToInvoices }: PaymentsTabProps) {
+export function PaymentsTab({
+  project,
+  onNavigateToInvoices,
+}: PaymentsTabProps) {
   const totalBudget = project.totalBudget || 0;
   const spentAmount = project.spentAmount || 0;
   const remainingBudget = project.remainingBudget || 0;
@@ -40,7 +43,9 @@ export function PaymentsTab({ project, onNavigateToInvoices }: PaymentsTabProps)
       {/* Header with Generate Invoice Button */}
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-xl font-semibold text-foreground">Project Payments</h2>
+          <h2 className="text-xl font-semibold text-foreground">
+            Project Payments
+          </h2>
           <p className="text-sm text-muted-foreground">
             Manage budget, payments, and generate invoices
           </p>

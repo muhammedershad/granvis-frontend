@@ -1,13 +1,13 @@
 import { apiSlice } from "./apiSlice";
 import {
-  Payment,
   CreatePaymentDto,
-  UpdatePaymentDto,
   MarkPaymentPaidDto,
+  Payment,
   PaymentListResponse,
   PaymentQueryParams,
-  ProjectPaymentSummary,
   PdfGenerationResponse,
+  ProjectPaymentSummary,
+  UpdatePaymentDto,
 } from "@/types/payment";
 
 export const paymentsApi = apiSlice.injectEndpoints({
@@ -16,18 +16,31 @@ export const paymentsApi = apiSlice.injectEndpoints({
     getPayments: builder.query<PaymentListResponse, PaymentQueryParams>({
       query: (params) => {
         const searchParams = new URLSearchParams();
-        if (params.projectId) searchParams.append("projectId", params.projectId);
-        if (params.milestoneId) searchParams.append("milestoneId", params.milestoneId);
-        if (params.clientId) searchParams.append("clientId", params.clientId);
-        if (params.status) searchParams.append("status", params.status);
-        if (params.page) searchParams.append("page", String(params.page));
-        if (params.limit) searchParams.append("limit", String(params.limit));
+        if (params.projectId) {
+          searchParams.append("projectId", params.projectId);
+        }
+        if (params.milestoneId) {
+          searchParams.append("milestoneId", params.milestoneId);
+        }
+        if (params.clientId) {
+          searchParams.append("clientId", params.clientId);
+        }
+        if (params.status) {
+          searchParams.append("status", params.status);
+        }
+        if (params.page) {
+          searchParams.append("page", String(params.page));
+        }
+        if (params.limit) {
+          searchParams.append("limit", String(params.limit));
+        }
 
         return `/payments?${searchParams.toString()}`;
       },
       providesTags: (result) => [
         { type: "Payment" as const, id: "LIST" },
-        ...(result?.data?.map(({ id }) => ({ type: "Payment" as const, id })) || []),
+        ...(result?.data?.map(({ id }) => ({ type: "Payment" as const, id })) ||
+          []),
       ],
     }),
 
@@ -73,17 +86,26 @@ export const paymentsApi = apiSlice.injectEndpoints({
       invalidatesTags: (result) => [
         { type: "Payment" as const, id: "LIST" },
         { type: "Payment" as const, id: `PROJECT_${result?.projectId}` },
-        { type: "Payment" as const, id: `PROJECT_${result?.projectId}_SUMMARY` },
+        {
+          type: "Payment" as const,
+          id: `PROJECT_${result?.projectId}_SUMMARY`,
+        },
         { type: "Payment" as const, id: `MILESTONE_${result?.milestoneId}` },
         { type: "Milestone" as const, id: result?.milestoneId },
         { type: "Milestone" as const, id: `PROJECT_${result?.projectId}` },
-        { type: "Milestone" as const, id: `PROJECT_${result?.projectId}_SUMMARY` },
+        {
+          type: "Milestone" as const,
+          id: `PROJECT_${result?.projectId}_SUMMARY`,
+        },
         { type: "Project" as const, id: result?.projectId },
       ],
     }),
 
     // Update payment
-    updatePayment: builder.mutation<Payment, { id: string; data: UpdatePaymentDto }>({
+    updatePayment: builder.mutation<
+      Payment,
+      { id: string; data: UpdatePaymentDto }
+    >({
       query: ({ id, data }) => ({
         url: `/payments/${id}`,
         method: "PATCH",
@@ -93,7 +115,10 @@ export const paymentsApi = apiSlice.injectEndpoints({
         { type: "Payment" as const, id },
         { type: "Payment" as const, id: "LIST" },
         { type: "Payment" as const, id: `PROJECT_${result?.projectId}` },
-        { type: "Payment" as const, id: `PROJECT_${result?.projectId}_SUMMARY` },
+        {
+          type: "Payment" as const,
+          id: `PROJECT_${result?.projectId}_SUMMARY`,
+        },
         { type: "Payment" as const, id: `MILESTONE_${result?.milestoneId}` },
         { type: "Milestone" as const, id: result?.milestoneId },
       ],
@@ -113,11 +138,17 @@ export const paymentsApi = apiSlice.injectEndpoints({
         { type: "Payment" as const, id },
         { type: "Payment" as const, id: "LIST" },
         { type: "Payment" as const, id: `PROJECT_${result?.projectId}` },
-        { type: "Payment" as const, id: `PROJECT_${result?.projectId}_SUMMARY` },
+        {
+          type: "Payment" as const,
+          id: `PROJECT_${result?.projectId}_SUMMARY`,
+        },
         { type: "Payment" as const, id: `MILESTONE_${result?.milestoneId}` },
         { type: "Milestone" as const, id: result?.milestoneId },
         { type: "Milestone" as const, id: `PROJECT_${result?.projectId}` },
-        { type: "Milestone" as const, id: `PROJECT_${result?.projectId}_SUMMARY` },
+        {
+          type: "Milestone" as const,
+          id: `PROJECT_${result?.projectId}_SUMMARY`,
+        },
       ],
     }),
 
@@ -147,7 +178,9 @@ export const paymentsApi = apiSlice.injectEndpoints({
         url: `/pdf/payment/${paymentId}`,
         method: "POST",
       }),
-      invalidatesTags: (_result, _error, id) => [{ type: "Payment" as const, id }],
+      invalidatesTags: (_result, _error, id) => [
+        { type: "Payment" as const, id },
+      ],
     }),
 
     // Generate project PDF

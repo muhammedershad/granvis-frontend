@@ -1,7 +1,7 @@
 import { apiSlice } from "./apiSlice";
 import {
-  FirmSettings,
   CreateFirmSettingsDto,
+  FirmSettings,
   UpdateFirmSettingsDto,
 } from "@/types/firm-settings";
 
@@ -12,7 +12,8 @@ export const firmSettingsApi = apiSlice.injectEndpoints({
       query: () => "/firm-settings",
       providesTags: (result) => [
         { type: "FirmSettings" as const, id: "LIST" },
-        ...(result?.map(({ id }) => ({ type: "FirmSettings" as const, id })) || []),
+        ...(result?.map(({ id }) => ({ type: "FirmSettings" as const, id })) ||
+          []),
       ],
     }),
 
@@ -25,7 +26,9 @@ export const firmSettingsApi = apiSlice.injectEndpoints({
     // Get single firm settings
     getFirmSettingsById: builder.query<FirmSettings, string>({
       query: (id) => `/firm-settings/${id}`,
-      providesTags: (_result, _error, id) => [{ type: "FirmSettings" as const, id }],
+      providesTags: (_result, _error, id) => [
+        { type: "FirmSettings" as const, id },
+      ],
     }),
 
     // Create firm settings

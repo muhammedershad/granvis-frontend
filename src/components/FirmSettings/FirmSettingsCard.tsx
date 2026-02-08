@@ -1,18 +1,18 @@
 "use client";
 
 import {
+  Edit2,
+  FileText,
   Globe,
+  Hash,
+  Info,
   Mail,
   MapPin,
   MoreHorizontal,
   Phone,
   Star,
-  Edit2,
-  Trash2,
-  FileText,
   StickyNote,
-  Hash,
-  Info,
+  Trash2,
 } from "lucide-react";
 import { Card, CardContent, CardHeader } from "../ui/card";
 import { Badge } from "../ui/badge";
@@ -94,7 +94,8 @@ export function FirmSettingsCard({
               {(firm.city || firm.state) && (
                 <p className="text-sm text-muted-foreground truncate flex items-center gap-1 mt-0.5">
                   <MapPin className="h-3 w-3 flex-shrink-0" />
-                  {firm.city}{firm.state ? `, ${firm.state}` : ""}
+                  {firm.city}
+                  {firm.state ? `, ${firm.state}` : ""}
                 </p>
               )}
             </div>
@@ -102,52 +103,52 @@ export function FirmSettingsCard({
 
           {/* Dropdown Menu */}
           <div className="flex-shrink-0">
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button
-                variant="ghost"
-                size="icon"
-                className="h-8 w-8 transition-all duration-200 hover:bg-white/60 dark:hover:bg-white/10 rounded-lg"
-              >
-                <MoreHorizontal className="h-4 w-4" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent
-              align="end"
-              className="min-w-[180px] backdrop-blur-xl bg-white/95 dark:bg-gray-900/95 border-white/30 dark:border-white/10 shadow-2xl shadow-black/10 dark:shadow-black/40 rounded-xl p-1.5"
-            >
-              <DropdownMenuItem
-                onClick={() => onEdit(firm)}
-                className="rounded-lg px-3 py-2.5 cursor-pointer gap-3 focus:bg-blue-500/10 dark:focus:bg-blue-500/20"
-              >
-                <div className="w-7 h-7 rounded-lg bg-blue-500/10 dark:bg-blue-500/20 flex items-center justify-center flex-shrink-0">
-                  <Edit2 className="h-3.5 w-3.5 text-blue-600 dark:text-blue-400" />
-                </div>
-                <span className="text-sm font-medium">Edit Firm</span>
-              </DropdownMenuItem>
-              {!firm.isDefault && (
-                <DropdownMenuItem
-                  onClick={() => onSetDefault(firm)}
-                  className="rounded-lg px-3 py-2.5 cursor-pointer gap-3 focus:bg-amber-500/10 dark:focus:bg-amber-500/20"
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-8 w-8 transition-all duration-200 hover:bg-white/60 dark:hover:bg-white/10 rounded-lg"
                 >
-                  <div className="w-7 h-7 rounded-lg bg-amber-500/10 dark:bg-amber-500/20 flex items-center justify-center flex-shrink-0">
-                    <Star className="h-3.5 w-3.5 text-amber-600 dark:text-amber-400" />
-                  </div>
-                  <span className="text-sm font-medium">Set as Default</span>
-                </DropdownMenuItem>
-              )}
-              <DropdownMenuSeparator className="my-1.5 bg-gray-200/60 dark:bg-white/10" />
-              <DropdownMenuItem
-                onClick={() => onDelete(firm)}
-                className="rounded-lg px-3 py-2.5 cursor-pointer gap-3 text-red-600 dark:text-red-400 focus:text-red-600 dark:focus:text-red-400 focus:bg-red-500/10 dark:focus:bg-red-500/20"
+                  <MoreHorizontal className="h-4 w-4" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent
+                align="end"
+                className="min-w-[180px] backdrop-blur-xl bg-white/95 dark:bg-gray-900/95 border-white/30 dark:border-white/10 shadow-2xl shadow-black/10 dark:shadow-black/40 rounded-xl p-1.5"
               >
-                <div className="w-7 h-7 rounded-lg bg-red-500/10 dark:bg-red-500/20 flex items-center justify-center flex-shrink-0">
-                  <Trash2 className="h-3.5 w-3.5 text-red-500 dark:text-red-400" />
-                </div>
-                <span className="text-sm font-medium">Delete</span>
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
+                <DropdownMenuItem
+                  onClick={() => onEdit(firm)}
+                  className="rounded-lg px-3 py-2.5 cursor-pointer gap-3 focus:bg-blue-500/10 dark:focus:bg-blue-500/20"
+                >
+                  <div className="w-7 h-7 rounded-lg bg-blue-500/10 dark:bg-blue-500/20 flex items-center justify-center flex-shrink-0">
+                    <Edit2 className="h-3.5 w-3.5 text-blue-600 dark:text-blue-400" />
+                  </div>
+                  <span className="text-sm font-medium">Edit Firm</span>
+                </DropdownMenuItem>
+                {!firm.isDefault && (
+                  <DropdownMenuItem
+                    onClick={() => onSetDefault(firm)}
+                    className="rounded-lg px-3 py-2.5 cursor-pointer gap-3 focus:bg-amber-500/10 dark:focus:bg-amber-500/20"
+                  >
+                    <div className="w-7 h-7 rounded-lg bg-amber-500/10 dark:bg-amber-500/20 flex items-center justify-center flex-shrink-0">
+                      <Star className="h-3.5 w-3.5 text-amber-600 dark:text-amber-400" />
+                    </div>
+                    <span className="text-sm font-medium">Set as Default</span>
+                  </DropdownMenuItem>
+                )}
+                <DropdownMenuSeparator className="my-1.5 bg-gray-200/60 dark:bg-white/10" />
+                <DropdownMenuItem
+                  onClick={() => onDelete(firm)}
+                  className="rounded-lg px-3 py-2.5 cursor-pointer gap-3 text-red-600 dark:text-red-400 focus:text-red-600 dark:focus:text-red-400 focus:bg-red-500/10 dark:focus:bg-red-500/20"
+                >
+                  <div className="w-7 h-7 rounded-lg bg-red-500/10 dark:bg-red-500/20 flex items-center justify-center flex-shrink-0">
+                    <Trash2 className="h-3.5 w-3.5 text-red-500 dark:text-red-400" />
+                  </div>
+                  <span className="text-sm font-medium">Delete</span>
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
         </div>
 
@@ -181,7 +182,10 @@ export function FirmSettingsCard({
             <div className="truncate">
               <span>{firm.phone}</span>
               {firm.alternatePhone && (
-                <span className="text-muted-foreground/60"> / {firm.alternatePhone}</span>
+                <span className="text-muted-foreground/60">
+                  {" "}
+                  / {firm.alternatePhone}
+                </span>
               )}
             </div>
           </div>
@@ -218,7 +222,9 @@ export function FirmSettingsCard({
             </div>
             <div className="min-w-0">
               <div className="flex items-center gap-1">
-                <p className="text-[10px] text-muted-foreground leading-tight">Start No.</p>
+                <p className="text-[10px] text-muted-foreground leading-tight">
+                  Start No.
+                </p>
                 <TooltipProvider>
                   <Tooltip>
                     <TooltipTrigger asChild>
@@ -230,7 +236,9 @@ export function FirmSettingsCard({
                   </Tooltip>
                 </TooltipProvider>
               </div>
-              <p className="text-sm font-semibold text-foreground">{firm.invoiceStartNumber || 1}</p>
+              <p className="text-sm font-semibold text-foreground">
+                {firm.invoiceStartNumber || 1}
+              </p>
             </div>
           </div>
 
@@ -240,7 +248,9 @@ export function FirmSettingsCard({
             </div>
             <div className="min-w-0">
               <div className="flex items-center gap-1">
-                <p className="text-[10px] text-muted-foreground leading-tight">Notes</p>
+                <p className="text-[10px] text-muted-foreground leading-tight">
+                  Notes
+                </p>
                 <TooltipProvider>
                   <Tooltip>
                     <TooltipTrigger asChild>
@@ -252,7 +262,9 @@ export function FirmSettingsCard({
                   </Tooltip>
                 </TooltipProvider>
               </div>
-              <p className="text-sm font-semibold text-foreground">{notesCount} {notesCount === 1 ? "note" : "notes"}</p>
+              <p className="text-sm font-semibold text-foreground">
+                {notesCount} {notesCount === 1 ? "note" : "notes"}
+              </p>
             </div>
           </div>
         </div>

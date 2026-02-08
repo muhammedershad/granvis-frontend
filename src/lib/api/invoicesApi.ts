@@ -131,7 +131,14 @@ export interface MarkInvoicePaidDto {
   paidAmount: number;
   paidDate?: string;
   transactionReference?: string;
-  paymentMethod?: "cash" | "bank_transfer" | "cheque" | "upi" | "neft" | "rtgs" | "other";
+  paymentMethod?:
+    | "cash"
+    | "bank_transfer"
+    | "cheque"
+    | "upi"
+    | "neft"
+    | "rtgs"
+    | "other";
 }
 
 // Invoice Query DTO

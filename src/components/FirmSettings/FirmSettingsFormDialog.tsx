@@ -6,24 +6,21 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
   AlertCircle,
-  Plus,
-  Trash2,
-  X,
-  Loader2,
   Building2,
-  MapPin,
-  FileText,
-  Edit2,
-  Image as ImageIcon,
   ChevronDown,
   ChevronRight,
+  Edit2,
+  FileText,
+  Image as ImageIcon,
+  Loader2,
+  MapPin,
+  Plus,
   Sparkles,
+  Trash2,
+  X,
 } from "lucide-react";
 import { cn } from "../ui/utils";
-import {
-  Dialog,
-  DialogContent,
-} from "../ui/dialog";
+import { Dialog, DialogContent } from "../ui/dialog";
 import { Separator } from "../ui/separator";
 import { Button } from "../ui/button";
 import { Input } from "../ui/input";
@@ -35,17 +32,12 @@ import {
   useCreateFirmSettingsMutation,
   useUpdateFirmSettingsMutation,
 } from "@/lib/api/firmSettingsApi";
-import {
-  useGetPresignedUrlMutation,
-} from "@/lib/api/uploadApi";
+import { useGetPresignedUrlMutation } from "@/lib/api/uploadApi";
 import { uploadToS3 } from "@/lib/utils/uploadToS3";
+import { CreateFirmSettingsDto, FirmSettings } from "@/types/firm-settings";
 import {
-  FirmSettings,
-  CreateFirmSettingsDto,
-} from "@/types/firm-settings";
-import {
-  createFirmSettingsSchema,
   type CreateFirmSettingsFormData,
+  createFirmSettingsSchema,
 } from "@/lib/validations/firm-settings";
 import { getCloudFrontUrl } from "@/lib/utils/cloudfront";
 import { toast } from "sonner";
@@ -58,19 +50,31 @@ interface FirmSettingsFormDialogProps {
 
 const FIRM_LOGOS_FOLDER = "griha-local/firm-logos";
 
-const BASIC_FIELDS = ["name", "email", "phone", "alternatePhone", "website"] as const;
+const BASIC_FIELDS = [
+  "name",
+  "email",
+  "phone",
+  "alternatePhone",
+  "website",
+] as const;
 const ADDRESS_FIELDS = ["address", "city", "state", "country"] as const;
 const INVOICE_FIELDS = ["invoicePrefix", "invoiceStartNumber"] as const;
 
 function getFirstErrorSection(errors: Record<string, unknown>): string | null {
   for (const field of BASIC_FIELDS) {
-    if (errors[field]) return "basic";
+    if (errors[field]) {
+      return "basic";
+    }
   }
   for (const field of ADDRESS_FIELDS) {
-    if (errors[field]) return "address";
+    if (errors[field]) {
+      return "address";
+    }
   }
   for (const field of INVOICE_FIELDS) {
-    if (errors[field]) return "invoice";
+    if (errors[field]) {
+      return "invoice";
+    }
   }
   return null;
 }
@@ -116,9 +120,22 @@ export function FirmSettingsFormDialog({
   const isDefault = watch("isDefault") || false;
 
   // Section error checks
-  const hasBasicErrors = !!(errors.name || errors.email || errors.phone || errors.alternatePhone || errors.website);
-  const hasAddressErrors = !!(errors.address || errors.city || errors.state || errors.country);
-  const hasInvoiceErrors = !!(errors.invoicePrefix || errors.invoiceStartNumber);
+  const hasBasicErrors = !!(
+    errors.name ||
+    errors.email ||
+    errors.phone ||
+    errors.alternatePhone ||
+    errors.website
+  );
+  const hasAddressErrors = !!(
+    errors.address ||
+    errors.city ||
+    errors.state ||
+    errors.country
+  );
+  const hasInvoiceErrors = !!(
+    errors.invoicePrefix || errors.invoiceStartNumber
+  );
 
   // Expanded sections
   const [expandedSection, setExpandedSection] = useState<string>("basic");
@@ -132,8 +149,10 @@ export function FirmSettingsFormDialog({
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // API
-  const [createFirm, { isLoading: isCreating }] = useCreateFirmSettingsMutation();
-  const [updateFirm, { isLoading: isUpdating }] = useUpdateFirmSettingsMutation();
+  const [createFirm, { isLoading: isCreating }] =
+    useCreateFirmSettingsMutation();
+  const [updateFirm, { isLoading: isUpdating }] =
+    useUpdateFirmSettingsMutation();
   const [getPresignedUrl] = useGetPresignedUrlMutation();
 
   const isSaving = isCreating || isUpdating;
@@ -231,7 +250,9 @@ export function FirmSettingsFormDialog({
       onOpenChange(false);
     } catch (error: unknown) {
       console.error("Firm settings API error:", error);
-      const fallback = isEditMode ? "Failed to update firm settings" : "Failed to create firm settings";
+      const fallback = isEditMode
+        ? "Failed to update firm settings"
+        : "Failed to create firm settings";
       let errorMessage = fallback;
 
       // RTK Query .unwrap() throws { status, data } where data is the response body
@@ -271,7 +292,10 @@ export function FirmSettingsFormDialog({
   };
 
   const handleRemoveNote = (index: number) => {
-    setValue("defaultNotes", defaultNotes.filter((_, i) => i !== index));
+    setValue(
+      "defaultNotes",
+      defaultNotes.filter((_, i) => i !== index)
+    );
   };
 
   const handleRemoveImage = () => {
@@ -283,7 +307,8 @@ export function FirmSettingsFormDialog({
     setExpandedSection(expandedSection === section ? "" : section);
   };
 
-  const existingLogoUrl = editingFirm?.logo || getCloudFrontUrl(watch("logoKey"));
+  const existingLogoUrl =
+    editingFirm?.logo || getCloudFrontUrl(watch("logoKey"));
   const displayLogo = imageCrop.croppedImage || existingLogoUrl;
 
   return (
@@ -302,13 +327,18 @@ export function FirmSettingsFormDialog({
                   {isEditMode ? "Edit Firm" : "New Firm"}
                 </h2>
                 <p className="text-xs sm:text-sm text-gray-500 dark:text-muted-foreground font-medium">
-                  {isEditMode ? "Update firm details" : "Add firm details for invoices"}
+                  {isEditMode
+                    ? "Update firm details"
+                    : "Add firm details for invoices"}
                 </p>
               </div>
             </div>
           </div>
 
-          <form onSubmit={handleSubmit(onSubmit, onFormError)} className="flex flex-col flex-1 overflow-hidden">
+          <form
+            onSubmit={handleSubmit(onSubmit, onFormError)}
+            className="flex flex-col flex-1 overflow-hidden"
+          >
             {/* Scrollable body */}
             <div className="flex-1 overflow-y-auto p-4 sm:p-6 custom-scrollbar">
               <div className="space-y-3 bg-white dark:bg-black/40 p-3 sm:p-4 rounded-2xl border border-gray-100 dark:border-white/5 shadow-sm dark:shadow-none">
@@ -348,11 +378,17 @@ export function FirmSettingsFormDialog({
                               }`}
                             >
                               <div className="flex flex-col items-center justify-center pt-5 pb-6">
-                                <ImageIcon className={`h-8 w-8 mb-2 transition-colors ${
-                                  imageCrop.error ? "text-red-400" : "text-muted-foreground group-hover:text-orange-500"
-                                }`} />
+                                <ImageIcon
+                                  className={`h-8 w-8 mb-2 transition-colors ${
+                                    imageCrop.error
+                                      ? "text-red-400"
+                                      : "text-muted-foreground group-hover:text-orange-500"
+                                  }`}
+                                />
                                 <p className="text-xs text-muted-foreground">
-                                  <span className="font-semibold">Click to upload</span>
+                                  <span className="font-semibold">
+                                    Click to upload
+                                  </span>
                                 </p>
                                 <p className="text-[10px] text-muted-foreground mt-1">
                                   JPG, PNG, WebP (Max 1MB)
@@ -642,7 +678,9 @@ export function FirmSettingsFormDialog({
                             </span>
                             <Input
                               value={note}
-                              onChange={(e) => handleUpdateNote(index, e.target.value)}
+                              onChange={(e) =>
+                                handleUpdateNote(index, e.target.value)
+                              }
                               placeholder="Enter note..."
                               className="flex-1 h-10 text-sm"
                             />
@@ -674,7 +712,9 @@ export function FirmSettingsFormDialog({
                         <Checkbox
                           id="firmIsDefault"
                           checked={isDefault}
-                          onCheckedChange={(checked) => setValue("isDefault", checked === true)}
+                          onCheckedChange={(checked) =>
+                            setValue("isDefault", checked === true)
+                          }
                         />
                         <Label
                           htmlFor="firmIsDefault"
@@ -699,17 +739,16 @@ export function FirmSettingsFormDialog({
               >
                 Cancel
               </Button>
-              <Button
-                type="submit"
-                disabled={isSaving}
-              >
+              <Button type="submit" disabled={isSaving}>
                 {isSaving ? (
                   <>
                     <Loader2 className="w-4 h-4 animate-spin" />
                     {isEditMode ? "Updating..." : "Creating..."}
                   </>
+                ) : isEditMode ? (
+                  "Update Firm"
                 ) : (
-                  isEditMode ? "Update Firm" : "Create Firm"
+                  "Create Firm"
                 )}
               </Button>
             </div>

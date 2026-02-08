@@ -53,10 +53,10 @@ import { Employee } from "../../types/employee";
 import { cn } from "../ui/utils";
 import { toast } from "sonner";
 import {
-  useGetEmployeeByIdQuery,
-  useUpdateEmployeeMutation,
   useDeleteEmployeeMutation,
+  useGetEmployeeByIdQuery,
   useGetEmployeesByManagerQuery,
+  useUpdateEmployeeMutation,
 } from "@/lib/api/employeesApi";
 import { useGetProjectsByEmployeeQuery } from "@/lib/api/projectsApi";
 import { Project } from "@/types/project";
@@ -188,7 +188,10 @@ function EmployeeProfileCard({
 
             <div className="text-center lg:text-left space-y-2">
               <Badge
-                className={cn("text-xs", getStatusColor(employee.employmentStatus))}
+                className={cn(
+                  "text-xs",
+                  getStatusColor(employee.employmentStatus)
+                )}
               >
                 {employee.employmentStatus}
               </Badge>
@@ -205,12 +208,16 @@ function EmployeeProfileCard({
           <div className="lg:col-span-4">
             <div className="flex items-center gap-2 mb-4 pb-2 border-b border-white/10">
               <UserCheck className="w-4 h-4 text-purple-400" />
-              <h3 className="text-white/90 font-medium text-sm">Personal Information</h3>
+              <h3 className="text-white/90 font-medium text-sm">
+                Personal Information
+              </h3>
             </div>
 
             <div className="space-y-4">
               <div>
-                <Label className="text-white/50 text-xs uppercase tracking-wider">Full Name</Label>
+                <Label className="text-white/50 text-xs uppercase tracking-wider">
+                  Full Name
+                </Label>
                 {isEditing ? (
                   <div className="grid grid-cols-2 gap-2 mt-1.5">
                     <Input
@@ -243,7 +250,9 @@ function EmployeeProfileCard({
               </div>
 
               <div>
-                <Label className="text-white/50 text-xs uppercase tracking-wider">Position</Label>
+                <Label className="text-white/50 text-xs uppercase tracking-wider">
+                  Position
+                </Label>
                 {isEditing ? (
                   <Input
                     value={editedEmployee.position}
@@ -260,14 +269,19 @@ function EmployeeProfileCard({
               </div>
 
               <div>
-                <Label className="text-white/50 text-xs uppercase tracking-wider">Department</Label>
+                <Label className="text-white/50 text-xs uppercase tracking-wider">
+                  Department
+                </Label>
                 {isEditing ? (
                   <Select
                     value={editedEmployee.department}
                     onValueChange={(value) =>
                       setEditedEmployee((prev) =>
                         prev
-                          ? { ...prev, department: value as Employee["department"] }
+                          ? {
+                              ...prev,
+                              department: value as Employee["department"],
+                            }
                           : null
                       )
                     }
@@ -302,7 +316,8 @@ function EmployeeProfileCard({
                         prev
                           ? {
                               ...prev,
-                              employmentType: value as Employee["employmentType"],
+                              employmentType:
+                                value as Employee["employmentType"],
                             }
                           : null
                       )
@@ -320,12 +335,16 @@ function EmployeeProfileCard({
                     </SelectContent>
                   </Select>
                 ) : (
-                  <p className="text-white/90 mt-1">{employee.employmentType}</p>
+                  <p className="text-white/90 mt-1">
+                    {employee.employmentType}
+                  </p>
                 )}
               </div>
 
               <div>
-                <Label className="text-white/50 text-xs uppercase tracking-wider">Status</Label>
+                <Label className="text-white/50 text-xs uppercase tracking-wider">
+                  Status
+                </Label>
                 {isEditing ? (
                   <Select
                     value={editedEmployee.employmentStatus}
@@ -334,7 +353,8 @@ function EmployeeProfileCard({
                         prev
                           ? {
                               ...prev,
-                              employmentStatus: value as Employee["employmentStatus"],
+                              employmentStatus:
+                                value as Employee["employmentStatus"],
                               status: value as Employee["status"],
                             }
                           : null
@@ -354,7 +374,12 @@ function EmployeeProfileCard({
                   </Select>
                 ) : (
                   <div className="mt-1">
-                    <Badge className={cn("text-xs", getStatusColor(employee.employmentStatus))}>
+                    <Badge
+                      className={cn(
+                        "text-xs",
+                        getStatusColor(employee.employmentStatus)
+                      )}
+                    >
                       {employee.employmentStatus}
                     </Badge>
                   </div>
@@ -367,7 +392,9 @@ function EmployeeProfileCard({
           <div className="lg:col-span-5">
             <div className="flex items-center gap-2 mb-4 pb-2 border-b border-white/10">
               <Mail className="w-4 h-4 text-blue-400" />
-              <h3 className="text-white/90 font-medium text-sm">Contact Information</h3>
+              <h3 className="text-white/90 font-medium text-sm">
+                Contact Information
+              </h3>
             </div>
 
             <div className="space-y-4">
@@ -387,7 +414,9 @@ function EmployeeProfileCard({
                     className="bg-white/5 border-white/10 text-white h-9 text-sm"
                   />
                 ) : (
-                  <span className="text-white/90 text-sm">{employee.email}</span>
+                  <span className="text-white/90 text-sm">
+                    {employee.email}
+                  </span>
                 )}
               </div>
 
@@ -406,7 +435,9 @@ function EmployeeProfileCard({
                     className="bg-white/5 border-white/10 text-white h-9 text-sm"
                   />
                 ) : (
-                  <span className="text-white/90 text-sm">{employee.phone}</span>
+                  <span className="text-white/90 text-sm">
+                    {employee.phone}
+                  </span>
                 )}
               </div>
 
@@ -490,7 +521,9 @@ function EmployeeProfileCard({
           <div className="p-4 rounded-xl bg-gradient-to-br from-purple-500/10 to-purple-500/5 border border-purple-500/10">
             <div className="flex items-center gap-2 mb-2">
               <Briefcase className="w-4 h-4 text-purple-400" />
-              <Label className="text-white/50 text-xs uppercase tracking-wider">Experience</Label>
+              <Label className="text-white/50 text-xs uppercase tracking-wider">
+                Experience
+              </Label>
             </div>
             {isEditing ? (
               <Input
@@ -507,7 +540,8 @@ function EmployeeProfileCard({
               />
             ) : (
               <p className="text-white/90 text-lg font-semibold">
-                {employee.experience || 0} <span className="text-sm font-normal text-white/60">years</span>
+                {employee.experience || 0}{" "}
+                <span className="text-sm font-normal text-white/60">years</span>
               </p>
             )}
           </div>
@@ -515,7 +549,9 @@ function EmployeeProfileCard({
           <div className="p-4 rounded-xl bg-gradient-to-br from-green-500/10 to-green-500/5 border border-green-500/10">
             <div className="flex items-center gap-2 mb-2">
               <TrendingUp className="w-4 h-4 text-green-400" />
-              <Label className="text-white/50 text-xs uppercase tracking-wider">Salary</Label>
+              <Label className="text-white/50 text-xs uppercase tracking-wider">
+                Salary
+              </Label>
             </div>
             {isEditing ? (
               <Input
@@ -532,9 +568,13 @@ function EmployeeProfileCard({
               />
             ) : (
               <p className="text-white/90 text-lg font-semibold">
-                {employee.salary
-                  ? `₹${employee.salary.toLocaleString()}`
-                  : <span className="text-sm font-normal text-white/60">Not disclosed</span>}
+                {employee.salary ? (
+                  `₹${employee.salary.toLocaleString()}`
+                ) : (
+                  <span className="text-sm font-normal text-white/60">
+                    Not disclosed
+                  </span>
+                )}
               </p>
             )}
           </div>
@@ -542,15 +582,21 @@ function EmployeeProfileCard({
           <div className="p-4 rounded-xl bg-gradient-to-br from-blue-500/10 to-blue-500/5 border border-blue-500/10">
             <div className="flex items-center gap-2 mb-2">
               <Shield className="w-4 h-4 text-blue-400" />
-              <Label className="text-white/50 text-xs uppercase tracking-wider">Role</Label>
+              <Label className="text-white/50 text-xs uppercase tracking-wider">
+                Role
+              </Label>
             </div>
-            <p className="text-white/90 text-lg font-semibold capitalize">{employee.role}</p>
+            <p className="text-white/90 text-lg font-semibold capitalize">
+              {employee.role}
+            </p>
           </div>
 
           <div className="p-4 rounded-xl bg-gradient-to-br from-orange-500/10 to-orange-500/5 border border-orange-500/10">
             <div className="flex items-center gap-2 mb-2">
               <Clock className="w-4 h-4 text-orange-400" />
-              <Label className="text-white/50 text-xs uppercase tracking-wider">Hire Date</Label>
+              <Label className="text-white/50 text-xs uppercase tracking-wider">
+                Hire Date
+              </Label>
             </div>
             <p className="text-white/90 text-lg font-semibold">
               {new Date(employee.hireDate).toLocaleDateString("en-GB", {
@@ -578,8 +624,10 @@ export function EmployeeDetailsPage({ employeeId }: EmployeeDetailsPageProps) {
     isError,
   } = useGetEmployeeByIdQuery(employeeId);
 
-  const { data: directReports = [] } = useGetEmployeesByManagerQuery(employeeId);
-  const { data: employeeProjects = [], isLoading: isLoadingProjects } = useGetProjectsByEmployeeQuery(employeeId);
+  const { data: directReports = [] } =
+    useGetEmployeesByManagerQuery(employeeId);
+  const { data: employeeProjects = [], isLoading: isLoadingProjects } =
+    useGetProjectsByEmployeeQuery(employeeId);
 
   const [updateEmployee, { isLoading: isSaving }] = useUpdateEmployeeMutation();
   const [deleteEmployee] = useDeleteEmployeeMutation();
@@ -691,7 +739,11 @@ export function EmployeeDetailsPage({ employeeId }: EmployeeDetailsPageProps) {
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
-              <DropdownMenuItem onClick={() => router.push(`/admin/employees/${employeeId}/edit`)}>
+              <DropdownMenuItem
+                onClick={() =>
+                  router.push(`/admin/employees/${employeeId}/edit`)
+                }
+              >
                 <Edit className="h-4 w-4 mr-2" />
                 Edit Full Profile
               </DropdownMenuItem>
@@ -985,7 +1037,9 @@ export function EmployeeDetailsPage({ employeeId }: EmployeeDetailsPageProps) {
                       <div
                         key={project.id}
                         className="rounded-xl bg-white/5 border border-white/10 hover:bg-white/10 transition-colors cursor-pointer overflow-hidden"
-                        onClick={() => router.push(`/admin/projects/${project.id}`)}
+                        onClick={() =>
+                          router.push(`/admin/projects/${project.id}`)
+                        }
                       >
                         <div className="flex flex-col sm:flex-row">
                           {/* Cover Image */}
@@ -1048,10 +1102,20 @@ export function EmployeeDetailsPage({ employeeId }: EmployeeDetailsPageProps) {
                                 {project.description}
                               </p>
                               <div className="flex flex-wrap items-center gap-1.5 sm:gap-2">
-                                <Badge className={cn("text-xs", getProjectStatusColor(project.status))}>
+                                <Badge
+                                  className={cn(
+                                    "text-xs",
+                                    getProjectStatusColor(project.status)
+                                  )}
+                                >
                                   {project.status}
                                 </Badge>
-                                <Badge className={cn("text-xs", getProjectPriorityColor(project.priority))}>
+                                <Badge
+                                  className={cn(
+                                    "text-xs",
+                                    getProjectPriorityColor(project.priority)
+                                  )}
+                                >
                                   {project.priority}
                                 </Badge>
                                 <span className="text-white/50 text-xs flex items-center gap-1">
@@ -1060,12 +1124,16 @@ export function EmployeeDetailsPage({ employeeId }: EmployeeDetailsPageProps) {
                                 </span>
                                 <span className="text-white/50 text-xs flex items-center gap-1">
                                   <MapPin className="w-3 h-3" />
-                                  {project.location?.city}, {project.location?.state}
+                                  {project.location?.city},{" "}
+                                  {project.location?.state}
                                 </span>
                               </div>
                               {/* Date for mobile - shown inline with badges */}
                               <p className="text-white/50 text-xs mt-2 sm:hidden">
-                                Started: {new Date(project.startDate).toLocaleDateString()}
+                                Started:{" "}
+                                {new Date(
+                                  project.startDate
+                                ).toLocaleDateString()}
                               </p>
                             </div>
                             {/* Progress section - hidden on mobile (shown on image instead) */}
@@ -1076,11 +1144,15 @@ export function EmployeeDetailsPage({ employeeId }: EmployeeDetailsPageProps) {
                               <div className="w-20 h-2 bg-white/10 rounded-full overflow-hidden">
                                 <div
                                   className="h-full bg-gradient-to-r from-purple-500 to-blue-500 rounded-full"
-                                  style={{ width: `${project.progressPercentage || 0}%` }}
+                                  style={{
+                                    width: `${project.progressPercentage || 0}%`,
+                                  }}
                                 />
                               </div>
                               <p className="text-white/50 text-xs mt-2">
-                                {new Date(project.startDate).toLocaleDateString()}
+                                {new Date(
+                                  project.startDate
+                                ).toLocaleDateString()}
                               </p>
                             </div>
                           </div>

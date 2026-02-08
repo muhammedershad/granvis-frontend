@@ -1,20 +1,20 @@
 "use client";
 
-import { useReducer, useEffect, useState } from "react";
+import { useEffect, useReducer, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import {
-  FileText,
-  Calendar,
   ArrowLeft,
-  Save,
-  CheckCircle,
-  Loader2,
-  Eye,
   Briefcase,
-  Phone,
+  Calendar,
+  CheckCircle,
+  ExternalLink,
+  Eye,
+  FileText,
+  Loader2,
   Mail,
   MapPin,
-  ExternalLink,
+  Phone,
+  Save,
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
 import { Button } from "../ui/button";
@@ -31,10 +31,10 @@ import {
 import { MilestoneSelectionTable } from "./MilestoneSelectionTable";
 import { InvoiceSummaryPanel } from "./InvoiceSummaryPanel";
 import {
+  MilestoneWithInvoicing,
   calculateMilestoneInvoicingStatus,
   initialInvoiceFormState,
   invoiceFormReducer,
-  MilestoneWithInvoicing,
 } from "./invoiceMockData";
 import { useGetMilestonesByProjectQuery } from "@/lib/api/milestonesApi";
 import { useGetProjectByIdQuery } from "@/lib/api/projectsApi";
@@ -69,7 +69,9 @@ export function CreateInvoicePage({
     invoiceFormReducer,
     initialInvoiceFormState
   );
-  const [expandedMilestones, setExpandedMilestones] = useState<Set<string>>(new Set());
+  const [expandedMilestones, setExpandedMilestones] = useState<Set<string>>(
+    new Set()
+  );
 
   // Get current user from auth state
   const user = useAppSelector((state) => state.auth.user);
@@ -79,20 +81,18 @@ export function CreateInvoicePage({
   const isEditMode = !!invoiceId;
 
   // Fetch project details
-  const {
-    data: project,
-    isLoading: isLoadingProject,
-  } = useGetProjectByIdQuery(projectId, {
-    skip: !projectId,
-  });
+  const { data: project, isLoading: isLoadingProject } = useGetProjectByIdQuery(
+    projectId,
+    {
+      skip: !projectId,
+    }
+  );
 
   // Fetch milestones for the project
-  const {
-    data: milestonesData = [],
-    isLoading: isLoadingMilestones,
-  } = useGetMilestonesByProjectQuery(projectId, {
-    skip: !projectId,
-  });
+  const { data: milestonesData = [], isLoading: isLoadingMilestones } =
+    useGetMilestonesByProjectQuery(projectId, {
+      skip: !projectId,
+    });
 
   // Fetch existing invoices for the project
   const { data: existingInvoices = [], isLoading: isLoadingInvoices } =
@@ -107,9 +107,7 @@ export function CreateInvoicePage({
     });
 
   // Fetch all firm settings for selection
-  const {
-    data: allFirmSettings = [],
-  } = useGetFirmSettingsQuery();
+  const { data: allFirmSettings = [] } = useGetFirmSettingsQuery();
 
   // Selected firm state — defaults to the default firm or first available
   const [selectedFirmId, setSelectedFirmId] = useState<string>("");
@@ -133,23 +131,25 @@ export function CreateInvoicePage({
   const isSaving = isCreating || isUpdating;
 
   // Calculate invoicing status for each milestone
-  const milestonesWithStatus: MilestoneWithInvoicing[] = milestonesData.map(milestone => {
-    // Filter out the current invoice being edited to avoid double-counting
-    const invoicesToConsider = existingInvoices.filter(
-      (inv) => inv.id !== (invoiceId || "")
-    );
+  const milestonesWithStatus: MilestoneWithInvoicing[] = milestonesData.map(
+    (milestone) => {
+      // Filter out the current invoice being edited to avoid double-counting
+      const invoicesToConsider = existingInvoices.filter(
+        (inv) => inv.id !== (invoiceId || "")
+      );
 
-    // Calculate based on existing finalized invoices
-    const { status, totalBilled, remainingAmount } =
-      calculateMilestoneInvoicingStatus(milestone, invoicesToConsider);
+      // Calculate based on existing finalized invoices
+      const { status, totalBilled, remainingAmount } =
+        calculateMilestoneInvoicingStatus(milestone, invoicesToConsider);
 
-    return {
-      ...milestone,
-      invoicingStatus: status,
-      totalBilled,
-      remainingToBill: remainingAmount,
-    };
-  });
+      return {
+        ...milestone,
+        invoicingStatus: status,
+        totalBilled,
+        remainingToBill: remainingAmount,
+      };
+    }
+  );
 
   // Initialize form with generated invoice number
   useEffect(() => {
@@ -195,10 +195,15 @@ export function CreateInvoicePage({
         setSelectedFirmId(defaultFirm?.id || allFirmSettings[0].id);
       }
     }
-  }, [allFirmSettings, selectedFirmId, isEditMode, existingInvoice?.firmSettingsId]);
+  }, [
+    allFirmSettings,
+    selectedFirmId,
+    isEditMode,
+    existingInvoice?.firmSettingsId,
+  ]);
 
   const handleToggleExpand = (milestoneId: string) => {
-    setExpandedMilestones(prev => {
+    setExpandedMilestones((prev) => {
       const next = new Set(prev);
       if (next.has(milestoneId)) {
         next.delete(milestoneId);
@@ -221,7 +226,9 @@ export function CreateInvoicePage({
 
   const validateFinalize = (): string | null => {
     const draftError = validateDraft();
-    if (draftError) return draftError;
+    if (draftError) {
+      return draftError;
+    }
 
     // Check all milestone amounts are > 0
     for (const item of state.selectedMilestones.values()) {
@@ -409,16 +416,17 @@ export function CreateInvoicePage({
   // Prevent editing finalized invoices
   const isEditable = !existingInvoice || existingInvoice.status === "draft";
 
-  const isLoading = isLoadingProject || isLoadingMilestones || isLoadingInvoices ||
+  const isLoading =
+    isLoadingProject ||
+    isLoadingMilestones ||
+    isLoadingInvoices ||
     (isEditMode && isLoadingExistingInvoice);
 
   if (isLoading) {
     return (
       <div className="flex items-center justify-center py-16">
         <Loader2 className="w-8 h-8 animate-spin text-purple-500" />
-        <span className="ml-3 text-lg text-muted-foreground">
-          Loading...
-        </span>
+        <span className="ml-3 text-lg text-muted-foreground">Loading...</span>
       </div>
     );
   }
@@ -451,11 +459,7 @@ export function CreateInvoicePage({
 
         {/* Action Buttons - Desktop */}
         <div className="hidden md:flex items-center gap-3">
-          <Button
-            variant="outline"
-            onClick={handleCancel}
-            disabled={isSaving}
-          >
+          <Button variant="outline" onClick={handleCancel} disabled={isSaving}>
             Cancel
           </Button>
           {isEditable && (
@@ -511,7 +515,9 @@ export function CreateInvoicePage({
                   <div className="p-2 bg-amber-500/10 rounded-lg border border-amber-500/20">
                     <Briefcase className="h-5 w-5 text-amber-600 dark:text-amber-400" />
                   </div>
-                  <CardTitle className="text-foreground">Firm Details</CardTitle>
+                  <CardTitle className="text-foreground">
+                    Firm Details
+                  </CardTitle>
                 </div>
                 <Link
                   href={`/${basePath.split("/")[1]}/firm-settings`}
@@ -564,9 +570,13 @@ export function CreateInvoicePage({
                   {selectedFirm && (
                     <div className="flex items-start gap-4 p-3 rounded-lg bg-muted/50 border border-border/50">
                       {/* Logo */}
-                      {(selectedFirm.logo || selectedFirm.logoKey) ? (
+                      {selectedFirm.logo || selectedFirm.logoKey ? (
                         <img
-                          src={selectedFirm.logo || getCloudFrontUrl(selectedFirm.logoKey) || ""}
+                          src={
+                            selectedFirm.logo ||
+                            getCloudFrontUrl(selectedFirm.logoKey) ||
+                            ""
+                          }
                           alt={selectedFirm.name}
                           className="w-12 h-12 object-contain rounded-lg border border-gray-200 dark:border-gray-700 bg-white flex-shrink-0"
                         />
@@ -611,7 +621,9 @@ export function CreateInvoicePage({
                 <div className="p-2 bg-blue-500/10 rounded-lg border border-blue-500/20">
                   <Calendar className="h-5 w-5 text-blue-600 dark:text-blue-400" />
                 </div>
-                <CardTitle className="text-foreground">Basic Information</CardTitle>
+                <CardTitle className="text-foreground">
+                  Basic Information
+                </CardTitle>
               </div>
             </CardHeader>
             <CardContent className="relative space-y-4">
@@ -625,7 +637,10 @@ export function CreateInvoicePage({
                     type="date"
                     value={state.invoiceDate}
                     onChange={(e) =>
-                      dispatch({ type: "SET_INVOICE_DATE", payload: e.target.value })
+                      dispatch({
+                        type: "SET_INVOICE_DATE",
+                        payload: e.target.value,
+                      })
                     }
                     disabled={!isEditable}
                     className="text-sm"

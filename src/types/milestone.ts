@@ -1,20 +1,20 @@
 // Milestone Enums
 export enum MilestoneStatus {
-  NOT_STARTED = 'not_started',
-  IN_PROGRESS = 'in_progress',
-  COMPLETED = 'completed',
+  NOT_STARTED = "not_started",
+  IN_PROGRESS = "in_progress",
+  COMPLETED = "completed",
 }
 
 export enum MilestonePaymentStatus {
-  UNPAID = 'unpaid',
-  PARTIALLY_PAID = 'partially_paid',
-  PAID = 'paid',
+  UNPAID = "unpaid",
+  PARTIALLY_PAID = "partially_paid",
+  PAID = "paid",
 }
 
 export enum RateType {
-  PER_SQFT = 'per_sqft',
-  PER_VISIT = 'per_visit',
-  FIXED = 'fixed',
+  PER_SQFT = "per_sqft",
+  PER_VISIT = "per_visit",
+  FIXED = "fixed",
 }
 
 // Scope of Work Item

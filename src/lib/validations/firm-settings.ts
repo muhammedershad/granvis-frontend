@@ -16,7 +16,10 @@ export const createFirmSettingsSchema = z.object({
   phone: z
     .string()
     .min(1, "Phone number is required")
-    .regex(phoneRegex, "Phone must be 10-15 digits (may include +, spaces, or hyphens)"),
+    .regex(
+      phoneRegex,
+      "Phone must be 10-15 digits (may include +, spaces, or hyphens)"
+    ),
   alternatePhone: z
     .string()
     .regex(phoneRegex, "Alternate phone must be 10-15 digits")
@@ -44,7 +47,10 @@ export const createFirmSettingsSchema = z.object({
     .min(1, "State is required")
     .min(2, "State must be at least 2 characters")
     .max(100, "State must not exceed 100 characters"),
-  country: z.string().max(100, "Country must not exceed 100 characters").optional(),
+  country: z
+    .string()
+    .max(100, "Country must not exceed 100 characters")
+    .optional(),
 
   // Invoice Settings
   invoicePrefix: z
@@ -63,4 +69,6 @@ export const createFirmSettingsSchema = z.object({
   logoKey: z.string().optional(),
 });
 
-export type CreateFirmSettingsFormData = z.infer<typeof createFirmSettingsSchema>;
+export type CreateFirmSettingsFormData = z.infer<
+  typeof createFirmSettingsSchema
+>;

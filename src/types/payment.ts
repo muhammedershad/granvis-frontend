@@ -1,19 +1,19 @@
 // Payment Enums
 export enum PaymentStatus {
-  PENDING = 'pending',
-  PAID = 'paid',
-  OVERDUE = 'overdue',
-  CANCELLED = 'cancelled',
+  PENDING = "pending",
+  PAID = "paid",
+  OVERDUE = "overdue",
+  CANCELLED = "cancelled",
 }
 
 export enum PaymentMethod {
-  CASH = 'cash',
-  BANK_TRANSFER = 'bank_transfer',
-  CHEQUE = 'cheque',
-  UPI = 'upi',
-  NEFT = 'neft',
-  RTGS = 'rtgs',
-  OTHER = 'other',
+  CASH = "cash",
+  BANK_TRANSFER = "bank_transfer",
+  CHEQUE = "cheque",
+  UPI = "upi",
+  NEFT = "neft",
+  RTGS = "rtgs",
+  OTHER = "other",
 }
 
 // Main Payment Interface

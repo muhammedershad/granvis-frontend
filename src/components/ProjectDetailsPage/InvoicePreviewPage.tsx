@@ -3,14 +3,14 @@
 import { useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import {
+  AlertCircle,
   ArrowLeft,
-  Printer,
+  CheckCircle,
   Download,
   Edit,
-  CheckCircle,
   Loader2,
+  Printer,
   X,
-  AlertCircle,
 } from "lucide-react";
 import { Button } from "../ui/button";
 import { InvoicePreview, InvoicePreviewData } from "./InvoicePreview";
@@ -73,7 +73,8 @@ export function InvoicePreviewPage({
   const [createInvoice, { isLoading: isCreating }] = useCreateInvoiceMutation();
 
   // Parse form state from URL params
-  const invoiceDate = searchParams.get("date") || new Date().toISOString().split("T")[0];
+  const invoiceDate =
+    searchParams.get("date") || new Date().toISOString().split("T")[0];
   const invoiceRef = searchParams.get("invoiceRef") || "";
   const notesParam = searchParams.get("notes");
   const notes = notesParam ? notesParam.split("|") : undefined;
@@ -81,7 +82,9 @@ export function InvoicePreviewPage({
   // Parse milestone items with custom rates/amounts
   const itemsParam = searchParams.get("items");
   const milestoneItems: InvoiceMilestoneItem[] = (() => {
-    if (!itemsParam) return [];
+    if (!itemsParam) {
+      return [];
+    }
     try {
       return JSON.parse(atob(itemsParam));
     } catch {
@@ -91,7 +94,9 @@ export function InvoicePreviewPage({
 
   // Parse financial summary
   const subtotal = parseFloat(searchParams.get("subtotal") || "0");
-  const discountType = (searchParams.get("discountType") || "percentage") as "percentage" | "flat";
+  const discountType = (searchParams.get("discountType") || "percentage") as
+    | "percentage"
+    | "flat";
   const discountValue = parseFloat(searchParams.get("discountValue") || "0");
   const discountAmount = parseFloat(searchParams.get("discountAmount") || "0");
   const netTotal = parseFloat(searchParams.get("netTotal") || "0");
@@ -110,35 +115,36 @@ export function InvoicePreviewPage({
   });
 
   // Fetch selected firm settings by ID, or fall back to default
-  const {
-    data: selectedFirmData,
-    isLoading: isLoadingSelectedFirm,
-  } = useGetFirmSettingsByIdQuery(firmSettingsId, {
-    skip: !firmSettingsId,
-  });
+  const { data: selectedFirmData, isLoading: isLoadingSelectedFirm } =
+    useGetFirmSettingsByIdQuery(firmSettingsId, {
+      skip: !firmSettingsId,
+    });
 
-  const {
-    data: defaultFirmData,
-    isLoading: isLoadingDefaultFirm,
-  } = useGetDefaultFirmSettingsQuery(undefined, {
-    skip: !!firmSettingsId,
-  });
+  const { data: defaultFirmData, isLoading: isLoadingDefaultFirm } =
+    useGetDefaultFirmSettingsQuery(undefined, {
+      skip: !!firmSettingsId,
+    });
 
-  const isLoadingFirmSettings = firmSettingsId ? isLoadingSelectedFirm : isLoadingDefaultFirm;
+  const isLoadingFirmSettings = firmSettingsId
+    ? isLoadingSelectedFirm
+    : isLoadingDefaultFirm;
   const firmSettingsData = selectedFirmData || defaultFirmData;
 
   // Use fetched firm settings or fallback
   const firmSettings = firmSettingsData || defaultFirmSettingsFallback;
 
   // Fetch client details
-  const {
-    data: client,
-    isLoading: isLoadingClient,
-  } = useGetClientByIdQuery(project?.clientId || "", {
-    skip: !project?.clientId,
-  });
+  const { data: client, isLoading: isLoadingClient } = useGetClientByIdQuery(
+    project?.clientId || "",
+    {
+      skip: !project?.clientId,
+    }
+  );
 
-  const isLoading = isLoadingProject || isLoadingFirmSettings || (project?.clientId ? isLoadingClient : false);
+  const isLoading =
+    isLoadingProject ||
+    isLoadingFirmSettings ||
+    (project?.clientId ? isLoadingClient : false);
   const isBusy = isGenerating || isCreating;
 
   const handlePrint = () => {
@@ -185,7 +191,9 @@ export function InvoicePreviewPage({
         defaultNotes: firmSettings.defaultNotes,
         status: "sent",
         firmSettingsId: firmSettingsData?.id || firmSettingsId || undefined,
-        createdBy: user ? `${user.firstName} ${user.lastName}`.trim() || user.email : "Unknown User",
+        createdBy: user
+          ? `${user.firstName} ${user.lastName}`.trim() || user.email
+          : "Unknown User",
         createdById: user?._id,
       };
 
@@ -222,7 +230,9 @@ export function InvoicePreviewPage({
           <p className="text-lg font-medium">Unable to load invoice preview</p>
         </div>
         <p className="text-muted-foreground">
-          {projectError ? "Failed to load project details. Please try again." : "Project not found."}
+          {projectError
+            ? "Failed to load project details. Please try again."
+            : "Project not found."}
         </p>
         <Button variant="outline" onClick={handleClose}>
           <ArrowLeft className="h-4 w-4 mr-2" />
@@ -275,7 +285,8 @@ export function InvoicePreviewPage({
           <div className="container mx-auto flex items-center gap-2 text-amber-700 dark:text-amber-400 text-sm">
             <AlertCircle className="h-4 w-4 flex-shrink-0" />
             <span>
-              No firm settings configured. Using placeholder data. Please configure your firm settings for accurate invoices.
+              No firm settings configured. Using placeholder data. Please
+              configure your firm settings for accurate invoices.
             </span>
           </div>
         </div>
@@ -300,19 +311,11 @@ export function InvoicePreviewPage({
           </div>
 
           <div className="flex items-center gap-3">
-            <Button
-              variant="outline"
-              onClick={handleEdit}
-              disabled={isBusy}
-            >
+            <Button variant="outline" onClick={handleEdit} disabled={isBusy}>
               <Edit className="h-4 w-4 mr-2" />
               Edit
             </Button>
-            <Button
-              variant="outline"
-              onClick={handlePrint}
-              disabled={isBusy}
-            >
+            <Button variant="outline" onClick={handlePrint} disabled={isBusy}>
               <Printer className="h-4 w-4 mr-2" />
               Print
             </Button>

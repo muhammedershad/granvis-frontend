@@ -4,15 +4,15 @@ import { useMemo, useState } from "react";
 import { useSelector } from "react-redux";
 import {
   Activity,
+  AlertCircle,
+  CheckCircle2,
+  Circle,
+  Clock,
+  DollarSign,
   Flag,
   Plus,
   RefreshCcw,
   TrendingUp,
-  DollarSign,
-  CheckCircle2,
-  Clock,
-  Circle,
-  AlertCircle,
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
 import { Badge } from "../ui/badge";
@@ -20,7 +20,7 @@ import { Button } from "../ui/button";
 import { Progress } from "../ui/progress";
 import { Skeleton } from "../ui/skeleton";
 import { toast } from "sonner";
-import { getAuthDetails, IAuthRoles } from "@/store/slices/authSlice";
+import { IAuthRoles, getAuthDetails } from "@/store/slices/authSlice";
 import type { Project } from "@/types/project";
 import { Milestone } from "@/types/milestone";
 import {
@@ -66,7 +66,9 @@ export function TimelineTab({ project }: TimelineTabProps) {
   const [editModalOpen, setEditModalOpen] = useState(false);
   const [progressModalOpen, setProgressModalOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
-  const [selectedMilestone, setSelectedMilestone] = useState<Milestone | null>(null);
+  const [selectedMilestone, setSelectedMilestone] = useState<Milestone | null>(
+    null
+  );
 
   // Drag and drop states
   const [draggedId, setDraggedId] = useState<string | null>(null);
@@ -78,11 +80,11 @@ export function TimelineTab({ project }: TimelineTabProps) {
   }, [milestones]);
 
   // Permission checks
-  const canEdit = user?.role && [
-    IAuthRoles.SUPER_ADMIN,
-    IAuthRoles.ADMIN,
-    IAuthRoles.MANAGER,
-  ].includes(user.role);
+  const canEdit =
+    user?.role &&
+    [IAuthRoles.SUPER_ADMIN, IAuthRoles.ADMIN, IAuthRoles.MANAGER].includes(
+      user.role
+    );
 
   // Handlers
   const handleCreateMilestone = () => {
@@ -125,16 +127,18 @@ export function TimelineTab({ project }: TimelineTabProps) {
     }
 
     // Calculate new order
-    const draggedIndex = sortedMilestones.findIndex(m => m.id === draggedId);
-    const targetIndex = sortedMilestones.findIndex(m => m.id === targetId);
+    const draggedIndex = sortedMilestones.findIndex((m) => m.id === draggedId);
+    const targetIndex = sortedMilestones.findIndex((m) => m.id === targetId);
 
-    if (draggedIndex === -1 || targetIndex === -1) return;
+    if (draggedIndex === -1 || targetIndex === -1) {
+      return;
+    }
 
     const newOrder = [...sortedMilestones];
     const [draggedItem] = newOrder.splice(draggedIndex, 1);
     newOrder.splice(targetIndex, 0, draggedItem);
 
-    const reorderedIds = newOrder.map(m => m.id);
+    const reorderedIds = newOrder.map((m) => m.id);
 
     try {
       await reorderMilestones({
@@ -177,7 +181,9 @@ export function TimelineTab({ project }: TimelineTabProps) {
       <Card>
         <CardContent className="flex flex-col items-center justify-center py-12">
           <AlertCircle className="h-12 w-12 text-red-500 mb-4" />
-          <p className="text-lg font-medium text-foreground mb-2">Failed to load milestones</p>
+          <p className="text-lg font-medium text-foreground mb-2">
+            Failed to load milestones
+          </p>
           <p className="text-sm text-muted-foreground mb-4">
             There was an error loading the project milestones.
           </p>
@@ -222,7 +228,9 @@ export function TimelineTab({ project }: TimelineTabProps) {
             <div className="flex flex-col items-center justify-center py-12 text-muted-foreground">
               <Flag className="h-12 w-12 mb-4 opacity-50" />
               <p className="text-lg font-medium">No milestones yet</p>
-              <p className="text-sm mb-4">Create your first milestone to start tracking progress</p>
+              <p className="text-sm mb-4">
+                Create your first milestone to start tracking progress
+              </p>
               {canEdit && (
                 <Button onClick={handleCreateMilestone} variant="outline">
                   <Plus className="h-4 w-4 mr-2" />

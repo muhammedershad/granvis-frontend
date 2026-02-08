@@ -1,11 +1,11 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Plus, FileText } from "lucide-react";
-import { Card, CardHeader, CardTitle, CardContent } from "../ui/card";
+import { FileText, Plus } from "lucide-react";
+import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
 import { Button } from "../ui/button";
 import { InvoiceListTable } from "./InvoiceListTable";
 import { InvoiceFormDialog } from "./InvoiceFormDialog";
-import { mockInvoices, Invoice } from "./invoiceMockData";
+import { Invoice, mockInvoices } from "./invoiceMockData";
 import type { Project } from "@/types/project";
 
 interface InvoicesTabProps {
@@ -25,7 +25,7 @@ export function InvoicesTab({ project, basePath }: InvoicesTabProps) {
   };
 
   const handleEditInvoice = (invoice: Invoice) => {
-    if (invoice.status === 'draft') {
+    if (invoice.status === "draft") {
       // Navigate to edit invoice page
       router.push(`${basePath}/${project.id}/invoices/new?edit=${invoice.id}`);
     } else {
@@ -41,7 +41,7 @@ export function InvoicesTab({ project, basePath }: InvoicesTabProps) {
   };
 
   const handleDeleteInvoice = (invoiceId: string) => {
-    setInvoices(prev => prev.filter(inv => inv.id !== invoiceId));
+    setInvoices((prev) => prev.filter((inv) => inv.id !== invoiceId));
   };
 
   // This is kept for viewing invoices (read-only)

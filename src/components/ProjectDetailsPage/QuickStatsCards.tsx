@@ -1,4 +1,4 @@
-import { Calendar, DollarSign, TrendingUp, Users, Flag } from "lucide-react";
+import { Calendar, DollarSign, Flag, TrendingUp, Users } from "lucide-react";
 import { Card, CardContent } from "../ui/card";
 import { Badge } from "../ui/badge";
 import type { Project } from "@/types/project";
@@ -121,7 +121,11 @@ export function QuickStatsCards({ project }: QuickStatsCardsProps) {
                     variant="outline"
                     className="bg-emerald-100 text-emerald-800 border-emerald-200 dark:bg-emerald-900/30 text-xs px-1.5 py-0"
                   >
-                    {Math.round((summary.completedCount / (summary.milestoneCount || 1)) * 100)}%
+                    {Math.round(
+                      (summary.completedCount / (summary.milestoneCount || 1)) *
+                        100
+                    )}
+                    %
                   </Badge>
                 </div>
               ) : (

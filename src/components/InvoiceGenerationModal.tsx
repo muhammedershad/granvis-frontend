@@ -1,8 +1,8 @@
 "use client";
 
-import { useEffect, useState, useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useSelector } from "react-redux";
-import { useForm, useFieldArray, Controller } from "react-hook-form";
+import { Controller, useFieldArray, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import {
@@ -27,20 +27,24 @@ import {
 import { Separator } from "./ui/separator";
 import { Checkbox } from "./ui/checkbox";
 import {
+  CheckCircle2,
+  Download,
+  FileText,
+  Info,
   Loader2,
   Plus,
   Trash2,
-  FileText,
-  Download,
-  CheckCircle2,
-  Info
 } from "lucide-react";
 import { toast } from "sonner";
 import { getAuthDetails } from "@/store/slices/authSlice";
-import { PaymentMethod, PaymentStatus, CreatePaymentDto } from "@/types/payment";
+import {
+  CreatePaymentDto,
+  PaymentMethod,
+  PaymentStatus,
+} from "@/types/payment";
 import {
   useCreatePaymentMutation,
-  useGeneratePaymentPdfMutation
+  useGeneratePaymentPdfMutation,
 } from "@/lib/api/paymentsApi";
 import { useGetProjectsQuery } from "@/lib/api/projectsApi";
 import { useGetMilestonesByProjectQuery } from "@/lib/api/milestonesApi";
@@ -107,24 +111,32 @@ export function InvoiceGenerationModal({
 }: InvoiceGenerationModalProps) {
   const { user } = useSelector(getAuthDetails);
   const [createPayment, { isLoading: isCreating }] = useCreatePaymentMutation();
-  const [generatePdf, { isLoading: isGeneratingPdf }] = useGeneratePaymentPdfMutation();
+  const [generatePdf, { isLoading: isGeneratingPdf }] =
+    useGeneratePaymentPdfMutation();
 
-  const [selectedProjectId, setSelectedProjectId] = useState<string>(preSelectedProjectId || "");
-  const [selectedMilestone, setSelectedMilestone] = useState<Milestone | null>(null);
-  const [generatedPaymentId, setGeneratedPaymentId] = useState<string | null>(null);
+  const [selectedProjectId, setSelectedProjectId] = useState<string>(
+    preSelectedProjectId || ""
+  );
+  const [selectedMilestone, setSelectedMilestone] = useState<Milestone | null>(
+    null
+  );
+  const [generatedPaymentId, setGeneratedPaymentId] = useState<string | null>(
+    null
+  );
   const [pdfUrl, setPdfUrl] = useState<string | null>(null);
 
   // Fetch projects
-  const { data: projectsResponse, isLoading: isLoadingProjects } = useGetProjectsQuery({
-    page: 1,
-    limit: 1000,
-  });
+  const { data: projectsResponse, isLoading: isLoadingProjects } =
+    useGetProjectsQuery({
+      page: 1,
+      limit: 1000,
+    });
 
   // Fetch milestones for selected project
-  const { data: milestonesData, isLoading: isLoadingMilestones } = useGetMilestonesByProjectQuery(
-    selectedProjectId,
-    { skip: !selectedProjectId }
-  );
+  const { data: milestonesData, isLoading: isLoadingMilestones } =
+    useGetMilestonesByProjectQuery(selectedProjectId, {
+      skip: !selectedProjectId,
+    });
 
   const projects = projectsResponse?.data || [];
   const milestones = milestonesData || [];
@@ -188,7 +200,7 @@ export function InvoiceGenerationModal({
 
         // Add custom line items
         const customItemsTotal = (watchCustomLineItems || []).reduce(
-          (sum, item) => sum + (item.rate * item.quantity),
+          (sum, item) => sum + item.rate * item.quantity,
           0
         );
 
@@ -200,7 +212,7 @@ export function InvoiceGenerationModal({
   // Calculate custom items total
   const customItemsTotal = useMemo(() => {
     return (watchCustomLineItems || []).reduce(
-      (sum, item) => sum + (item.rate * item.quantity),
+      (sum, item) => sum + item.rate * item.quantity,
       0
     );
   }, [watchCustomLineItems]);
@@ -227,7 +239,9 @@ export function InvoiceGenerationModal({
   }, [open, reset, preSelectedProjectId, preSelectedMilestoneId]);
 
   const onSubmit = async (data: InvoiceFormData) => {
-    if (!user) return;
+    if (!user) {
+      return;
+    }
 
     try {
       // Get client ID from selected project
@@ -304,7 +318,8 @@ export function InvoiceGenerationModal({
               Generate Invoice
             </DialogTitle>
             <DialogDescription>
-              Create an invoice for a project milestone with optional custom line items
+              Create an invoice for a project milestone with optional custom
+              line items
             </DialogDescription>
           </DialogHeader>
         </div>
@@ -317,7 +332,9 @@ export function InvoiceGenerationModal({
             </div>
 
             <div className="text-center space-y-2">
-              <h3 className="text-2xl font-semibold">Invoice Generated Successfully!</h3>
+              <h3 className="text-2xl font-semibold">
+                Invoice Generated Successfully!
+              </h3>
               <p className="text-muted-foreground">
                 Your invoice has been created and the PDF is ready for download
               </p>
@@ -341,7 +358,9 @@ export function InvoiceGenerationModal({
               <Card>
                 <CardHeader>
                   <CardTitle>Project & Milestone</CardTitle>
-                  <CardDescription>Select the project and milestone for this invoice</CardDescription>
+                  <CardDescription>
+                    Select the project and milestone for this invoice
+                  </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <div className="grid grid-cols-2 gap-4">
@@ -353,7 +372,10 @@ export function InvoiceGenerationModal({
                         name="projectId"
                         control={control}
                         render={({ field }) => (
-                          <Select value={field.value} onValueChange={field.onChange}>
+                          <Select
+                            value={field.value}
+                            onValueChange={field.onChange}
+                          >
                             <SelectTrigger>
                               <SelectValue placeholder="Select project" />
                             </SelectTrigger>
@@ -368,7 +390,10 @@ export function InvoiceGenerationModal({
                                 </SelectItem>
                               ) : (
                                 projects.map((project) => (
-                                  <SelectItem key={project.id} value={project.id}>
+                                  <SelectItem
+                                    key={project.id}
+                                    value={project.id}
+                                  >
                                     {project.name}
                                   </SelectItem>
                                 ))
@@ -378,7 +403,9 @@ export function InvoiceGenerationModal({
                         )}
                       />
                       {errors.projectId && (
-                        <p className="text-sm text-red-500">{errors.projectId.message}</p>
+                        <p className="text-sm text-red-500">
+                          {errors.projectId.message}
+                        </p>
                       )}
                     </div>
 
@@ -409,8 +436,12 @@ export function InvoiceGenerationModal({
                                 </SelectItem>
                               ) : (
                                 milestones.map((milestone) => (
-                                  <SelectItem key={milestone.id} value={milestone.id}>
-                                    Stage {milestone.stageNumber}: {milestone.title}
+                                  <SelectItem
+                                    key={milestone.id}
+                                    value={milestone.id}
+                                  >
+                                    Stage {milestone.stageNumber}:{" "}
+                                    {milestone.title}
                                   </SelectItem>
                                 ))
                               )}
@@ -419,7 +450,9 @@ export function InvoiceGenerationModal({
                         )}
                       />
                       {errors.milestoneId && (
-                        <p className="text-sm text-red-500">{errors.milestoneId.message}</p>
+                        <p className="text-sm text-red-500">
+                          {errors.milestoneId.message}
+                        </p>
                       )}
                     </div>
                   </div>
@@ -432,13 +465,16 @@ export function InvoiceGenerationModal({
                   <CardHeader>
                     <CardTitle>Milestone Details</CardTitle>
                     <CardDescription>
-                      Stage {selectedMilestone.stageNumber}: {selectedMilestone.title}
+                      Stage {selectedMilestone.stageNumber}:{" "}
+                      {selectedMilestone.title}
                     </CardDescription>
                   </CardHeader>
                   <CardContent className="space-y-4">
                     {/* Scope of Work */}
                     <div className="space-y-2">
-                      <Label className="text-sm font-semibold">Scope of Work</Label>
+                      <Label className="text-sm font-semibold">
+                        Scope of Work
+                      </Label>
                       <div className="space-y-2">
                         {selectedMilestone.scopeOfWork.map((item, index) => (
                           <div
@@ -465,31 +501,41 @@ export function InvoiceGenerationModal({
 
                     {/* Additional Charges */}
                     {selectedMilestone.additionalCharges &&
-                     selectedMilestone.additionalCharges.length > 0 && (
-                      <div className="space-y-2">
-                        <Label className="text-sm font-semibold">Additional Charges</Label>
+                      selectedMilestone.additionalCharges.length > 0 && (
                         <div className="space-y-2">
-                          {selectedMilestone.additionalCharges.map((charge, index) => (
-                            <div
-                              key={charge.id}
-                              className="flex items-center justify-between p-3 bg-muted/50 rounded-lg"
-                            >
-                              <div className="flex-1">
-                                <p className="font-medium">{charge.description}</p>
-                                <p className="text-sm text-muted-foreground">
-                                  ₹{charge.ratePerUnit.toLocaleString("en-IN")} × {charge.quantity}
-                                </p>
-                              </div>
-                              <div className="text-right">
-                                <p className="font-semibold">
-                                  {formatCurrency(charge.amount)}
-                                </p>
-                              </div>
-                            </div>
-                          ))}
+                          <Label className="text-sm font-semibold">
+                            Additional Charges
+                          </Label>
+                          <div className="space-y-2">
+                            {selectedMilestone.additionalCharges.map(
+                              (charge, index) => (
+                                <div
+                                  key={charge.id}
+                                  className="flex items-center justify-between p-3 bg-muted/50 rounded-lg"
+                                >
+                                  <div className="flex-1">
+                                    <p className="font-medium">
+                                      {charge.description}
+                                    </p>
+                                    <p className="text-sm text-muted-foreground">
+                                      ₹
+                                      {charge.ratePerUnit.toLocaleString(
+                                        "en-IN"
+                                      )}{" "}
+                                      × {charge.quantity}
+                                    </p>
+                                  </div>
+                                  <div className="text-right">
+                                    <p className="font-semibold">
+                                      {formatCurrency(charge.amount)}
+                                    </p>
+                                  </div>
+                                </div>
+                              )
+                            )}
+                          </div>
                         </div>
-                      </div>
-                    )}
+                      )}
 
                     {/* Milestone Total */}
                     <div className="flex items-center justify-between p-4 bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-950/20 dark:to-purple-950/20 rounded-lg border-2 border-blue-200 dark:border-blue-800">
@@ -533,7 +579,11 @@ export function InvoiceGenerationModal({
                         variant="outline"
                         size="sm"
                         onClick={() =>
-                          appendCustomLineItem({ description: "", rate: 0, quantity: 1 })
+                          appendCustomLineItem({
+                            description: "",
+                            rate: 0,
+                            quantity: 1,
+                          })
                         }
                       >
                         <Plus className="h-4 w-4 mr-1" />
@@ -550,7 +600,9 @@ export function InvoiceGenerationModal({
                             className="p-4 border rounded-lg bg-muted/30 space-y-3"
                           >
                             <div className="flex items-start justify-between gap-2">
-                              <span className="text-sm font-medium">Item {index + 1}</span>
+                              <span className="text-sm font-medium">
+                                Item {index + 1}
+                              </span>
                               <Button
                                 type="button"
                                 variant="ghost"
@@ -566,11 +618,16 @@ export function InvoiceGenerationModal({
                               <Label>Description</Label>
                               <Input
                                 placeholder="e.g., Site Visit Charges"
-                                {...register(`customLineItems.${index}.description`)}
+                                {...register(
+                                  `customLineItems.${index}.description`
+                                )}
                               />
                               {errors.customLineItems?.[index]?.description && (
                                 <p className="text-sm text-red-500">
-                                  {errors.customLineItems[index]?.description?.message}
+                                  {
+                                    errors.customLineItems[index]?.description
+                                      ?.message
+                                  }
                                 </p>
                               )}
                             </div>
@@ -583,9 +640,12 @@ export function InvoiceGenerationModal({
                                   min="0"
                                   step="0.01"
                                   placeholder="0"
-                                  {...register(`customLineItems.${index}.rate`, {
-                                    valueAsNumber: true,
-                                  })}
+                                  {...register(
+                                    `customLineItems.${index}.rate`,
+                                    {
+                                      valueAsNumber: true,
+                                    }
+                                  )}
                                 />
                               </div>
 
@@ -596,19 +656,25 @@ export function InvoiceGenerationModal({
                                   min="1"
                                   step="1"
                                   placeholder="1"
-                                  {...register(`customLineItems.${index}.quantity`, {
-                                    valueAsNumber: true,
-                                  })}
+                                  {...register(
+                                    `customLineItems.${index}.quantity`,
+                                    {
+                                      valueAsNumber: true,
+                                    }
+                                  )}
                                 />
                               </div>
                             </div>
 
                             <div className="flex items-center justify-between p-2 bg-muted rounded">
-                              <span className="text-sm font-medium">Amount:</span>
+                              <span className="text-sm font-medium">
+                                Amount:
+                              </span>
                               <span className="font-semibold">
                                 {formatCurrency(
                                   (watchCustomLineItems?.[index]?.rate || 0) *
-                                    (watchCustomLineItems?.[index]?.quantity || 1)
+                                    (watchCustomLineItems?.[index]?.quantity ||
+                                      1)
                                 )}
                               </span>
                             </div>
@@ -617,7 +683,9 @@ export function InvoiceGenerationModal({
 
                         <div className="p-3 bg-muted/50 rounded-lg">
                           <div className="flex items-center justify-between">
-                            <span className="text-sm font-medium">Custom Items Total:</span>
+                            <span className="text-sm font-medium">
+                              Custom Items Total:
+                            </span>
                             <span className="text-lg font-bold">
                               {formatCurrency(customItemsTotal)}
                             </span>
@@ -626,7 +694,8 @@ export function InvoiceGenerationModal({
                       </div>
                     ) : (
                       <p className="text-sm text-muted-foreground text-center py-4">
-                        No custom items added. Click "Add Item" to include additional charges.
+                        No custom items added. Click "Add Item" to include
+                        additional charges.
                       </p>
                     )}
                   </CardContent>
@@ -638,7 +707,9 @@ export function InvoiceGenerationModal({
                 <Card>
                   <CardHeader>
                     <CardTitle>Payment Details</CardTitle>
-                    <CardDescription>Enter payment and invoice information</CardDescription>
+                    <CardDescription>
+                      Enter payment and invoice information
+                    </CardDescription>
                   </CardHeader>
                   <CardContent className="space-y-4">
                     <div className="grid grid-cols-2 gap-4">
@@ -650,7 +721,10 @@ export function InvoiceGenerationModal({
                           name="method"
                           control={control}
                           render={({ field }) => (
-                            <Select value={field.value} onValueChange={field.onChange}>
+                            <Select
+                              value={field.value}
+                              onValueChange={field.onChange}
+                            >
                               <SelectTrigger>
                                 <SelectValue />
                               </SelectTrigger>
@@ -658,12 +732,24 @@ export function InvoiceGenerationModal({
                                 <SelectItem value={PaymentMethod.BANK_TRANSFER}>
                                   Bank Transfer
                                 </SelectItem>
-                                <SelectItem value={PaymentMethod.CASH}>Cash</SelectItem>
-                                <SelectItem value={PaymentMethod.CHEQUE}>Cheque</SelectItem>
-                                <SelectItem value={PaymentMethod.UPI}>UPI</SelectItem>
-                                <SelectItem value={PaymentMethod.NEFT}>NEFT</SelectItem>
-                                <SelectItem value={PaymentMethod.RTGS}>RTGS</SelectItem>
-                                <SelectItem value={PaymentMethod.OTHER}>Other</SelectItem>
+                                <SelectItem value={PaymentMethod.CASH}>
+                                  Cash
+                                </SelectItem>
+                                <SelectItem value={PaymentMethod.CHEQUE}>
+                                  Cheque
+                                </SelectItem>
+                                <SelectItem value={PaymentMethod.UPI}>
+                                  UPI
+                                </SelectItem>
+                                <SelectItem value={PaymentMethod.NEFT}>
+                                  NEFT
+                                </SelectItem>
+                                <SelectItem value={PaymentMethod.RTGS}>
+                                  RTGS
+                                </SelectItem>
+                                <SelectItem value={PaymentMethod.OTHER}>
+                                  Other
+                                </SelectItem>
                               </SelectContent>
                             </Select>
                           )}
@@ -671,7 +757,9 @@ export function InvoiceGenerationModal({
                       </div>
 
                       <div className="space-y-2">
-                        <Label htmlFor="transactionReference">Transaction Reference</Label>
+                        <Label htmlFor="transactionReference">
+                          Transaction Reference
+                        </Label>
                         <Input
                           id="transactionReference"
                           placeholder="e.g., TXN123456"
@@ -685,20 +773,34 @@ export function InvoiceGenerationModal({
                         <Label htmlFor="invoiceDate">
                           Invoice Date <span className="text-red-500">*</span>
                         </Label>
-                        <Input id="invoiceDate" type="date" {...register("invoiceDate")} />
+                        <Input
+                          id="invoiceDate"
+                          type="date"
+                          {...register("invoiceDate")}
+                        />
                         {errors.invoiceDate && (
-                          <p className="text-sm text-red-500">{errors.invoiceDate.message}</p>
+                          <p className="text-sm text-red-500">
+                            {errors.invoiceDate.message}
+                          </p>
                         )}
                       </div>
 
                       <div className="space-y-2">
                         <Label htmlFor="dueDate">Due Date</Label>
-                        <Input id="dueDate" type="date" {...register("dueDate")} />
+                        <Input
+                          id="dueDate"
+                          type="date"
+                          {...register("dueDate")}
+                        />
                       </div>
 
                       <div className="space-y-2">
                         <Label htmlFor="paidDate">Paid Date (if paid)</Label>
-                        <Input id="paidDate" type="date" {...register("paidDate")} />
+                        <Input
+                          id="paidDate"
+                          type="date"
+                          {...register("paidDate")}
+                        />
                       </div>
                     </div>
 
@@ -725,7 +827,9 @@ export function InvoiceGenerationModal({
                     <div className="p-4 bg-gradient-to-r from-green-50 to-emerald-50 dark:from-green-950/20 dark:to-emerald-950/20 rounded-lg border-2 border-green-200 dark:border-green-800">
                       <div className="flex items-center justify-between">
                         <div>
-                          <p className="text-sm text-muted-foreground">Total Invoice Amount</p>
+                          <p className="text-sm text-muted-foreground">
+                            Total Invoice Amount
+                          </p>
                           <p className="text-xs text-muted-foreground">
                             (Milestone + Custom Items)
                           </p>

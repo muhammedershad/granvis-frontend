@@ -1,4 +1,4 @@
-import { Mail, Phone, Users, FileText, MessageSquare } from "lucide-react";
+import { FileText, Mail, MessageSquare, Phone, Users } from "lucide-react";
 import { createElement } from "react";
 
 export interface PaymentHistory {

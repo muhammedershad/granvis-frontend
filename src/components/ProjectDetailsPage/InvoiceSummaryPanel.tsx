@@ -2,17 +2,17 @@ import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
 import { Input } from "../ui/input";
 import { Label } from "../ui/label";
 import { Button } from "../ui/button";
-import { Calculator, Percent, DollarSign } from "lucide-react";
+import { Calculator, DollarSign, Percent } from "lucide-react";
 
 interface InvoiceSummaryPanelProps {
   subtotal: number;
-  discountType: 'percentage' | 'flat';
+  discountType: "percentage" | "flat";
   discountValue: number;
   discountAmount: number;
   netTotal: number;
   paidAmount: number;
   balance: number;
-  onSetDiscount: (type: 'percentage' | 'flat', value: number) => void;
+  onSetDiscount: (type: "percentage" | "flat", value: number) => void;
   onSetPaidAmount: (amount: number) => void;
 }
 
@@ -51,7 +51,9 @@ export function InvoiceSummaryPanel({
         <CardContent className="relative space-y-4">
           {/* Subtotal */}
           <div className="flex items-center justify-between p-3 bg-muted/30 rounded-lg">
-            <span className="text-sm font-medium text-foreground">Subtotal</span>
+            <span className="text-sm font-medium text-foreground">
+              Subtotal
+            </span>
             <span className="text-lg font-semibold text-foreground">
               {formatCurrency(subtotal)}
             </span>
@@ -59,26 +61,27 @@ export function InvoiceSummaryPanel({
 
           {/* Discount Section */}
           <div className="space-y-3 p-3 bg-muted/30 rounded-lg">
-            <Label className="text-sm font-medium text-foreground">Discount</Label>
+            <Label className="text-sm font-medium text-foreground">
+              Discount
+            </Label>
 
             {/* Discount Type Toggle */}
             <div className="flex gap-2">
               <Button
                 type="button"
-                variant={discountType === 'percentage' ? 'default' : 'outline'}
+                variant={discountType === "percentage" ? "default" : "outline"}
                 size="sm"
                 className="flex-1"
-                onClick={() => onSetDiscount('percentage', discountValue)}
+                onClick={() => onSetDiscount("percentage", discountValue)}
               >
-                <Percent className="h-3 w-3 mr-1" />
-                %
+                <Percent className="h-3 w-3 mr-1" />%
               </Button>
               <Button
                 type="button"
-                variant={discountType === 'flat' ? 'default' : 'outline'}
+                variant={discountType === "flat" ? "default" : "outline"}
                 size="sm"
                 className="flex-1"
-                onClick={() => onSetDiscount('flat', discountValue)}
+                onClick={() => onSetDiscount("flat", discountValue)}
               >
                 <DollarSign className="h-3 w-3 mr-1" />
                 Flat
@@ -90,11 +93,15 @@ export function InvoiceSummaryPanel({
               <Input
                 type="number"
                 min="0"
-                max={discountType === 'percentage' ? 100 : undefined}
-                step={discountType === 'percentage' ? 1 : 0.01}
+                max={discountType === "percentage" ? 100 : undefined}
+                step={discountType === "percentage" ? 1 : 0.01}
                 value={discountValue}
-                onChange={(e) => onSetDiscount(discountType, parseFloat(e.target.value) || 0)}
-                placeholder={discountType === 'percentage' ? 'Percentage' : 'Amount'}
+                onChange={(e) =>
+                  onSetDiscount(discountType, parseFloat(e.target.value) || 0)
+                }
+                placeholder={
+                  discountType === "percentage" ? "Percentage" : "Amount"
+                }
                 className="text-sm"
               />
               <p className="text-xs text-muted-foreground">
@@ -105,7 +112,9 @@ export function InvoiceSummaryPanel({
 
           {/* Net Total */}
           <div className="flex items-center justify-between p-4 bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-950/20 dark:to-purple-950/20 rounded-lg border-2 border-blue-200 dark:border-blue-800">
-            <span className="text-sm font-semibold text-foreground">Net Total</span>
+            <span className="text-sm font-semibold text-foreground">
+              Net Total
+            </span>
             <span className="text-2xl font-bold text-blue-600 dark:text-blue-400">
               {formatCurrency(netTotal)}
             </span>
@@ -113,7 +122,10 @@ export function InvoiceSummaryPanel({
 
           {/* Paid Amount */}
           <div className="space-y-2">
-            <Label htmlFor="paidAmount" className="text-sm font-medium text-foreground">
+            <Label
+              htmlFor="paidAmount"
+              className="text-sm font-medium text-foreground"
+            >
               Paid Amount
             </Label>
             <Input
@@ -131,12 +143,16 @@ export function InvoiceSummaryPanel({
 
           {/* Balance */}
           <div className="flex items-center justify-between p-4 bg-gradient-to-r from-orange-50 to-amber-50 dark:from-orange-950/20 dark:to-amber-950/20 rounded-lg border-2 border-orange-200 dark:border-orange-800">
-            <span className="text-sm font-semibold text-foreground">Balance</span>
-            <span className={`text-2xl font-bold ${
-              balance > 0
-                ? 'text-orange-600 dark:text-orange-400'
-                : 'text-green-600 dark:text-green-400'
-            }`}>
+            <span className="text-sm font-semibold text-foreground">
+              Balance
+            </span>
+            <span
+              className={`text-2xl font-bold ${
+                balance > 0
+                  ? "text-orange-600 dark:text-orange-400"
+                  : "text-green-600 dark:text-green-400"
+              }`}
+            >
               {formatCurrency(balance)}
             </span>
           </div>

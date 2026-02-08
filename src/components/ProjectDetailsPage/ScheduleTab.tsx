@@ -3,10 +3,10 @@ import {
   CalendarDays,
   CheckCircle,
   Clock,
+  DollarSign,
   Flag,
   MapPin,
   Target,
-  DollarSign,
   TrendingUp,
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
@@ -14,7 +14,11 @@ import { Badge } from "../ui/badge";
 import { Progress } from "../ui/progress";
 import type { Project } from "@/types/project";
 import { useGetMilestonesByProjectQuery } from "@/lib/api/milestonesApi";
-import { Milestone, MilestoneStatus, MilestonePaymentStatus } from "@/types/milestone";
+import {
+  Milestone,
+  MilestonePaymentStatus,
+  MilestoneStatus,
+} from "@/types/milestone";
 
 interface ScheduleTabProps {
   project: Project;
@@ -78,8 +82,12 @@ export function ScheduleTab({ project }: ScheduleTabProps) {
   const upcomingMilestones = milestones
     .filter((m: Milestone) => m.status !== MilestoneStatus.COMPLETED)
     .sort((a: Milestone, b: Milestone) => {
-      if (!a.dueDate) return 1;
-      if (!b.dueDate) return -1;
+      if (!a.dueDate) {
+        return 1;
+      }
+      if (!b.dueDate) {
+        return -1;
+      }
       return new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime();
     });
 
@@ -187,7 +195,9 @@ export function ScheduleTab({ project }: ScheduleTabProps) {
           ) : (
             <div className="space-y-4">
               {upcomingMilestones.map((milestone: Milestone) => {
-                const daysUntil = milestone.dueDate ? getDaysUntil(milestone.dueDate) : null;
+                const daysUntil = milestone.dueDate
+                  ? getDaysUntil(milestone.dueDate)
+                  : null;
                 const isOverdue = daysUntil !== null && daysUntil < 0;
                 return (
                   <Card
@@ -214,18 +224,28 @@ export function ScheduleTab({ project }: ScheduleTabProps) {
                             <h4 className="text-foreground font-medium truncate">
                               {milestone.title}
                             </h4>
-                            <Badge variant="outline" className={getStatusColor(milestone.status)}>
+                            <Badge
+                              variant="outline"
+                              className={getStatusColor(milestone.status)}
+                            >
                               {milestone.status === MilestoneStatus.IN_PROGRESS
                                 ? "In Progress"
                                 : "Not Started"}
                             </Badge>
-                            <Badge variant="outline" className={getPaymentStatusColor(milestone.paymentStatus)}>
+                            <Badge
+                              variant="outline"
+                              className={getPaymentStatusColor(
+                                milestone.paymentStatus
+                              )}
+                            >
                               <DollarSign className="h-3 w-3 mr-1" />
-                              {milestone.paymentStatus === MilestonePaymentStatus.PAID
+                              {milestone.paymentStatus ===
+                              MilestonePaymentStatus.PAID
                                 ? "Paid"
-                                : milestone.paymentStatus === MilestonePaymentStatus.PARTIALLY_PAID
-                                ? "Partially Paid"
-                                : "Unpaid"}
+                                : milestone.paymentStatus ===
+                                    MilestonePaymentStatus.PARTIALLY_PAID
+                                  ? "Partially Paid"
+                                  : "Unpaid"}
                             </Badge>
                           </div>
 
@@ -241,9 +261,14 @@ export function ScheduleTab({ project }: ScheduleTabProps) {
                                 <TrendingUp className="h-4 w-4" />
                                 <span>Progress</span>
                               </div>
-                              <span className="font-semibold">{milestone.progressPercentage}%</span>
+                              <span className="font-semibold">
+                                {milestone.progressPercentage}%
+                              </span>
                             </div>
-                            <Progress value={milestone.progressPercentage} className="h-1.5" />
+                            <Progress
+                              value={milestone.progressPercentage}
+                              className="h-1.5"
+                            />
                           </div>
 
                           <div className="flex items-center gap-4 text-xs text-muted-foreground mt-3 flex-wrap">
@@ -256,14 +281,16 @@ export function ScheduleTab({ project }: ScheduleTabProps) {
                                     (isOverdue
                                       ? ` (${Math.abs(daysUntil)} days overdue)`
                                       : daysUntil === 0
-                                      ? " (Due today)"
-                                      : ` (${daysUntil} days left)`)}
+                                        ? " (Due today)"
+                                        : ` (${daysUntil} days left)`)}
                                 </span>
                               </div>
                             )}
                             <div className="flex items-center gap-1">
                               <DollarSign className="h-3 w-3" />
-                              <span>Amount: {formatCurrency(milestone.totalAmount)}</span>
+                              <span>
+                                Amount: {formatCurrency(milestone.totalAmount)}
+                              </span>
                             </div>
                           </div>
                         </div>
@@ -308,13 +335,20 @@ export function ScheduleTab({ project }: ScheduleTabProps) {
                           <h4 className="text-foreground font-medium">
                             {milestone.title}
                           </h4>
-                          <Badge variant="outline" className={getPaymentStatusColor(milestone.paymentStatus)}>
+                          <Badge
+                            variant="outline"
+                            className={getPaymentStatusColor(
+                              milestone.paymentStatus
+                            )}
+                          >
                             <DollarSign className="h-3 w-3 mr-1" />
-                            {milestone.paymentStatus === MilestonePaymentStatus.PAID
+                            {milestone.paymentStatus ===
+                            MilestonePaymentStatus.PAID
                               ? "Paid"
-                              : milestone.paymentStatus === MilestonePaymentStatus.PARTIALLY_PAID
-                              ? "Partially Paid"
-                              : "Unpaid"}
+                              : milestone.paymentStatus ===
+                                  MilestonePaymentStatus.PARTIALLY_PAID
+                                ? "Partially Paid"
+                                : "Unpaid"}
                           </Badge>
                         </div>
                         {milestone.description && (
@@ -328,7 +362,8 @@ export function ScheduleTab({ project }: ScheduleTabProps) {
                           </p>
                         )}
                         <p className="text-xs text-muted-foreground mt-1">
-                          Amount: {formatCurrency(milestone.totalAmount)} • Paid: {formatCurrency(milestone.paidAmount)}
+                          Amount: {formatCurrency(milestone.totalAmount)} •
+                          Paid: {formatCurrency(milestone.paidAmount)}
                         </p>
                       </div>
                     </div>

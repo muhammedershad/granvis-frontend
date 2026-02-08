@@ -471,9 +471,11 @@ export function ClientsPageContent({ onClientSelect }: ClientsPageProps) {
     [updateURLParams, filters]
   );
 
-  const selectHandler = onClientSelect || ((clientId: string) => {
-    router.push(`${pathname}/${clientId}`);
-  });
+  const selectHandler =
+    onClientSelect ||
+    ((clientId: string) => {
+      router.push(`${pathname}/${clientId}`);
+    });
 
   if (isLoading) {
     return <ClientsLoadingState />;

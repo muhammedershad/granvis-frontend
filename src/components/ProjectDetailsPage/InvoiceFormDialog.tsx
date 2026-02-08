@@ -1,11 +1,11 @@
-import { useReducer, useEffect, useState } from "react";
-import { FileText, Calendar } from "lucide-react";
+import { useEffect, useReducer, useState } from "react";
+import { Calendar, FileText } from "lucide-react";
 import {
   Dialog,
   DialogContent,
+  DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogFooter,
 } from "../ui/dialog";
 import { Button } from "../ui/button";
 import { Input } from "../ui/input";
@@ -14,11 +14,11 @@ import { Textarea } from "../ui/textarea";
 import { MilestoneSelectionTable } from "./MilestoneSelectionTable";
 import { InvoiceSummaryPanel } from "./InvoiceSummaryPanel";
 import {
-  calculateMilestoneInvoicingStatus,
   Invoice,
+  MilestoneWithInvoicing,
+  calculateMilestoneInvoicingStatus,
   initialInvoiceFormState,
   invoiceFormReducer,
-  MilestoneWithInvoicing,
 } from "./invoiceMockData";
 import { useGetMilestonesByProjectQuery } from "@/lib/api/milestonesApi";
 import { toast } from "sonner";
@@ -44,34 +44,36 @@ export function InvoiceFormDialog({
     invoiceFormReducer,
     initialInvoiceFormState
   );
-  const [expandedMilestones, setExpandedMilestones] = useState<Set<string>>(new Set());
+  const [expandedMilestones, setExpandedMilestones] = useState<Set<string>>(
+    new Set()
+  );
 
   // Fetch milestones for the project
-  const {
-    data: milestonesData = [],
-    isLoading: isLoadingMilestones,
-  } = useGetMilestonesByProjectQuery(projectId, {
-    skip: !projectId || !open,
-  });
+  const { data: milestonesData = [], isLoading: isLoadingMilestones } =
+    useGetMilestonesByProjectQuery(projectId, {
+      skip: !projectId || !open,
+    });
 
   // Calculate invoicing status for each milestone
-  const milestonesWithStatus: MilestoneWithInvoicing[] = milestonesData.map(milestone => {
-    // Filter out the current invoice being edited to avoid double-counting
-    const invoicesToConsider = existingInvoices.filter(
-      (inv) => inv.id !== invoice?.id
-    );
+  const milestonesWithStatus: MilestoneWithInvoicing[] = milestonesData.map(
+    (milestone) => {
+      // Filter out the current invoice being edited to avoid double-counting
+      const invoicesToConsider = existingInvoices.filter(
+        (inv) => inv.id !== invoice?.id
+      );
 
-    // Calculate based on existing finalized invoices
-    const { status, totalBilled, remainingAmount } =
-      calculateMilestoneInvoicingStatus(milestone, invoicesToConsider);
+      // Calculate based on existing finalized invoices
+      const { status, totalBilled, remainingAmount } =
+        calculateMilestoneInvoicingStatus(milestone, invoicesToConsider);
 
-    return {
-      ...milestone,
-      invoicingStatus: status,
-      totalBilled,
-      remainingToBill: remainingAmount,
-    };
-  });
+      return {
+        ...milestone,
+        invoicingStatus: status,
+        totalBilled,
+        remainingToBill: remainingAmount,
+      };
+    }
+  );
 
   // Initialize form when dialog opens
   useEffect(() => {
@@ -116,7 +118,9 @@ export function InvoiceFormDialog({
 
   const validateFinalize = (): string | null => {
     const draftError = validateDraft();
-    if (draftError) return draftError;
+    if (draftError) {
+      return draftError;
+    }
 
     // Check all milestone amounts are > 0
     for (const item of state.selectedMilestones.values()) {
@@ -345,7 +349,10 @@ export function InvoiceFormDialog({
                 balance={state.balance}
                 onSetDiscount={(type, value) => {
                   if (isEditable) {
-                    dispatch({ type: "SET_DISCOUNT", payload: { type, value } });
+                    dispatch({
+                      type: "SET_DISCOUNT",
+                      payload: { type, value },
+                    });
                   }
                 }}
                 onSetPaidAmount={(amount) => {
@@ -361,11 +368,7 @@ export function InvoiceFormDialog({
         {isEditable && (
           <DialogFooter className="border-t px-6 py-4 bg-muted/20">
             <div className="flex items-center justify-between w-full">
-              <Button
-                type="button"
-                variant="outline"
-                onClick={handleClose}
-              >
+              <Button type="button" variant="outline" onClick={handleClose}>
                 Cancel
               </Button>
               <div className="flex gap-2">
@@ -392,11 +395,7 @@ export function InvoiceFormDialog({
 
         {!isEditable && (
           <DialogFooter className="border-t px-6 py-4 bg-muted/20">
-            <Button
-              type="button"
-              variant="outline"
-              onClick={handleClose}
-            >
+            <Button type="button" variant="outline" onClick={handleClose}>
               Close
             </Button>
           </DialogFooter>

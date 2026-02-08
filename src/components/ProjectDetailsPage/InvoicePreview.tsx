@@ -1,6 +1,6 @@
 "use client";
 
-import { Phone, Mail, MapPin } from "lucide-react";
+import { Mail, MapPin, Phone } from "lucide-react";
 import { FirmSettings } from "@/types/firm-settings";
 import { Project } from "@/types/project";
 import { Client } from "@/types/client";
@@ -49,14 +49,19 @@ function formatRate(rateType: string, rate: number): string {
 
 function formatInvoiceDate(dateString: string): string {
   const date = new Date(dateString);
-  return date.toLocaleDateString("en-US", {
-    month: "long",
-    day: "numeric",
-    year: "numeric",
-  }).toUpperCase().replace(",", "");
+  return date
+    .toLocaleDateString("en-US", {
+      month: "long",
+      day: "numeric",
+      year: "numeric",
+    })
+    .toUpperCase()
+    .replace(",", "");
 }
 
-function buildTableRows(milestoneItems: InvoiceMilestoneItem[]): MilestoneTableRow[] {
+function buildTableRows(
+  milestoneItems: InvoiceMilestoneItem[]
+): MilestoneTableRow[] {
   // Sort by stage number
   const sorted = [...milestoneItems].sort(
     (a, b) => a.milestoneStageNumber - b.milestoneStageNumber
@@ -95,14 +100,20 @@ export function InvoicePreview({ data }: { data: InvoicePreviewData }) {
   const builtUpArea = project.builtUpArea || 0;
 
   // Default notes if not provided
-  const displayNotes = notes && notes.length > 0 ? notes : firmSettings.defaultNotes || [
-    "Detailed MEP Drawings are considered an extra service.",
-    "One site visit is included in each stage. Additional site visits will be charged separately.",
-    "Site visits are for observation, reporting, and client coordination. They are not intended for full-time site supervision.",
-  ];
+  const displayNotes =
+    notes && notes.length > 0
+      ? notes
+      : firmSettings.defaultNotes || [
+          "Detailed MEP Drawings are considered an extra service.",
+          "One site visit is included in each stage. Additional site visits will be charged separately.",
+          "Site visits are for observation, reporting, and client coordination. They are not intended for full-time site supervision.",
+        ];
 
   return (
-    <div className="invoice-preview bg-white text-black print:bg-white" style={{ fontFamily: "'Segoe UI', Tahoma, Geneva, Verdana, sans-serif" }}>
+    <div
+      className="invoice-preview bg-white text-black print:bg-white"
+      style={{ fontFamily: "'Segoe UI', Tahoma, Geneva, Verdana, sans-serif" }}
+    >
       <style jsx>{`
         @media print {
           .invoice-preview {
@@ -139,7 +150,12 @@ export function InvoicePreview({ data }: { data: InvoicePreviewData }) {
           <div className="text-right space-y-1 text-sm text-gray-700">
             <div className="flex items-center justify-end gap-2">
               <Phone className="w-4 h-4 text-[#1e3a5f]" />
-              <span>{firmSettings.phone}{firmSettings.alternatePhone ? `, ${firmSettings.alternatePhone}` : ""}</span>
+              <span>
+                {firmSettings.phone}
+                {firmSettings.alternatePhone
+                  ? `, ${firmSettings.alternatePhone}`
+                  : ""}
+              </span>
             </div>
             <div className="flex items-center justify-end gap-2">
               <Mail className="w-4 h-4 text-[#1e3a5f]" />
@@ -149,7 +165,9 @@ export function InvoicePreview({ data }: { data: InvoicePreviewData }) {
               <MapPin className="w-4 h-4 text-[#1e3a5f]" />
               <span>{firmSettings.address},</span>
             </div>
-            <div className="text-right pl-6">{firmSettings.city}, {firmSettings.state}</div>
+            <div className="text-right pl-6">
+              {firmSettings.city}, {firmSettings.state}
+            </div>
           </div>
         </div>
 
@@ -167,14 +185,19 @@ export function InvoicePreview({ data }: { data: InvoicePreviewData }) {
               <span className="font-bold">Client:</span> {clientName}
             </p>
             <p className="text-sm">
-              <span className="font-bold">Total Built-up Area: {builtUpArea.toLocaleString()} ~{Math.round(builtUpArea / 10) * 10} Sq.Ft</span>
+              <span className="font-bold">
+                Total Built-up Area: {builtUpArea.toLocaleString()} ~
+                {Math.round(builtUpArea / 10) * 10} Sq.Ft
+              </span>
             </p>
           </div>
           <div className="text-right space-y-1">
             {invoiceRef && (
               <p className="font-bold text-sm text-[#1e3a5f]">{invoiceRef}</p>
             )}
-            <p className="font-bold text-sm">{formatInvoiceDate(invoiceDate)}</p>
+            <p className="font-bold text-sm">
+              {formatInvoiceDate(invoiceDate)}
+            </p>
           </div>
         </div>
 
@@ -183,20 +206,37 @@ export function InvoicePreview({ data }: { data: InvoicePreviewData }) {
           <table className="w-full border-collapse text-xs">
             <thead>
               <tr className="bg-[#1e3a5f] text-white">
-                <th className="border border-gray-300 px-2 py-2 text-left font-semibold w-24">PHASES</th>
-                <th className="border border-gray-300 px-2 py-2 text-left font-semibold">SCOPE OF WORK</th>
-                <th className="border border-gray-300 px-2 py-2 text-center font-semibold w-24">RATE</th>
-                <th className="border border-gray-300 px-2 py-2 text-center font-semibold w-20">QTY</th>
-                <th className="border border-gray-300 px-2 py-2 text-right font-semibold w-24">AMOUNT</th>
+                <th className="border border-gray-300 px-2 py-2 text-left font-semibold w-24">
+                  PHASES
+                </th>
+                <th className="border border-gray-300 px-2 py-2 text-left font-semibold">
+                  SCOPE OF WORK
+                </th>
+                <th className="border border-gray-300 px-2 py-2 text-center font-semibold w-24">
+                  RATE
+                </th>
+                <th className="border border-gray-300 px-2 py-2 text-center font-semibold w-20">
+                  QTY
+                </th>
+                <th className="border border-gray-300 px-2 py-2 text-right font-semibold w-24">
+                  AMOUNT
+                </th>
               </tr>
             </thead>
             <tbody>
               {tableRows.map((row, index) => (
-                <tr key={index} className={index % 2 === 0 ? "bg-white" : "bg-gray-50"}>
+                <tr
+                  key={index}
+                  className={index % 2 === 0 ? "bg-white" : "bg-gray-50"}
+                >
                   <td className="border border-gray-300 px-2 py-2 align-top">
                     <div>
-                      <div className="font-semibold text-[#1e3a5f] text-[10px]">{row.phase}</div>
-                      <div className="font-semibold text-[#1e3a5f] text-[10px]">{row.phaseName}</div>
+                      <div className="font-semibold text-[#1e3a5f] text-[10px]">
+                        {row.phase}
+                      </div>
+                      <div className="font-semibold text-[#1e3a5f] text-[10px]">
+                        {row.phaseName}
+                      </div>
                     </div>
                   </td>
                   <td className="border border-gray-300 px-2 py-2 align-top text-[11px]">
@@ -224,13 +264,17 @@ export function InvoicePreview({ data }: { data: InvoicePreviewData }) {
               <tbody>
                 <tr>
                   <td className="py-1 text-gray-600">Subtotal</td>
-                  <td className="py-1 text-right font-mono">{formatCurrency(subtotal)}</td>
+                  <td className="py-1 text-right font-mono">
+                    {formatCurrency(subtotal)}
+                  </td>
                 </tr>
                 {discountAmount > 0 && (
                   <tr>
                     <td className="py-1 text-gray-600">
                       Discount
-                      {discountType === "percentage" ? ` (${discountValue}%)` : ""}
+                      {discountType === "percentage"
+                        ? ` (${discountValue}%)`
+                        : ""}
                     </td>
                     <td className="py-1 text-right font-mono text-red-600">
                       -{formatCurrency(discountAmount)}

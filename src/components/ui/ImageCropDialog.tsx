@@ -3,10 +3,7 @@
 import { useCallback, useRef, useState } from "react";
 import ReactCrop, { Crop, PixelCrop } from "react-image-crop";
 import "react-image-crop/dist/ReactCrop.css";
-import {
-  Dialog,
-  DialogContent,
-} from "./dialog";
+import { Dialog, DialogContent } from "./dialog";
 import { Button } from "./button";
 import { Slider } from "./slider";
 import { Label } from "./label";
@@ -57,7 +54,9 @@ export function ImageCropDialog({
 
   const handleImageLoad = useCallback(() => {
     const img = imgRef.current;
-    if (!img) return;
+    if (!img) {
+      return;
+    }
 
     const cropWidthPercent = aspectRatio >= 1 ? 80 : 80 * aspectRatio;
     const cropHeightPercent = aspectRatio <= 1 ? 80 : 80 / aspectRatio;
@@ -306,7 +305,10 @@ export function ImageCropDialog({
 
             {/* Help text */}
             <div className="text-xs text-muted-foreground space-y-1 px-1">
-              <p>Drag the corners to adjust the crop area. Final image must be under 1MB.</p>
+              <p>
+                Drag the corners to adjust the crop area. Final image must be
+                under 1MB.
+              </p>
             </div>
           </div>
         </div>

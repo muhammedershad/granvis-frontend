@@ -29,7 +29,9 @@ export function DeleteFirmDialog({
   const [deleteFirm, { isLoading }] = useDeleteFirmSettingsMutation();
 
   const handleDelete = async () => {
-    if (!firm) return;
+    if (!firm) {
+      return;
+    }
 
     try {
       await deleteFirm(firm.id).unwrap();

@@ -2,7 +2,7 @@
 
 import { useEffect } from "react";
 import { useSelector } from "react-redux";
-import { useForm, Controller } from "react-hook-form";
+import { Controller, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import {
@@ -27,14 +27,14 @@ import {
 import { Separator } from "../ui/separator";
 import { Slider } from "../ui/slider";
 import { Progress } from "../ui/progress";
-import { Loader2, Flag, Calendar, User, TrendingUp } from "lucide-react";
+import { Calendar, Flag, Loader2, TrendingUp, User } from "lucide-react";
 import { toast } from "sonner";
 import { getAuthDetails } from "@/store/slices/authSlice";
 import {
-  Milestone,
   CreateMilestoneDto,
-  UpdateMilestoneDto,
+  Milestone,
   MilestoneStatus,
+  UpdateMilestoneDto,
 } from "@/types/milestone";
 import type { Project } from "@/types/project";
 import {
@@ -72,16 +72,19 @@ export function MilestoneFormModal({
   existingMilestones = [],
 }: MilestoneFormModalProps) {
   const { user } = useSelector(getAuthDetails);
-  const [createMilestone, { isLoading: isCreating }] = useCreateMilestoneMutation();
-  const [updateMilestone, { isLoading: isUpdating }] = useUpdateMilestoneMutation();
+  const [createMilestone, { isLoading: isCreating }] =
+    useCreateMilestoneMutation();
+  const [updateMilestone, { isLoading: isUpdating }] =
+    useUpdateMilestoneMutation();
 
   const isEditMode = !!milestone;
   const isLoading = isCreating || isUpdating;
 
   // Calculate next stage number
-  const nextStageNumber = existingMilestones.length > 0
-    ? Math.max(...existingMilestones.map(m => m.stageNumber)) + 1
-    : 1;
+  const nextStageNumber =
+    existingMilestones.length > 0
+      ? Math.max(...existingMilestones.map((m) => m.stageNumber)) + 1
+      : 1;
 
   const {
     register,
@@ -148,7 +151,9 @@ export function MilestoneFormModal({
   }, [open, milestone, reset, nextStageNumber]);
 
   const onSubmit = async (data: MilestoneFormData) => {
-    if (!user) return;
+    if (!user) {
+      return;
+    }
 
     try {
       const payload = {
@@ -185,15 +190,21 @@ export function MilestoneFormModal({
 
       onOpenChange(false);
     } catch (error: any) {
-      const message = error?.data?.message || `Failed to ${isEditMode ? "update" : "create"} milestone`;
+      const message =
+        error?.data?.message ||
+        `Failed to ${isEditMode ? "update" : "create"} milestone`;
       toast.error(message);
       console.error("Milestone form error:", error);
     }
   };
 
   const getStatusFromProgress = (progress: number): string => {
-    if (progress === 0) return "Not Started";
-    if (progress === 100) return "Completed";
+    if (progress === 0) {
+      return "Not Started";
+    }
+    if (progress === 100) {
+      return "Completed";
+    }
     return "In Progress";
   };
 
@@ -231,7 +242,9 @@ export function MilestoneFormModal({
                     {...register("title")}
                   />
                   {errors.title && (
-                    <p className="text-sm text-red-500">{errors.title.message}</p>
+                    <p className="text-sm text-red-500">
+                      {errors.title.message}
+                    </p>
                   )}
                 </div>
 
@@ -258,7 +271,9 @@ export function MilestoneFormModal({
                     {...register("stageNumber", { valueAsNumber: true })}
                   />
                   {errors.stageNumber && (
-                    <p className="text-sm text-red-500">{errors.stageNumber.message}</p>
+                    <p className="text-sm text-red-500">
+                      {errors.stageNumber.message}
+                    </p>
                   )}
                   <p className="text-xs text-muted-foreground">
                     Determines the order of this milestone in the timeline
@@ -316,11 +331,7 @@ export function MilestoneFormModal({
 
                 <div className="space-y-2">
                   <Label htmlFor="dueDate">Due Date</Label>
-                  <Input
-                    id="dueDate"
-                    type="date"
-                    {...register("dueDate")}
-                  />
+                  <Input id="dueDate" type="date" {...register("dueDate")} />
                 </div>
               </div>
             </div>
@@ -383,7 +394,10 @@ export function MilestoneFormModal({
                     name="status"
                     control={control}
                     render={({ field }) => (
-                      <Select value={field.value} onValueChange={field.onChange}>
+                      <Select
+                        value={field.value}
+                        onValueChange={field.onChange}
+                      >
                         <SelectTrigger className="w-full">
                           <SelectValue />
                         </SelectTrigger>

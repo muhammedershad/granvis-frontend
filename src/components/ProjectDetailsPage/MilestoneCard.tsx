@@ -2,24 +2,24 @@
 
 import { useSelector } from "react-redux";
 import {
+  Calendar,
+  CheckCircle2,
+  Circle,
+  ClipboardList,
+  Clock,
+  Eye,
+  FileIcon,
+  FileText,
   Pencil,
+  Tag,
   Trash2,
   TrendingUp,
-  Calendar,
-  Clock,
-  Circle,
-  CheckCircle2,
   User,
-  Tag,
-  FileText,
-  Eye,
-  ClipboardList,
-  FileIcon,
 } from "lucide-react";
 import { Card, CardContent } from "../ui/card";
 import { Badge } from "../ui/badge";
 import { Button } from "../ui/button";
-import { getAuthDetails, IAuthRoles } from "@/store/slices/authSlice";
+import { IAuthRoles, getAuthDetails } from "@/store/slices/authSlice";
 import { Milestone, MilestoneStatus } from "@/types/milestone";
 import { formatDate } from "./utils";
 
@@ -91,14 +91,14 @@ export function MilestoneCard({
 }: MilestoneCardProps) {
   const { user } = useSelector(getAuthDetails);
 
-  const canEdit = user?.role && [
-    IAuthRoles.SUPER_ADMIN,
-    IAuthRoles.ADMIN,
-    IAuthRoles.MANAGER,
-  ].includes(user.role);
+  const canEdit =
+    user?.role &&
+    [IAuthRoles.SUPER_ADMIN, IAuthRoles.ADMIN, IAuthRoles.MANAGER].includes(
+      user.role
+    );
 
   return (
-    <div 
+    <div
       className={`relative flex gap-6 ${isDragging ? "opacity-50" : ""} ${isDragOver ? "scale-[1.01]" : ""} transition-all duration-200`}
       draggable={draggable && canEdit}
       onDragStart={(e) => onDragStart?.(e, milestone.id)}
@@ -107,7 +107,9 @@ export function MilestoneCard({
     >
       {/* Timeline Connector */}
       <div className="flex flex-col items-center">
-        <div className={`flex-shrink-0 w-10 h-10 rounded-full flex items-center justify-center bg-[#1a1a1a] border border-white/10 ring-1 ring-white/5 transition-all duration-300 ${isDragOver ? "border-blue-500/50" : ""}`}>
+        <div
+          className={`flex-shrink-0 w-10 h-10 rounded-full flex items-center justify-center bg-[#1a1a1a] border border-white/10 ring-1 ring-white/5 transition-all duration-300 ${isDragOver ? "border-blue-500/50" : ""}`}
+        >
           <FileIcon className="h-5 w-5 text-gray-400" />
         </div>
         {!isLast && (
@@ -129,7 +131,10 @@ export function MilestoneCard({
                 <h3 className="text-lg font-semibold text-[#f0f0f0] tracking-tight group-hover:text-blue-400 transition-colors">
                   {milestone.title}
                 </h3>
-                <Badge variant="outline" className={`rounded-full px-2 py-0 h-5 text-[10px] font-medium uppercase tracking-wider ${getStatusColor(milestone.status)}`}>
+                <Badge
+                  variant="outline"
+                  className={`rounded-full px-2 py-0 h-5 text-[10px] font-medium uppercase tracking-wider ${getStatusColor(milestone.status)}`}
+                >
                   <span className="flex items-center gap-1">
                     {getStatusIcon(milestone.status)}
                     {formatStatus(milestone.status)}
@@ -148,29 +153,45 @@ export function MilestoneCard({
               <div className="grid grid-cols-2 md:grid-cols-4 gap-x-12 gap-y-4">
                 {milestone.assignedTo && (
                   <div className="space-y-1">
-                    <p className="text-[11px] text-gray-600 uppercase tracking-widest font-medium">Assigned to:</p>
-                    <p className="text-sm font-semibold text-[#d0d0d0]">{milestone.assignedTo}</p>
+                    <p className="text-[11px] text-gray-600 uppercase tracking-widest font-medium">
+                      Assigned to:
+                    </p>
+                    <p className="text-sm font-semibold text-[#d0d0d0]">
+                      {milestone.assignedTo}
+                    </p>
                   </div>
                 )}
 
                 {milestone.startDate && (
                   <div className="space-y-1">
-                    <p className="text-[11px] text-gray-600 uppercase tracking-widest font-medium">Start Date:</p>
-                    <p className="text-sm font-semibold text-[#d0d0d0]">{formatDate(milestone.startDate)}</p>
+                    <p className="text-[11px] text-gray-600 uppercase tracking-widest font-medium">
+                      Start Date:
+                    </p>
+                    <p className="text-sm font-semibold text-[#d0d0d0]">
+                      {formatDate(milestone.startDate)}
+                    </p>
                   </div>
                 )}
 
                 {milestone.dueDate && (
                   <div className="space-y-1">
-                    <p className="text-[11px] text-gray-600 uppercase tracking-widest font-medium">End Date:</p>
-                    <p className="text-sm font-semibold text-[#d0d0d0]">{formatDate(milestone.dueDate)}</p>
+                    <p className="text-[11px] text-gray-600 uppercase tracking-widest font-medium">
+                      End Date:
+                    </p>
+                    <p className="text-sm font-semibold text-[#d0d0d0]">
+                      {formatDate(milestone.dueDate)}
+                    </p>
                   </div>
                 )}
 
                 {milestone.category && (
                   <div className="space-y-1">
-                    <p className="text-[11px] text-gray-600 uppercase tracking-widest font-medium">Category:</p>
-                    <p className="text-sm font-semibold text-[#d0d0d0]">{milestone.category}</p>
+                    <p className="text-[11px] text-gray-600 uppercase tracking-widest font-medium">
+                      Category:
+                    </p>
+                    <p className="text-sm font-semibold text-[#d0d0d0]">
+                      {milestone.category}
+                    </p>
                   </div>
                 )}
               </div>
@@ -178,7 +199,9 @@ export function MilestoneCard({
               {/* Attachments */}
               {milestone.attachments && milestone.attachments.length > 0 && (
                 <div className="space-y-2 pt-2 border-t border-white/5">
-                  <p className="text-[11px] text-gray-600 uppercase tracking-widest font-medium">Attachments:</p>
+                  <p className="text-[11px] text-gray-600 uppercase tracking-widest font-medium">
+                    Attachments:
+                  </p>
                   <div className="flex flex-wrap gap-2">
                     {milestone.attachments.map((attachment) => (
                       <div
@@ -186,7 +209,9 @@ export function MilestoneCard({
                         className="flex items-center gap-1.5 px-2 py-1 rounded-md bg-white/5 border border-white/5 hover:bg-white/10 transition-colors cursor-pointer"
                       >
                         <FileText className="h-3 w-3 text-gray-400" />
-                        <span className="text-xs text-gray-400">{attachment.fileName}</span>
+                        <span className="text-xs text-gray-400">
+                          {attachment.fileName}
+                        </span>
                       </div>
                     ))}
                   </div>

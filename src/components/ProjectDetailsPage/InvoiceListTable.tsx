@@ -1,11 +1,11 @@
-import { Edit2, Trash2, Eye, FileText } from "lucide-react";
+import { Edit2, Eye, FileText, Trash2 } from "lucide-react";
 import {
   Table,
-  TableHeader,
   TableBody,
-  TableRow,
-  TableHead,
   TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
 } from "../ui/table";
 import { Button } from "../ui/button";
 import { InvoiceStatusBadge } from "./InvoiceStatusBadge";
@@ -37,9 +37,9 @@ const formatDate = (dateString: string): string => {
 
 const formatDiscount = (invoice: Invoice): string => {
   if (invoice.discountValue === 0) {
-    return '-';
+    return "-";
   }
-  if (invoice.discountType === 'percentage') {
+  if (invoice.discountType === "percentage") {
     return `${invoice.discountValue}% (${formatCurrency(invoice.discountAmount)})`;
   }
   return formatCurrency(invoice.discountAmount);
@@ -55,9 +55,7 @@ export function InvoiceListTable({
     return (
       <div className="text-center py-12">
         <FileText className="mx-auto h-12 w-12 text-muted-foreground mb-4 opacity-50" />
-        <h3 className="text-foreground font-medium mb-2">
-          No Invoices Yet
-        </h3>
+        <h3 className="text-foreground font-medium mb-2">No Invoices Yet</h3>
         <p className="text-muted-foreground text-sm">
           Create your first invoice to get started.
         </p>
@@ -122,7 +120,7 @@ export function InvoiceListTable({
                       <Eye className="h-4 w-4" />
                     </Button>
                   )}
-                  {invoice.status === 'draft' && (
+                  {invoice.status === "draft" && (
                     <>
                       <Button
                         variant="ghost"
@@ -138,7 +136,9 @@ export function InvoiceListTable({
                         size="icon"
                         className="h-8 w-8 text-red-600 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300"
                         onClick={() => {
-                          if (confirm(`Delete invoice ${invoice.invoiceNumber}?`)) {
+                          if (
+                            confirm(`Delete invoice ${invoice.invoiceNumber}?`)
+                          ) {
                             onDelete(invoice.id);
                           }
                         }}
@@ -148,9 +148,9 @@ export function InvoiceListTable({
                       </Button>
                     </>
                   )}
-                  {invoice.status !== 'draft' && (
+                  {invoice.status !== "draft" && (
                     <div className="text-xs text-muted-foreground italic px-2">
-                      {invoice.status === 'sent' ? 'Sent' : 'Paid'}
+                      {invoice.status === "sent" ? "Sent" : "Paid"}
                     </div>
                   )}
                 </div>
