@@ -2,22 +2,9 @@
 
 import { useMemo, useState } from "react";
 import { useSelector } from "react-redux";
-import {
-  Activity,
-  AlertCircle,
-  CheckCircle2,
-  Circle,
-  Clock,
-  DollarSign,
-  Flag,
-  Plus,
-  RefreshCcw,
-  TrendingUp,
-} from "lucide-react";
+import { Activity, AlertCircle, Flag, Plus, RefreshCcw } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
-import { Badge } from "../ui/badge";
 import { Button } from "../ui/button";
-import { Progress } from "../ui/progress";
 import { Skeleton } from "../ui/skeleton";
 import { toast } from "sonner";
 import { IAuthRoles, getAuthDetails } from "@/store/slices/authSlice";
@@ -37,15 +24,6 @@ interface TimelineTabProps {
   project: Project;
 }
 
-const formatCurrency = (amount: number): string => {
-  if (amount >= 10000000) {
-    return `₹${(amount / 10000000).toFixed(2)}Cr`;
-  } else if (amount >= 100000) {
-    return `₹${(amount / 100000).toFixed(2)}L`;
-  }
-  return `₹${amount.toLocaleString("en-IN")}`;
-};
-
 export function TimelineTab({ project }: TimelineTabProps) {
   const { user } = useSelector(getAuthDetails);
 
@@ -57,7 +35,7 @@ export function TimelineTab({ project }: TimelineTabProps) {
     refetch,
   } = useGetMilestonesByProjectQuery(project.id);
 
-  const { data: summary } = useGetProjectProgressSummaryQuery(project.id);
+  useGetProjectProgressSummaryQuery(project.id);
 
   const [reorderMilestones] = useReorderMilestonesMutation();
 

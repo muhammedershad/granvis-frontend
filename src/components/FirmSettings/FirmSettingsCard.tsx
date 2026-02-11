@@ -2,7 +2,6 @@
 
 import {
   Edit2,
-  FileText,
   Globe,
   Hash,
   Info,

@@ -57,29 +57,13 @@ const defaultFirmSettingsFallback: FirmSettings = {
   updatedAt: new Date().toISOString(),
 };
 
-export function InvoicePreviewPage({
-  projectId,
-  basePath,
-}: InvoicePreviewPageProps) {
-  const router = useRouter();
-  const searchParams = useSearchParams();
-  const printRef = useRef<HTMLDivElement>(null);
-  const [isGenerating, setIsGenerating] = useState(false);
-
-  // Get current user from auth state
-  const user = useAppSelector((state) => state.auth.user);
-
-  // API mutations
-  const [createInvoice, { isLoading: isCreating }] = useCreateInvoiceMutation();
-
-  // Parse form state from URL params
+function parseSearchParams(searchParams: URLSearchParams) {
   const invoiceDate =
     searchParams.get("date") || new Date().toISOString().split("T")[0];
   const invoiceRef = searchParams.get("invoiceRef") || "";
   const notesParam = searchParams.get("notes");
   const notes = notesParam ? notesParam.split("|") : undefined;
 
-  // Parse milestone items with custom rates/amounts
   const itemsParam = searchParams.get("items");
   const milestoneItems: InvoiceMilestoneItem[] = (() => {
     if (!itemsParam) {
@@ -92,7 +76,6 @@ export function InvoicePreviewPage({
     }
   })();
 
-  // Parse financial summary
   const subtotal = parseFloat(searchParams.get("subtotal") || "0");
   const discountType = (searchParams.get("discountType") || "percentage") as
     | "percentage"
@@ -101,9 +84,143 @@ export function InvoicePreviewPage({
   const discountAmount = parseFloat(searchParams.get("discountAmount") || "0");
   const netTotal = parseFloat(searchParams.get("netTotal") || "0");
   const paidAmount = parseFloat(searchParams.get("paidAmount") || "0");
-
-  // Parse selected firm settings ID
   const firmSettingsId = searchParams.get("firmSettingsId") || "";
+
+  return {
+    invoiceDate,
+    invoiceRef,
+    notes,
+    milestoneItems,
+    subtotal,
+    discountType,
+    discountValue,
+    discountAmount,
+    netTotal,
+    paidAmount,
+    firmSettingsId,
+  };
+}
+
+function buildInvoiceData(opts: {
+  projectId: string;
+  project: { clientId?: string };
+  params: ReturnType<typeof parseSearchParams>;
+  firmSettings: FirmSettings;
+  firmSettingsData: FirmSettings | undefined;
+  user: {
+    firstName?: string;
+    lastName?: string;
+    email: string;
+    _id?: string;
+  } | null;
+}): CreateInvoiceDto {
+  const { projectId, project, params, firmSettings, firmSettingsData, user } =
+    opts;
+  return {
+    projectId,
+    clientId: project?.clientId || "",
+    invoiceDate: params.invoiceDate,
+    milestoneItems: params.milestoneItems,
+    subtotal: params.subtotal,
+    discountType: params.discountType,
+    discountValue: params.discountValue,
+    discountAmount: params.discountAmount,
+    netTotal: params.netTotal,
+    paidAmount: params.paidAmount,
+    notes: params.notes?.join("\n"),
+    defaultNotes: firmSettings.defaultNotes,
+    status: "sent",
+    firmSettingsId: firmSettingsData?.id || params.firmSettingsId || undefined,
+    createdBy: user
+      ? `${user.firstName} ${user.lastName}`.trim() || user.email
+      : "Unknown User",
+    createdById: user?._id,
+  };
+}
+
+function PreviewActionBar({
+  projectName,
+  isBusy,
+  onClose,
+  onEdit,
+  onPrint,
+  onDownload,
+  onFinalize,
+}: {
+  projectName: string;
+  isBusy: boolean;
+  onClose: () => void;
+  onEdit: () => void;
+  onPrint: () => void;
+  onDownload: () => void;
+  onFinalize: () => void;
+}) {
+  return (
+    <div className="print:hidden sticky top-0 z-50 bg-background/95 backdrop-blur border-b border-border">
+      <div className="container mx-auto px-4 py-3 flex items-center justify-between">
+        <div className="flex items-center gap-4">
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={onClose}
+            className="rounded-full"
+          >
+            <X className="h-5 w-5" />
+          </Button>
+          <div>
+            <h1 className="text-lg font-semibold">Invoice Preview</h1>
+            <p className="text-sm text-muted-foreground">{projectName}</p>
+          </div>
+        </div>
+
+        <div className="flex items-center gap-3">
+          <Button variant="outline" onClick={onEdit} disabled={isBusy}>
+            <Edit className="h-4 w-4 mr-2" />
+            Edit
+          </Button>
+          <Button variant="outline" onClick={onPrint} disabled={isBusy}>
+            <Printer className="h-4 w-4 mr-2" />
+            Print
+          </Button>
+          <Button variant="outline" onClick={onDownload} disabled={isBusy}>
+            {isBusy ? (
+              <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+            ) : (
+              <Download className="h-4 w-4 mr-2" />
+            )}
+            Download PDF
+          </Button>
+          <Button
+            onClick={onFinalize}
+            disabled={isBusy}
+            className="bg-gradient-to-r from-green-600 to-teal-600 hover:from-green-700 hover:to-teal-700"
+          >
+            {isBusy ? (
+              <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+            ) : (
+              <CheckCircle className="h-4 w-4 mr-2" />
+            )}
+            Finalize Invoice
+          </Button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+export function InvoicePreviewPage({
+  projectId,
+  basePath,
+}: InvoicePreviewPageProps) {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const printRef = useRef<HTMLDivElement>(null);
+  const [isGenerating, setIsGenerating] = useState(false);
+
+  const user = useAppSelector((state) => state.auth.user);
+  const [createInvoice, { isLoading: isCreating }] = useCreateInvoiceMutation();
+
+  const params = parseSearchParams(searchParams);
 
   // Fetch project details
   const {
@@ -114,23 +231,21 @@ export function InvoicePreviewPage({
     skip: !projectId,
   });
 
-  // Fetch selected firm settings by ID, or fall back to default
+  // Fetch firm settings
   const { data: selectedFirmData, isLoading: isLoadingSelectedFirm } =
-    useGetFirmSettingsByIdQuery(firmSettingsId, {
-      skip: !firmSettingsId,
+    useGetFirmSettingsByIdQuery(params.firmSettingsId, {
+      skip: !params.firmSettingsId,
     });
 
   const { data: defaultFirmData, isLoading: isLoadingDefaultFirm } =
     useGetDefaultFirmSettingsQuery(undefined, {
-      skip: !!firmSettingsId,
+      skip: !!params.firmSettingsId,
     });
 
-  const isLoadingFirmSettings = firmSettingsId
+  const isLoadingFirmSettings = params.firmSettingsId
     ? isLoadingSelectedFirm
     : isLoadingDefaultFirm;
   const firmSettingsData = selectedFirmData || defaultFirmData;
-
-  // Use fetched firm settings or fallback
   const firmSettings = firmSettingsData || defaultFirmSettingsFallback;
 
   // Fetch client details
@@ -147,55 +262,30 @@ export function InvoicePreviewPage({
     (project?.clientId ? isLoadingClient : false);
   const isBusy = isGenerating || isCreating;
 
-  const handlePrint = () => {
-    window.print();
-  };
-
-  const handleDownloadPdf = async () => {
-    setIsGenerating(true);
-    try {
-      // In a real implementation, this would call the backend PDF generation endpoint
-      // For now, we'll use browser print as PDF
-      toast.info("Use your browser's 'Save as PDF' option in the print dialog");
-      window.print();
-    } finally {
-      setIsGenerating(false);
-    }
-  };
-
   const handleEdit = () => {
-    // Go back to edit mode
     router.push(`${basePath}/${projectId}/invoices/new`);
   };
 
+  const handleClose = () => {
+    router.push(`${basePath}/${projectId}?tab=invoices`);
+  };
+
   const handleFinalize = async () => {
-    if (milestoneItems.length === 0) {
+    if (params.milestoneItems.length === 0) {
       toast.error("No milestone items found");
       return;
     }
 
     setIsGenerating(true);
     try {
-      const invoiceData: CreateInvoiceDto = {
+      const invoiceData = buildInvoiceData({
         projectId,
-        clientId: project?.clientId || "",
-        invoiceDate,
-        milestoneItems,
-        subtotal,
-        discountType,
-        discountValue,
-        discountAmount,
-        netTotal,
-        paidAmount,
-        notes: notes?.join("\n"),
-        defaultNotes: firmSettings.defaultNotes,
-        status: "sent",
-        firmSettingsId: firmSettingsData?.id || firmSettingsId || undefined,
-        createdBy: user
-          ? `${user.firstName} ${user.lastName}`.trim() || user.email
-          : "Unknown User",
-        createdById: user?._id,
-      };
+        project: project || {},
+        params,
+        firmSettings,
+        firmSettingsData,
+        user,
+      });
 
       await createInvoice(invoiceData).unwrap();
       toast.success("Invoice finalized successfully");
@@ -205,10 +295,6 @@ export function InvoicePreviewPage({
     } finally {
       setIsGenerating(false);
     }
-  };
-
-  const handleClose = () => {
-    router.push(`${basePath}/${projectId}?tab=invoices`);
   };
 
   if (isLoading) {
@@ -242,7 +328,7 @@ export function InvoicePreviewPage({
     );
   }
 
-  if (milestoneItems.length === 0) {
+  if (params.milestoneItems.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center min-h-screen gap-4">
         <div className="flex items-center gap-2 text-amber-600">
@@ -264,22 +350,21 @@ export function InvoicePreviewPage({
     firmSettings,
     project,
     client: client || null,
-    milestoneItems,
-    invoiceDate,
-    invoiceRef,
-    notes,
-    subtotal,
-    discountType,
-    discountValue,
-    discountAmount,
-    netTotal,
+    milestoneItems: params.milestoneItems,
+    invoiceDate: params.invoiceDate,
+    invoiceRef: params.invoiceRef,
+    notes: params.notes,
+    subtotal: params.subtotal,
+    discountType: params.discountType,
+    discountValue: params.discountValue,
+    discountAmount: params.discountAmount,
+    netTotal: params.netTotal,
   };
 
   const isUsingFallbackFirmSettings = !firmSettingsData;
 
   return (
     <div className="min-h-screen bg-gray-100 dark:bg-gray-900">
-      {/* Warning Banner for Missing Firm Settings */}
       {isUsingFallbackFirmSettings && (
         <div className="print:hidden bg-amber-500/10 border-b border-amber-500/20 px-4 py-2">
           <div className="container mx-auto flex items-center gap-2 text-amber-700 dark:text-amber-400 text-sm">
@@ -292,60 +377,20 @@ export function InvoicePreviewPage({
         </div>
       )}
 
-      {/* Action Bar - Hidden on Print */}
-      <div className="print:hidden sticky top-0 z-50 bg-background/95 backdrop-blur border-b border-border">
-        <div className="container mx-auto px-4 py-3 flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={handleClose}
-              className="rounded-full"
-            >
-              <X className="h-5 w-5" />
-            </Button>
-            <div>
-              <h1 className="text-lg font-semibold">Invoice Preview</h1>
-              <p className="text-sm text-muted-foreground">{project.name}</p>
-            </div>
-          </div>
-
-          <div className="flex items-center gap-3">
-            <Button variant="outline" onClick={handleEdit} disabled={isBusy}>
-              <Edit className="h-4 w-4 mr-2" />
-              Edit
-            </Button>
-            <Button variant="outline" onClick={handlePrint} disabled={isBusy}>
-              <Printer className="h-4 w-4 mr-2" />
-              Print
-            </Button>
-            <Button
-              variant="outline"
-              onClick={handleDownloadPdf}
-              disabled={isBusy}
-            >
-              {isBusy ? (
-                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-              ) : (
-                <Download className="h-4 w-4 mr-2" />
-              )}
-              Download PDF
-            </Button>
-            <Button
-              onClick={handleFinalize}
-              disabled={isBusy}
-              className="bg-gradient-to-r from-green-600 to-teal-600 hover:from-green-700 hover:to-teal-700"
-            >
-              {isBusy ? (
-                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-              ) : (
-                <CheckCircle className="h-4 w-4 mr-2" />
-              )}
-              Finalize Invoice
-            </Button>
-          </div>
-        </div>
-      </div>
+      <PreviewActionBar
+        projectName={project.name}
+        isBusy={isBusy}
+        onClose={handleClose}
+        onEdit={handleEdit}
+        onPrint={() => window.print()}
+        onDownload={() => {
+          toast.info(
+            "Use your browser's 'Save as PDF' option in the print dialog"
+          );
+          window.print();
+        }}
+        onFinalize={handleFinalize}
+      />
 
       {/* Preview Container */}
       <div className="container mx-auto px-4 py-8 print:p-0 print:m-0">

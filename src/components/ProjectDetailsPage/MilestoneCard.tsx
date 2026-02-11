@@ -2,19 +2,13 @@
 
 import { useSelector } from "react-redux";
 import {
-  Calendar,
   CheckCircle2,
   Circle,
-  ClipboardList,
   Clock,
   Eye,
   FileIcon,
   FileText,
   Pencil,
-  Tag,
-  Trash2,
-  TrendingUp,
-  User,
 } from "lucide-react";
 import { Card, CardContent } from "../ui/card";
 import { Badge } from "../ui/badge";
@@ -76,11 +70,61 @@ const formatStatus = (status: MilestoneStatus) => {
   }
 };
 
+function MilestoneDetailsGrid({ milestone }: { milestone: Milestone }) {
+  return (
+    <div className="grid grid-cols-2 md:grid-cols-4 gap-x-12 gap-y-4">
+      {milestone.assignedTo && (
+        <div className="space-y-1">
+          <p className="text-[11px] text-gray-600 uppercase tracking-widest font-medium">
+            Assigned to:
+          </p>
+          <p className="text-sm font-semibold text-[#d0d0d0]">
+            {milestone.assignedTo}
+          </p>
+        </div>
+      )}
+
+      {milestone.startDate && (
+        <div className="space-y-1">
+          <p className="text-[11px] text-gray-600 uppercase tracking-widest font-medium">
+            Start Date:
+          </p>
+          <p className="text-sm font-semibold text-[#d0d0d0]">
+            {formatDate(milestone.startDate)}
+          </p>
+        </div>
+      )}
+
+      {milestone.dueDate && (
+        <div className="space-y-1">
+          <p className="text-[11px] text-gray-600 uppercase tracking-widest font-medium">
+            End Date:
+          </p>
+          <p className="text-sm font-semibold text-[#d0d0d0]">
+            {formatDate(milestone.dueDate)}
+          </p>
+        </div>
+      )}
+
+      {milestone.category && (
+        <div className="space-y-1">
+          <p className="text-[11px] text-gray-600 uppercase tracking-widest font-medium">
+            Category:
+          </p>
+          <p className="text-sm font-semibold text-[#d0d0d0]">
+            {milestone.category}
+          </p>
+        </div>
+      )}
+    </div>
+  );
+}
+
 export function MilestoneCard({
   milestone,
   onEdit,
-  onDelete,
-  onUpdateProgress,
+  onDelete: _onDelete,
+  onUpdateProgress: _onUpdateProgress,
   draggable = false,
   onDragStart,
   onDragOver,
@@ -149,52 +193,7 @@ export function MilestoneCard({
                 </p>
               )}
 
-              {/* Details Grid */}
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-x-12 gap-y-4">
-                {milestone.assignedTo && (
-                  <div className="space-y-1">
-                    <p className="text-[11px] text-gray-600 uppercase tracking-widest font-medium">
-                      Assigned to:
-                    </p>
-                    <p className="text-sm font-semibold text-[#d0d0d0]">
-                      {milestone.assignedTo}
-                    </p>
-                  </div>
-                )}
-
-                {milestone.startDate && (
-                  <div className="space-y-1">
-                    <p className="text-[11px] text-gray-600 uppercase tracking-widest font-medium">
-                      Start Date:
-                    </p>
-                    <p className="text-sm font-semibold text-[#d0d0d0]">
-                      {formatDate(milestone.startDate)}
-                    </p>
-                  </div>
-                )}
-
-                {milestone.dueDate && (
-                  <div className="space-y-1">
-                    <p className="text-[11px] text-gray-600 uppercase tracking-widest font-medium">
-                      End Date:
-                    </p>
-                    <p className="text-sm font-semibold text-[#d0d0d0]">
-                      {formatDate(milestone.dueDate)}
-                    </p>
-                  </div>
-                )}
-
-                {milestone.category && (
-                  <div className="space-y-1">
-                    <p className="text-[11px] text-gray-600 uppercase tracking-widest font-medium">
-                      Category:
-                    </p>
-                    <p className="text-sm font-semibold text-[#d0d0d0]">
-                      {milestone.category}
-                    </p>
-                  </div>
-                )}
-              </div>
+              <MilestoneDetailsGrid milestone={milestone} />
 
               {/* Attachments */}
               {milestone.attachments && milestone.attachments.length > 0 && (

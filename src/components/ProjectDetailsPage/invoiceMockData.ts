@@ -180,6 +180,164 @@ export function getInvoicingStatusBadgeColor(status: InvoicingStatus): string {
   }
 }
 
+// ==================== REDUCER HELPERS ====================
+
+function recalculateTotals(
+  selectedMilestones: Map<string, MilestoneInvoiceItem>,
+  discountType: "percentage" | "flat",
+  discountValue: number,
+  paidAmount: number
+) {
+  const subtotal = calculateSubtotal(selectedMilestones);
+  const discountAmount = calculateDiscount(
+    subtotal,
+    discountType,
+    discountValue
+  );
+  const netTotal = Math.max(0, subtotal - discountAmount);
+  const balance = Math.max(0, netTotal - paidAmount);
+  return { subtotal, discountAmount, netTotal, balance };
+}
+
+function handleToggleMilestone(
+  state: InvoiceFormState,
+  milestoneId: string,
+  milestone: Milestone
+): InvoiceFormState {
+  const newSelectedMilestones = new Map(state.selectedMilestones);
+
+  if (newSelectedMilestones.has(milestoneId)) {
+    newSelectedMilestones.delete(milestoneId);
+  } else {
+    const primaryScope = milestone.scopeOfWork[0];
+    const newItem: MilestoneInvoiceItem = {
+      id: `mi-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+      milestoneId: milestone.id,
+      milestoneTitle: milestone.title,
+      milestoneStageNumber: milestone.stageNumber,
+      rateType: primaryScope?.rateType || RateType.FIXED,
+      rate: primaryScope?.rate || milestone.totalAmount || 0,
+      quantity: primaryScope?.quantity || 1,
+      calculatedAmount: primaryScope?.amount || milestone.totalAmount || 0,
+      editableAmount: primaryScope?.amount || milestone.totalAmount || 0,
+    };
+    newSelectedMilestones.set(milestoneId, newItem);
+  }
+
+  const totals = recalculateTotals(
+    newSelectedMilestones,
+    state.discountType,
+    state.discountValue,
+    state.paidAmount
+  );
+
+  return { ...state, selectedMilestones: newSelectedMilestones, ...totals };
+}
+
+function handleUpdateMilestoneRate(
+  state: InvoiceFormState,
+  payload: {
+    milestoneId: string;
+    rateType: string;
+    rate: number;
+    quantity: number;
+  }
+): InvoiceFormState {
+  const { milestoneId, rateType, rate, quantity } = payload;
+  const newSelectedMilestones = new Map(state.selectedMilestones);
+  const item = newSelectedMilestones.get(milestoneId);
+
+  if (!item) {
+    return state;
+  }
+
+  const calculatedAmount = rateType === "fixed" ? rate : rate * quantity;
+  newSelectedMilestones.set(milestoneId, {
+    ...item,
+    rateType: rateType as "per_sqft" | "per_visit" | "fixed",
+    rate,
+    quantity,
+    calculatedAmount,
+    editableAmount: calculatedAmount,
+  });
+
+  const totals = recalculateTotals(
+    newSelectedMilestones,
+    state.discountType,
+    state.discountValue,
+    state.paidAmount
+  );
+
+  return { ...state, selectedMilestones: newSelectedMilestones, ...totals };
+}
+
+function handleUpdateMilestoneAmount(
+  state: InvoiceFormState,
+  milestoneId: string,
+  amount: number
+): InvoiceFormState {
+  const newSelectedMilestones = new Map(state.selectedMilestones);
+  const item = newSelectedMilestones.get(milestoneId);
+
+  if (!item) {
+    return state;
+  }
+
+  newSelectedMilestones.set(milestoneId, { ...item, editableAmount: amount });
+
+  const totals = recalculateTotals(
+    newSelectedMilestones,
+    state.discountType,
+    state.discountValue,
+    state.paidAmount
+  );
+
+  return { ...state, selectedMilestones: newSelectedMilestones, ...totals };
+}
+
+function handleLoadDraft(payload: Invoice | unknown): InvoiceFormState {
+  const invoice = payload as Invoice & {
+    milestoneItems?: MilestoneInvoiceItem[];
+  };
+  const selectedMilestones = new Map<string, MilestoneInvoiceItem>();
+
+  if (invoice.milestoneItems) {
+    invoice.milestoneItems.forEach((item) => {
+      const milestoneItem: MilestoneInvoiceItem = {
+        id:
+          item.id ||
+          `mi-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+        milestoneId: item.milestoneId,
+        milestoneTitle: item.milestoneTitle,
+        milestoneStageNumber: item.milestoneStageNumber,
+        rateType: item.rateType,
+        rate: item.rate,
+        quantity: item.quantity,
+        calculatedAmount: item.calculatedAmount,
+        editableAmount: item.editableAmount,
+      };
+      selectedMilestones.set(item.milestoneId, milestoneItem);
+    });
+  }
+
+  return {
+    invoiceDate:
+      typeof invoice.invoiceDate === "string"
+        ? invoice.invoiceDate.split("T")[0]
+        : new Date(invoice.invoiceDate).toISOString().split("T")[0],
+    invoiceReference: invoice.invoiceNumber,
+    notes: invoice.notes || "",
+    selectedMilestones,
+    subtotal: invoice.subtotal,
+    discountType: invoice.discountType,
+    discountValue: invoice.discountValue,
+    discountAmount: invoice.discountAmount,
+    netTotal: invoice.netTotal,
+    paidAmount: invoice.paidAmount,
+    balance: invoice.balance,
+  };
+}
+
 // ==================== REDUCER ====================
 
 export function invoiceFormReducer(
@@ -188,158 +346,49 @@ export function invoiceFormReducer(
 ): InvoiceFormState {
   switch (action.type) {
     case "SET_INVOICE_DATE":
-      return {
-        ...state,
-        invoiceDate: action.payload,
-      };
+      return { ...state, invoiceDate: action.payload };
 
     case "SET_INVOICE_REFERENCE":
-      return {
-        ...state,
-        invoiceReference: action.payload,
-      };
+      return { ...state, invoiceReference: action.payload };
 
     case "SET_NOTES":
-      return {
-        ...state,
-        notes: action.payload,
-      };
+      return { ...state, notes: action.payload };
 
-    case "TOGGLE_MILESTONE": {
-      const { milestoneId, milestone } = action.payload;
-      const newSelectedMilestones = new Map(state.selectedMilestones);
-
-      if (newSelectedMilestones.has(milestoneId)) {
-        // Remove milestone
-        newSelectedMilestones.delete(milestoneId);
-      } else {
-        // Add milestone with pre-populated data
-        const primaryScope = milestone.scopeOfWork[0];
-        const newItem: MilestoneInvoiceItem = {
-          id: `mi-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
-          milestoneId: milestone.id,
-          milestoneTitle: milestone.title,
-          milestoneStageNumber: milestone.stageNumber,
-          rateType: primaryScope?.rateType || RateType.FIXED,
-          rate: primaryScope?.rate || milestone.totalAmount || 0,
-          quantity: primaryScope?.quantity || 1,
-          calculatedAmount: primaryScope?.amount || milestone.totalAmount || 0,
-          editableAmount: primaryScope?.amount || milestone.totalAmount || 0,
-        };
-        newSelectedMilestones.set(milestoneId, newItem);
-      }
-
-      const newSubtotal = calculateSubtotal(newSelectedMilestones);
-      const newDiscountAmount = calculateDiscount(
-        newSubtotal,
-        state.discountType,
-        state.discountValue
+    case "TOGGLE_MILESTONE":
+      return handleToggleMilestone(
+        state,
+        action.payload.milestoneId,
+        action.payload.milestone
       );
-      const newNetTotal = Math.max(0, newSubtotal - newDiscountAmount);
-      const newBalance = Math.max(0, newNetTotal - state.paidAmount);
 
-      return {
-        ...state,
-        selectedMilestones: newSelectedMilestones,
-        subtotal: newSubtotal,
-        discountAmount: newDiscountAmount,
-        netTotal: newNetTotal,
-        balance: newBalance,
-      };
-    }
+    case "UPDATE_MILESTONE_RATE":
+      return handleUpdateMilestoneRate(state, action.payload);
 
-    case "UPDATE_MILESTONE_RATE": {
-      const { milestoneId, rateType, rate, quantity } = action.payload;
-      const newSelectedMilestones = new Map(state.selectedMilestones);
-      const item = newSelectedMilestones.get(milestoneId);
-
-      if (item) {
-        const calculatedAmount = rateType === "fixed" ? rate : rate * quantity;
-        newSelectedMilestones.set(milestoneId, {
-          ...item,
-          rateType: rateType as "per_sqft" | "per_visit" | "fixed",
-          rate,
-          quantity,
-          calculatedAmount,
-          editableAmount: calculatedAmount,
-        });
-
-        const newSubtotal = calculateSubtotal(newSelectedMilestones);
-        const newDiscountAmount = calculateDiscount(
-          newSubtotal,
-          state.discountType,
-          state.discountValue
-        );
-        const newNetTotal = Math.max(0, newSubtotal - newDiscountAmount);
-        const newBalance = Math.max(0, newNetTotal - state.paidAmount);
-
-        return {
-          ...state,
-          selectedMilestones: newSelectedMilestones,
-          subtotal: newSubtotal,
-          discountAmount: newDiscountAmount,
-          netTotal: newNetTotal,
-          balance: newBalance,
-        };
-      }
-      return state;
-    }
-
-    case "UPDATE_MILESTONE_AMOUNT": {
-      const { milestoneId, amount } = action.payload;
-      const newSelectedMilestones = new Map(state.selectedMilestones);
-      const item = newSelectedMilestones.get(milestoneId);
-
-      if (item) {
-        newSelectedMilestones.set(milestoneId, {
-          ...item,
-          editableAmount: amount,
-        });
-
-        const newSubtotal = calculateSubtotal(newSelectedMilestones);
-        const newDiscountAmount = calculateDiscount(
-          newSubtotal,
-          state.discountType,
-          state.discountValue
-        );
-        const newNetTotal = Math.max(0, newSubtotal - newDiscountAmount);
-        const newBalance = Math.max(0, newNetTotal - state.paidAmount);
-
-        return {
-          ...state,
-          selectedMilestones: newSelectedMilestones,
-          subtotal: newSubtotal,
-          discountAmount: newDiscountAmount,
-          netTotal: newNetTotal,
-          balance: newBalance,
-        };
-      }
-      return state;
-    }
+    case "UPDATE_MILESTONE_AMOUNT":
+      return handleUpdateMilestoneAmount(
+        state,
+        action.payload.milestoneId,
+        action.payload.amount
+      );
 
     case "SET_DISCOUNT": {
       const { type, value } = action.payload;
-      const newDiscountAmount = calculateDiscount(state.subtotal, type, value);
-      const newNetTotal = Math.max(0, state.subtotal - newDiscountAmount);
-      const newBalance = Math.max(0, newNetTotal - state.paidAmount);
-
+      const discountAmount = calculateDiscount(state.subtotal, type, value);
+      const netTotal = Math.max(0, state.subtotal - discountAmount);
+      const balance = Math.max(0, netTotal - state.paidAmount);
       return {
         ...state,
         discountType: type,
         discountValue: value,
-        discountAmount: newDiscountAmount,
-        netTotal: newNetTotal,
-        balance: newBalance,
+        discountAmount,
+        netTotal,
+        balance,
       };
     }
 
     case "SET_PAID_AMOUNT": {
-      const newBalance = Math.max(0, state.netTotal - action.payload);
-      return {
-        ...state,
-        paidAmount: action.payload,
-        balance: newBalance,
-      };
+      const balance = Math.max(0, state.netTotal - action.payload);
+      return { ...state, paidAmount: action.payload, balance };
     }
 
     case "RESET_FORM":
@@ -348,48 +397,8 @@ export function invoiceFormReducer(
         invoiceReference: generateInvoiceNumber(),
       };
 
-    case "LOAD_DRAFT": {
-      const invoice = action.payload as Invoice & {
-        milestoneItems?: MilestoneInvoiceItem[];
-      };
-      const selectedMilestones = new Map<string, MilestoneInvoiceItem>();
-
-      if (invoice.milestoneItems) {
-        invoice.milestoneItems.forEach((item) => {
-          const milestoneItem: MilestoneInvoiceItem = {
-            id:
-              item.id ||
-              `mi-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
-            milestoneId: item.milestoneId,
-            milestoneTitle: item.milestoneTitle,
-            milestoneStageNumber: item.milestoneStageNumber,
-            rateType: item.rateType,
-            rate: item.rate,
-            quantity: item.quantity,
-            calculatedAmount: item.calculatedAmount,
-            editableAmount: item.editableAmount,
-          };
-          selectedMilestones.set(item.milestoneId, milestoneItem);
-        });
-      }
-
-      return {
-        invoiceDate:
-          typeof invoice.invoiceDate === "string"
-            ? invoice.invoiceDate.split("T")[0]
-            : new Date(invoice.invoiceDate).toISOString().split("T")[0],
-        invoiceReference: invoice.invoiceNumber,
-        notes: invoice.notes || "",
-        selectedMilestones,
-        subtotal: invoice.subtotal,
-        discountType: invoice.discountType,
-        discountValue: invoice.discountValue,
-        discountAmount: invoice.discountAmount,
-        netTotal: invoice.netTotal,
-        paidAmount: invoice.paidAmount,
-        balance: invoice.balance,
-      };
-    }
+    case "LOAD_DRAFT":
+      return handleLoadDraft(action.payload);
 
     default:
       return state;

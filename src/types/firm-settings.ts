@@ -64,4 +64,4 @@ export interface CreateFirmSettingsDto {
   isDefault?: boolean;
 }
 
-export interface UpdateFirmSettingsDto extends Partial<CreateFirmSettingsDto> {}
+export type UpdateFirmSettingsDto = Partial<CreateFirmSettingsDto>;

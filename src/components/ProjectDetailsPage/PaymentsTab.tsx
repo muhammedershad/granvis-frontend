@@ -1,14 +1,12 @@
 import {
   CheckCircle,
   Clock,
-  CreditCard,
   DollarSign,
   FileText,
   TrendingUp,
   Wallet,
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
-import { Progress } from "../ui/progress";
 import { Button } from "../ui/button";
 import type { Project } from "@/types/project";
 

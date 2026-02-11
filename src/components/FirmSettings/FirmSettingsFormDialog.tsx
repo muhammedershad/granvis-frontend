@@ -2,7 +2,12 @@
 
 import { useEffect, useRef, useState } from "react";
 import NextImage from "next/image";
-import { useForm } from "react-hook-form";
+import {
+  FieldErrors,
+  UseFormRegister,
+  UseFormSetValue,
+  useForm,
+} from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
   AlertCircle,
@@ -79,6 +84,523 @@ function getFirstErrorSection(errors: Record<string, unknown>): string | null {
   return null;
 }
 
+async function uploadLogo(
+  croppedBlob: Blob,
+  getPresignedUrl: (args: {
+    fileName: string;
+    contentType: string;
+    folder: string;
+  }) => { unwrap: () => Promise<{ uploadUrl: string; objectKey: string }> }
+): Promise<string> {
+  const fileName = `firm-logo-${Date.now()}.jpg`;
+  const presignedResponse = await getPresignedUrl({
+    fileName,
+    contentType: "image/jpeg",
+    folder: FIRM_LOGOS_FOLDER,
+  }).unwrap();
+
+  await uploadToS3(presignedResponse.uploadUrl, croppedBlob, "image/jpeg");
+
+  return presignedResponse.objectKey;
+}
+
+function buildFirmDto(
+  data: CreateFirmSettingsFormData,
+  logoKey: string | undefined
+): CreateFirmSettingsDto {
+  return {
+    name: data.name.trim(),
+    phone: data.phone.trim(),
+    alternatePhone: data.alternatePhone?.trim() || undefined,
+    email: data.email.trim(),
+    website: data.website?.trim() || undefined,
+    address: data.address.trim(),
+    city: data.city.trim(),
+    state: data.state.trim(),
+    country: data.country?.trim() || "India",
+    invoicePrefix: data.invoicePrefix?.trim() || undefined,
+    invoiceStartNumber: data.invoiceStartNumber || undefined,
+    defaultNotes: (data.defaultNotes || []).filter((n) => n.trim()),
+    isDefault: data.isDefault,
+    logoKey,
+  };
+}
+
+function extractErrorMessage(error: unknown, fallback: string): string {
+  const err = error as Record<string, unknown>;
+  const data = err?.data as Record<string, unknown> | undefined;
+  if (data && typeof data === "object") {
+    const details = data.details as Record<string, unknown> | undefined;
+    const msg = details?.message || data.message;
+    if (Array.isArray(msg)) {
+      return msg[0];
+    }
+    if (typeof msg === "string") {
+      return msg;
+    }
+  }
+  if (typeof err?.message === "string") {
+    return err.message;
+  }
+  return fallback;
+}
+
+interface FormFieldProps {
+  register: UseFormRegister<CreateFirmSettingsFormData>;
+  errors: FieldErrors<CreateFirmSettingsFormData>;
+}
+
+function LogoUploadSection({
+  displayLogo,
+  croppedImage,
+  existingLogoUrl,
+  error,
+  fileInputRef,
+  handleInputChange,
+  handleRemoveImage,
+}: {
+  displayLogo: string | null | undefined;
+  croppedImage: string | null;
+  existingLogoUrl: string | null | undefined;
+  error: string | null;
+  fileInputRef: React.RefObject<HTMLInputElement | null>;
+  handleInputChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  handleRemoveImage: () => void;
+}) {
+  return (
+    <div className="space-y-1.5">
+      <Label className="text-xs font-medium text-muted-foreground">
+        Firm Logo
+      </Label>
+      {!displayLogo ? (
+        <div className="relative">
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="image/jpeg,image/png,image/webp"
+            onChange={handleInputChange}
+            className="hidden"
+          />
+          <label
+            onClick={() => fileInputRef.current?.click()}
+            className={`flex flex-col items-center justify-center w-full h-32 border-2 border-dashed rounded-lg cursor-pointer transition-all duration-300 group ${
+              error
+                ? "border-red-300 dark:border-red-500/30 bg-red-50/50 dark:bg-red-500/5"
+                : "border-gray-200 dark:border-white/10 bg-gray-50/50 dark:bg-white/5 hover:bg-gray-100 dark:hover:bg-white/10"
+            }`}
+          >
+            <div className="flex flex-col items-center justify-center pt-5 pb-6">
+              <ImageIcon
+                className={`h-8 w-8 mb-2 transition-colors ${
+                  error
+                    ? "text-red-400"
+                    : "text-muted-foreground group-hover:text-orange-500"
+                }`}
+              />
+              <p className="text-xs text-muted-foreground">
+                <span className="font-semibold">Click to upload</span>
+              </p>
+              <p className="text-[10px] text-muted-foreground mt-1">
+                JPG, PNG, WebP (Max 1MB)
+              </p>
+            </div>
+          </label>
+          {error && (
+            <p className="text-xs text-red-500 dark:text-red-400 mt-1.5 flex items-center gap-1">
+              <AlertCircle className="h-3 w-3 flex-shrink-0" />
+              {error}
+            </p>
+          )}
+        </div>
+      ) : (
+        <div className="space-y-2">
+          <div className="relative w-full h-32 border-2 border-gray-200 dark:border-white/10 rounded-lg overflow-hidden bg-gray-50/50 dark:bg-white/5">
+            {croppedImage ? (
+              <NextImage
+                src={croppedImage}
+                alt="Firm logo preview"
+                fill
+                className="object-contain"
+              />
+            ) : (
+              <img
+                src={existingLogoUrl || ""}
+                alt="Firm logo"
+                className="w-full h-full object-contain"
+              />
+            )}
+            <div className="absolute top-2 right-2 flex gap-2 z-10">
+              <Button
+                type="button"
+                size="sm"
+                variant="secondary"
+                onClick={() => fileInputRef.current?.click()}
+                className="h-8 px-2 shadow-lg"
+              >
+                <Edit2 className="h-3 w-3" />
+              </Button>
+              <Button
+                type="button"
+                size="sm"
+                variant="destructive"
+                onClick={handleRemoveImage}
+                className="h-8 px-2 shadow-lg"
+              >
+                <X className="h-3 w-3" />
+              </Button>
+            </div>
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/jpeg,image/png,image/webp"
+              onChange={handleInputChange}
+              className="hidden"
+            />
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function BasicInfoFields({ register, errors }: FormFieldProps) {
+  return (
+    <>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="space-y-1.5">
+          <Label className="text-xs font-medium text-muted-foreground">
+            Firm Name *
+          </Label>
+          <Input
+            {...register("name")}
+            placeholder="e.g. Griha Architects"
+            className={`h-10 ${errors.name ? "border-red-500 focus-visible:ring-red-500" : ""}`}
+          />
+          {errors.name && (
+            <p className="text-xs text-red-500 flex items-center gap-1">
+              <AlertCircle className="h-3 w-3 flex-shrink-0" />
+              {errors.name.message}
+            </p>
+          )}
+        </div>
+        <div className="space-y-1.5">
+          <Label className="text-xs font-medium text-muted-foreground">
+            Email *
+          </Label>
+          <Input
+            type="email"
+            {...register("email")}
+            placeholder="firm@example.com"
+            className={`h-10 ${errors.email ? "border-red-500 focus-visible:ring-red-500" : ""}`}
+          />
+          {errors.email && (
+            <p className="text-xs text-red-500 flex items-center gap-1">
+              <AlertCircle className="h-3 w-3 flex-shrink-0" />
+              {errors.email.message}
+            </p>
+          )}
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="space-y-1.5">
+          <Label className="text-xs font-medium text-muted-foreground">
+            Phone *
+          </Label>
+          <Input
+            {...register("phone")}
+            placeholder="+91 98765 43210"
+            className={`h-10 ${errors.phone ? "border-red-500 focus-visible:ring-red-500" : ""}`}
+          />
+          {errors.phone && (
+            <p className="text-xs text-red-500 flex items-center gap-1">
+              <AlertCircle className="h-3 w-3 flex-shrink-0" />
+              {errors.phone.message}
+            </p>
+          )}
+        </div>
+        <div className="space-y-1.5">
+          <Label className="text-xs font-medium text-muted-foreground">
+            Alternate Phone
+          </Label>
+          <Input
+            {...register("alternatePhone")}
+            placeholder="+91 98765 43211"
+            className={`h-10 ${errors.alternatePhone ? "border-red-500 focus-visible:ring-red-500" : ""}`}
+          />
+          {errors.alternatePhone && (
+            <p className="text-xs text-red-500 flex items-center gap-1">
+              <AlertCircle className="h-3 w-3 flex-shrink-0" />
+              {errors.alternatePhone.message}
+            </p>
+          )}
+        </div>
+      </div>
+
+      <div className="space-y-1.5">
+        <Label className="text-xs font-medium text-muted-foreground">
+          Website
+        </Label>
+        <Input
+          {...register("website")}
+          placeholder="https://www.example.com"
+          className={`h-10 ${errors.website ? "border-red-500 focus-visible:ring-red-500" : ""}`}
+        />
+        {errors.website && (
+          <p className="text-xs text-red-500 flex items-center gap-1">
+            <AlertCircle className="h-3 w-3 flex-shrink-0" />
+            {errors.website.message}
+          </p>
+        )}
+      </div>
+    </>
+  );
+}
+
+function AddressFields({ register, errors }: FormFieldProps) {
+  return (
+    <>
+      <div className="space-y-1.5">
+        <Label className="text-xs font-medium text-muted-foreground">
+          Address *
+        </Label>
+        <Input
+          {...register("address")}
+          placeholder="Street address"
+          className={`h-10 ${errors.address ? "border-red-500 focus-visible:ring-red-500" : ""}`}
+        />
+        {errors.address && (
+          <p className="text-xs text-red-500 flex items-center gap-1">
+            <AlertCircle className="h-3 w-3 flex-shrink-0" />
+            {errors.address.message}
+          </p>
+        )}
+      </div>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="space-y-1.5">
+          <Label className="text-xs font-medium text-muted-foreground">
+            City *
+          </Label>
+          <Input
+            {...register("city")}
+            placeholder="City"
+            className={`h-10 ${errors.city ? "border-red-500 focus-visible:ring-red-500" : ""}`}
+          />
+          {errors.city && (
+            <p className="text-xs text-red-500 flex items-center gap-1">
+              <AlertCircle className="h-3 w-3 flex-shrink-0" />
+              {errors.city.message}
+            </p>
+          )}
+        </div>
+        <div className="space-y-1.5">
+          <Label className="text-xs font-medium text-muted-foreground">
+            State *
+          </Label>
+          <Input
+            {...register("state")}
+            placeholder="State"
+            className={`h-10 ${errors.state ? "border-red-500 focus-visible:ring-red-500" : ""}`}
+          />
+          {errors.state && (
+            <p className="text-xs text-red-500 flex items-center gap-1">
+              <AlertCircle className="h-3 w-3 flex-shrink-0" />
+              {errors.state.message}
+            </p>
+          )}
+        </div>
+      </div>
+      <div className="space-y-1.5">
+        <Label className="text-xs font-medium text-muted-foreground">
+          Country
+        </Label>
+        <Input {...register("country")} placeholder="India" className="h-10" />
+      </div>
+    </>
+  );
+}
+
+function InvoiceSettingsFields({
+  register,
+  errors,
+  defaultNotes,
+  isDefault,
+  setValue,
+  onAddNote,
+  onUpdateNote,
+  onRemoveNote,
+}: FormFieldProps & {
+  defaultNotes: string[];
+  isDefault: boolean;
+  setValue: UseFormSetValue<CreateFirmSettingsFormData>;
+  onAddNote: () => void;
+  onUpdateNote: (index: number, value: string) => void;
+  onRemoveNote: (index: number) => void;
+}) {
+  return (
+    <>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="space-y-1.5">
+          <Label className="text-xs font-medium text-muted-foreground">
+            Invoice Prefix
+          </Label>
+          <Input
+            {...register("invoicePrefix")}
+            placeholder="INV"
+            className="h-10"
+          />
+        </div>
+        <div className="space-y-1.5">
+          <Label className="text-xs font-medium text-muted-foreground">
+            Start Number
+          </Label>
+          <Input
+            type="number"
+            min={1}
+            {...register("invoiceStartNumber")}
+            className={`h-10 ${errors.invoiceStartNumber ? "border-red-500 focus-visible:ring-red-500" : ""}`}
+          />
+          {errors.invoiceStartNumber && (
+            <p className="text-xs text-red-500 flex items-center gap-1">
+              <AlertCircle className="h-3 w-3 flex-shrink-0" />
+              {errors.invoiceStartNumber.message}
+            </p>
+          )}
+        </div>
+      </div>
+
+      <DefaultNotesSection
+        defaultNotes={defaultNotes}
+        onAddNote={onAddNote}
+        onUpdateNote={onUpdateNote}
+        onRemoveNote={onRemoveNote}
+      />
+
+      <div className="flex items-center space-x-2 pt-2">
+        <Checkbox
+          id="firmIsDefault"
+          checked={isDefault}
+          onCheckedChange={(checked) => setValue("isDefault", checked === true)}
+        />
+        <Label
+          htmlFor="firmIsDefault"
+          className="text-xs font-medium text-muted-foreground cursor-pointer"
+        >
+          Set as default firm for invoices
+        </Label>
+      </div>
+    </>
+  );
+}
+
+function checkSectionErrors(errors: FieldErrors<CreateFirmSettingsFormData>) {
+  const hasBasicErrors = !!(
+    errors.name ||
+    errors.email ||
+    errors.phone ||
+    errors.alternatePhone ||
+    errors.website
+  );
+  const hasAddressErrors = !!(
+    errors.address ||
+    errors.city ||
+    errors.state ||
+    errors.country
+  );
+  const hasInvoiceErrors = !!(
+    errors.invoicePrefix || errors.invoiceStartNumber
+  );
+  return { hasBasicErrors, hasAddressErrors, hasInvoiceErrors };
+}
+
+const EMPTY_FORM_VALUES: CreateFirmSettingsFormData = {
+  name: "",
+  email: "",
+  phone: "",
+  alternatePhone: "",
+  website: "",
+  address: "",
+  city: "",
+  state: "",
+  country: "India",
+  invoicePrefix: "INV",
+  invoiceStartNumber: 1,
+  defaultNotes: [],
+  isDefault: false,
+  logoKey: "",
+};
+
+function getEditFormValues(firm: FirmSettings): CreateFirmSettingsFormData {
+  return {
+    name: firm.name,
+    email: firm.email,
+    phone: firm.phone,
+    alternatePhone: firm.alternatePhone || "",
+    website: firm.website || "",
+    address: firm.address,
+    city: firm.city,
+    state: firm.state,
+    country: firm.country || "India",
+    invoicePrefix: firm.invoicePrefix || "INV",
+    invoiceStartNumber: firm.invoiceStartNumber || 1,
+    defaultNotes: firm.defaultNotes || [],
+    isDefault: firm.isDefault,
+    logoKey: firm.logoKey || "",
+  };
+}
+
+function DefaultNotesSection({
+  defaultNotes,
+  onAddNote,
+  onUpdateNote,
+  onRemoveNote,
+}: {
+  defaultNotes: string[];
+  onAddNote: () => void;
+  onUpdateNote: (index: number, value: string) => void;
+  onRemoveNote: (index: number) => void;
+}) {
+  return (
+    <div className="space-y-3">
+      <Label className="text-xs font-medium text-muted-foreground">
+        Default Invoice Notes
+      </Label>
+      {defaultNotes.map((note, index) => (
+        <div key={index} className="flex items-center gap-2">
+          <span className="text-xs text-muted-foreground w-5 text-right flex-shrink-0">
+            {index + 1}.
+          </span>
+          <Input
+            value={note}
+            onChange={(e) => onUpdateNote(index, e.target.value)}
+            placeholder="Enter note..."
+            className="flex-1 h-10 text-sm"
+          />
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon"
+            className="h-8 w-8 flex-shrink-0 text-red-500 hover:text-red-600 hover:bg-red-500/10"
+            onClick={() => onRemoveNote(index)}
+          >
+            <Trash2 className="h-3.5 w-3.5" />
+          </Button>
+        </div>
+      ))}
+      <Button
+        type="button"
+        variant="outline"
+        size="sm"
+        onClick={onAddNote}
+        className="text-xs"
+      >
+        <Plus className="h-3.5 w-3.5 mr-1" />
+        Add Note
+      </Button>
+    </div>
+  );
+}
+
 export function FirmSettingsFormDialog({
   open,
   onOpenChange,
@@ -97,22 +619,7 @@ export function FirmSettingsFormDialog({
   } = useForm<CreateFirmSettingsFormData>({
     resolver: zodResolver(createFirmSettingsSchema),
     mode: "onBlur",
-    defaultValues: {
-      name: "",
-      email: "",
-      phone: "",
-      alternatePhone: "",
-      website: "",
-      address: "",
-      city: "",
-      state: "",
-      country: "India",
-      invoicePrefix: "INV",
-      invoiceStartNumber: 1,
-      defaultNotes: [],
-      isDefault: false,
-      logoKey: "",
-    },
+    defaultValues: EMPTY_FORM_VALUES,
   });
 
   // Watch fields that need manual control
@@ -120,22 +627,8 @@ export function FirmSettingsFormDialog({
   const isDefault = watch("isDefault") || false;
 
   // Section error checks
-  const hasBasicErrors = !!(
-    errors.name ||
-    errors.email ||
-    errors.phone ||
-    errors.alternatePhone ||
-    errors.website
-  );
-  const hasAddressErrors = !!(
-    errors.address ||
-    errors.city ||
-    errors.state ||
-    errors.country
-  );
-  const hasInvoiceErrors = !!(
-    errors.invoicePrefix || errors.invoiceStartNumber
-  );
+  const { hasBasicErrors, hasAddressErrors, hasInvoiceErrors } =
+    checkSectionErrors(errors);
 
   // Expanded sections
   const [expandedSection, setExpandedSection] = useState<string>("basic");
@@ -160,39 +653,9 @@ export function FirmSettingsFormDialog({
   // Populate form for editing or reset on open
   useEffect(() => {
     if (open && editingFirm) {
-      reset({
-        name: editingFirm.name,
-        email: editingFirm.email,
-        phone: editingFirm.phone,
-        alternatePhone: editingFirm.alternatePhone || "",
-        website: editingFirm.website || "",
-        address: editingFirm.address,
-        city: editingFirm.city,
-        state: editingFirm.state,
-        country: editingFirm.country || "India",
-        invoicePrefix: editingFirm.invoicePrefix || "INV",
-        invoiceStartNumber: editingFirm.invoiceStartNumber || 1,
-        defaultNotes: editingFirm.defaultNotes || [],
-        isDefault: editingFirm.isDefault,
-        logoKey: editingFirm.logoKey || "",
-      });
-    } else if (open && !editingFirm) {
-      reset({
-        name: "",
-        email: "",
-        phone: "",
-        alternatePhone: "",
-        website: "",
-        address: "",
-        city: "",
-        state: "",
-        country: "India",
-        invoicePrefix: "INV",
-        invoiceStartNumber: 1,
-        defaultNotes: [],
-        isDefault: false,
-        logoKey: "",
-      });
+      reset(getEditFormValues(editingFirm));
+    } else if (open) {
+      reset(EMPTY_FORM_VALUES);
       imageCrop.reset();
     }
     if (open) {
@@ -204,40 +667,11 @@ export function FirmSettingsFormDialog({
     try {
       let logoKey = data.logoKey || undefined;
 
-      // Upload logo if a new one was cropped
       if (imageCrop.croppedBlob) {
-        const fileName = `firm-logo-${Date.now()}.jpg`;
-        const presignedResponse = await getPresignedUrl({
-          fileName,
-          contentType: "image/jpeg",
-          folder: FIRM_LOGOS_FOLDER,
-        }).unwrap();
-
-        await uploadToS3(
-          presignedResponse.uploadUrl,
-          imageCrop.croppedBlob,
-          "image/jpeg"
-        );
-
-        logoKey = presignedResponse.objectKey;
+        logoKey = await uploadLogo(imageCrop.croppedBlob, getPresignedUrl);
       }
 
-      const dto: CreateFirmSettingsDto = {
-        name: data.name.trim(),
-        phone: data.phone.trim(),
-        alternatePhone: data.alternatePhone?.trim() || undefined,
-        email: data.email.trim(),
-        website: data.website?.trim() || undefined,
-        address: data.address.trim(),
-        city: data.city.trim(),
-        state: data.state.trim(),
-        country: data.country?.trim() || "India",
-        invoicePrefix: data.invoicePrefix?.trim() || undefined,
-        invoiceStartNumber: data.invoiceStartNumber || undefined,
-        defaultNotes: (data.defaultNotes || []).filter((n) => n.trim()),
-        isDefault: data.isDefault,
-        logoKey,
-      };
+      const dto = buildFirmDto(data, logoKey);
 
       if (isEditMode && editingFirm) {
         await updateFirm({ id: editingFirm.id, data: dto }).unwrap();
@@ -253,23 +687,7 @@ export function FirmSettingsFormDialog({
       const fallback = isEditMode
         ? "Failed to update firm settings"
         : "Failed to create firm settings";
-      let errorMessage = fallback;
-
-      // RTK Query .unwrap() throws { status, data } where data is the response body
-      const err = error as Record<string, unknown>;
-      const data = err?.data as Record<string, unknown> | undefined;
-      if (data && typeof data === "object") {
-        const details = data.details as Record<string, unknown> | undefined;
-        const msg = details?.message || data.message;
-        if (Array.isArray(msg)) {
-          errorMessage = msg[0];
-        } else if (typeof msg === "string") {
-          errorMessage = msg;
-        }
-      } else if (typeof err?.message === "string") {
-        errorMessage = err.message;
-      }
-      toast.error(errorMessage);
+      toast.error(extractErrorMessage(error, fallback));
     }
   };
 
@@ -355,189 +773,16 @@ export function FirmSettingsFormDialog({
                   />
                   {expandedSection === "basic" && (
                     <div className="p-4 pt-2 space-y-4 animate-in fade-in slide-in-from-top-2 duration-300">
-                      {/* Logo Upload */}
-                      <div className="space-y-1.5">
-                        <Label className="text-xs font-medium text-muted-foreground">
-                          Firm Logo
-                        </Label>
-                        {!displayLogo ? (
-                          <div className="relative">
-                            <input
-                              ref={fileInputRef}
-                              type="file"
-                              accept="image/jpeg,image/png,image/webp"
-                              onChange={imageCrop.handleInputChange}
-                              className="hidden"
-                            />
-                            <label
-                              onClick={() => fileInputRef.current?.click()}
-                              className={`flex flex-col items-center justify-center w-full h-32 border-2 border-dashed rounded-lg cursor-pointer transition-all duration-300 group ${
-                                imageCrop.error
-                                  ? "border-red-300 dark:border-red-500/30 bg-red-50/50 dark:bg-red-500/5"
-                                  : "border-gray-200 dark:border-white/10 bg-gray-50/50 dark:bg-white/5 hover:bg-gray-100 dark:hover:bg-white/10"
-                              }`}
-                            >
-                              <div className="flex flex-col items-center justify-center pt-5 pb-6">
-                                <ImageIcon
-                                  className={`h-8 w-8 mb-2 transition-colors ${
-                                    imageCrop.error
-                                      ? "text-red-400"
-                                      : "text-muted-foreground group-hover:text-orange-500"
-                                  }`}
-                                />
-                                <p className="text-xs text-muted-foreground">
-                                  <span className="font-semibold">
-                                    Click to upload
-                                  </span>
-                                </p>
-                                <p className="text-[10px] text-muted-foreground mt-1">
-                                  JPG, PNG, WebP (Max 1MB)
-                                </p>
-                              </div>
-                            </label>
-                            {imageCrop.error && (
-                              <p className="text-xs text-red-500 dark:text-red-400 mt-1.5 flex items-center gap-1">
-                                <AlertCircle className="h-3 w-3 flex-shrink-0" />
-                                {imageCrop.error}
-                              </p>
-                            )}
-                          </div>
-                        ) : (
-                          <div className="space-y-2">
-                            <div className="relative w-full h-32 border-2 border-gray-200 dark:border-white/10 rounded-lg overflow-hidden bg-gray-50/50 dark:bg-white/5">
-                              {imageCrop.croppedImage ? (
-                                <NextImage
-                                  src={imageCrop.croppedImage}
-                                  alt="Firm logo preview"
-                                  fill
-                                  className="object-contain"
-                                />
-                              ) : (
-                                <img
-                                  src={existingLogoUrl || ""}
-                                  alt="Firm logo"
-                                  className="w-full h-full object-contain"
-                                />
-                              )}
-                              <div className="absolute top-2 right-2 flex gap-2 z-10">
-                                <Button
-                                  type="button"
-                                  size="sm"
-                                  variant="secondary"
-                                  onClick={() => fileInputRef.current?.click()}
-                                  className="h-8 px-2 shadow-lg"
-                                >
-                                  <Edit2 className="h-3 w-3" />
-                                </Button>
-                                <Button
-                                  type="button"
-                                  size="sm"
-                                  variant="destructive"
-                                  onClick={handleRemoveImage}
-                                  className="h-8 px-2 shadow-lg"
-                                >
-                                  <X className="h-3 w-3" />
-                                </Button>
-                              </div>
-                              <input
-                                ref={fileInputRef}
-                                type="file"
-                                accept="image/jpeg,image/png,image/webp"
-                                onChange={imageCrop.handleInputChange}
-                                className="hidden"
-                              />
-                            </div>
-                          </div>
-                        )}
-                      </div>
-
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div className="space-y-1.5">
-                          <Label className="text-xs font-medium text-muted-foreground">
-                            Firm Name *
-                          </Label>
-                          <Input
-                            {...register("name")}
-                            placeholder="e.g. Griha Architects"
-                            className={`h-10 ${errors.name ? "border-red-500 focus-visible:ring-red-500" : ""}`}
-                          />
-                          {errors.name && (
-                            <p className="text-xs text-red-500 flex items-center gap-1">
-                              <AlertCircle className="h-3 w-3 flex-shrink-0" />
-                              {errors.name.message}
-                            </p>
-                          )}
-                        </div>
-                        <div className="space-y-1.5">
-                          <Label className="text-xs font-medium text-muted-foreground">
-                            Email *
-                          </Label>
-                          <Input
-                            type="email"
-                            {...register("email")}
-                            placeholder="firm@example.com"
-                            className={`h-10 ${errors.email ? "border-red-500 focus-visible:ring-red-500" : ""}`}
-                          />
-                          {errors.email && (
-                            <p className="text-xs text-red-500 flex items-center gap-1">
-                              <AlertCircle className="h-3 w-3 flex-shrink-0" />
-                              {errors.email.message}
-                            </p>
-                          )}
-                        </div>
-                      </div>
-
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div className="space-y-1.5">
-                          <Label className="text-xs font-medium text-muted-foreground">
-                            Phone *
-                          </Label>
-                          <Input
-                            {...register("phone")}
-                            placeholder="+91 98765 43210"
-                            className={`h-10 ${errors.phone ? "border-red-500 focus-visible:ring-red-500" : ""}`}
-                          />
-                          {errors.phone && (
-                            <p className="text-xs text-red-500 flex items-center gap-1">
-                              <AlertCircle className="h-3 w-3 flex-shrink-0" />
-                              {errors.phone.message}
-                            </p>
-                          )}
-                        </div>
-                        <div className="space-y-1.5">
-                          <Label className="text-xs font-medium text-muted-foreground">
-                            Alternate Phone
-                          </Label>
-                          <Input
-                            {...register("alternatePhone")}
-                            placeholder="+91 98765 43211"
-                            className={`h-10 ${errors.alternatePhone ? "border-red-500 focus-visible:ring-red-500" : ""}`}
-                          />
-                          {errors.alternatePhone && (
-                            <p className="text-xs text-red-500 flex items-center gap-1">
-                              <AlertCircle className="h-3 w-3 flex-shrink-0" />
-                              {errors.alternatePhone.message}
-                            </p>
-                          )}
-                        </div>
-                      </div>
-
-                      <div className="space-y-1.5">
-                        <Label className="text-xs font-medium text-muted-foreground">
-                          Website
-                        </Label>
-                        <Input
-                          {...register("website")}
-                          placeholder="https://www.example.com"
-                          className={`h-10 ${errors.website ? "border-red-500 focus-visible:ring-red-500" : ""}`}
-                        />
-                        {errors.website && (
-                          <p className="text-xs text-red-500 flex items-center gap-1">
-                            <AlertCircle className="h-3 w-3 flex-shrink-0" />
-                            {errors.website.message}
-                          </p>
-                        )}
-                      </div>
+                      <LogoUploadSection
+                        displayLogo={displayLogo}
+                        croppedImage={imageCrop.croppedImage}
+                        existingLogoUrl={existingLogoUrl}
+                        error={imageCrop.error}
+                        fileInputRef={fileInputRef}
+                        handleInputChange={imageCrop.handleInputChange}
+                        handleRemoveImage={handleRemoveImage}
+                      />
+                      <BasicInfoFields register={register} errors={errors} />
                     </div>
                   )}
                 </div>
@@ -557,66 +802,7 @@ export function FirmSettingsFormDialog({
                   />
                   {expandedSection === "address" && (
                     <div className="p-4 pt-2 space-y-4 animate-in fade-in slide-in-from-top-2 duration-300">
-                      <div className="space-y-1.5">
-                        <Label className="text-xs font-medium text-muted-foreground">
-                          Address *
-                        </Label>
-                        <Input
-                          {...register("address")}
-                          placeholder="Street address"
-                          className={`h-10 ${errors.address ? "border-red-500 focus-visible:ring-red-500" : ""}`}
-                        />
-                        {errors.address && (
-                          <p className="text-xs text-red-500 flex items-center gap-1">
-                            <AlertCircle className="h-3 w-3 flex-shrink-0" />
-                            {errors.address.message}
-                          </p>
-                        )}
-                      </div>
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div className="space-y-1.5">
-                          <Label className="text-xs font-medium text-muted-foreground">
-                            City *
-                          </Label>
-                          <Input
-                            {...register("city")}
-                            placeholder="City"
-                            className={`h-10 ${errors.city ? "border-red-500 focus-visible:ring-red-500" : ""}`}
-                          />
-                          {errors.city && (
-                            <p className="text-xs text-red-500 flex items-center gap-1">
-                              <AlertCircle className="h-3 w-3 flex-shrink-0" />
-                              {errors.city.message}
-                            </p>
-                          )}
-                        </div>
-                        <div className="space-y-1.5">
-                          <Label className="text-xs font-medium text-muted-foreground">
-                            State *
-                          </Label>
-                          <Input
-                            {...register("state")}
-                            placeholder="State"
-                            className={`h-10 ${errors.state ? "border-red-500 focus-visible:ring-red-500" : ""}`}
-                          />
-                          {errors.state && (
-                            <p className="text-xs text-red-500 flex items-center gap-1">
-                              <AlertCircle className="h-3 w-3 flex-shrink-0" />
-                              {errors.state.message}
-                            </p>
-                          )}
-                        </div>
-                      </div>
-                      <div className="space-y-1.5">
-                        <Label className="text-xs font-medium text-muted-foreground">
-                          Country
-                        </Label>
-                        <Input
-                          {...register("country")}
-                          placeholder="India"
-                          className="h-10"
-                        />
-                      </div>
+                      <AddressFields register={register} errors={errors} />
                     </div>
                   )}
                 </div>
@@ -636,93 +822,16 @@ export function FirmSettingsFormDialog({
                   />
                   {expandedSection === "invoice" && (
                     <div className="p-4 pt-2 space-y-4 animate-in fade-in slide-in-from-top-2 duration-300">
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div className="space-y-1.5">
-                          <Label className="text-xs font-medium text-muted-foreground">
-                            Invoice Prefix
-                          </Label>
-                          <Input
-                            {...register("invoicePrefix")}
-                            placeholder="INV"
-                            className="h-10"
-                          />
-                        </div>
-                        <div className="space-y-1.5">
-                          <Label className="text-xs font-medium text-muted-foreground">
-                            Start Number
-                          </Label>
-                          <Input
-                            type="number"
-                            min={1}
-                            {...register("invoiceStartNumber")}
-                            className={`h-10 ${errors.invoiceStartNumber ? "border-red-500 focus-visible:ring-red-500" : ""}`}
-                          />
-                          {errors.invoiceStartNumber && (
-                            <p className="text-xs text-red-500 flex items-center gap-1">
-                              <AlertCircle className="h-3 w-3 flex-shrink-0" />
-                              {errors.invoiceStartNumber.message}
-                            </p>
-                          )}
-                        </div>
-                      </div>
-
-                      {/* Default Notes */}
-                      <div className="space-y-3">
-                        <Label className="text-xs font-medium text-muted-foreground">
-                          Default Invoice Notes
-                        </Label>
-                        {defaultNotes.map((note, index) => (
-                          <div key={index} className="flex items-center gap-2">
-                            <span className="text-xs text-muted-foreground w-5 text-right flex-shrink-0">
-                              {index + 1}.
-                            </span>
-                            <Input
-                              value={note}
-                              onChange={(e) =>
-                                handleUpdateNote(index, e.target.value)
-                              }
-                              placeholder="Enter note..."
-                              className="flex-1 h-10 text-sm"
-                            />
-                            <Button
-                              type="button"
-                              variant="ghost"
-                              size="icon"
-                              className="h-8 w-8 flex-shrink-0 text-red-500 hover:text-red-600 hover:bg-red-500/10"
-                              onClick={() => handleRemoveNote(index)}
-                            >
-                              <Trash2 className="h-3.5 w-3.5" />
-                            </Button>
-                          </div>
-                        ))}
-                        <Button
-                          type="button"
-                          variant="outline"
-                          size="sm"
-                          onClick={handleAddNote}
-                          className="text-xs"
-                        >
-                          <Plus className="h-3.5 w-3.5 mr-1" />
-                          Add Note
-                        </Button>
-                      </div>
-
-                      {/* Is Default */}
-                      <div className="flex items-center space-x-2 pt-2">
-                        <Checkbox
-                          id="firmIsDefault"
-                          checked={isDefault}
-                          onCheckedChange={(checked) =>
-                            setValue("isDefault", checked === true)
-                          }
-                        />
-                        <Label
-                          htmlFor="firmIsDefault"
-                          className="text-xs font-medium text-muted-foreground cursor-pointer"
-                        >
-                          Set as default firm for invoices
-                        </Label>
-                      </div>
+                      <InvoiceSettingsFields
+                        register={register}
+                        errors={errors}
+                        defaultNotes={defaultNotes}
+                        isDefault={isDefault}
+                        setValue={setValue}
+                        onAddNote={handleAddNote}
+                        onUpdateNote={handleUpdateNote}
+                        onRemoveNote={handleRemoveNote}
+                      />
                     </div>
                   )}
                 </div>

@@ -59,6 +59,435 @@ interface CreateInvoicePageProps {
   basePath: string;
 }
 
+interface InvoiceHeaderSectionProps {
+  isEditMode: boolean;
+  projectName: string | undefined;
+  invoiceReference: string;
+  isEditable: boolean;
+  isSaving: boolean;
+  hasSelectedMilestones: boolean;
+  onCancel: () => void;
+  onPreview: () => void;
+  onSaveDraft: () => void;
+  onFinalize: () => void;
+}
+
+function InvoiceHeaderSection({
+  isEditMode,
+  projectName,
+  invoiceReference,
+  isEditable,
+  isSaving,
+  hasSelectedMilestones,
+  onCancel,
+  onPreview,
+  onSaveDraft,
+  onFinalize,
+}: InvoiceHeaderSectionProps) {
+  return (
+    <div className="flex items-center justify-between">
+      <div className="flex items-center gap-4">
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={onCancel}
+          className="rounded-full"
+        >
+          <ArrowLeft className="h-5 w-5" />
+        </Button>
+        <div>
+          <h1 className="text-2xl font-bold text-foreground flex items-center gap-3">
+            <div className="p-2 bg-blue-500/10 rounded-lg border border-blue-500/20">
+              <FileText className="h-6 w-6 text-blue-600 dark:text-blue-400" />
+            </div>
+            {isEditMode ? "Edit Invoice" : "Create New Invoice"}
+          </h1>
+          <p className="text-sm text-muted-foreground mt-1">
+            {projectName} • {invoiceReference}
+          </p>
+        </div>
+      </div>
+
+      <div className="hidden md:flex items-center gap-3">
+        <Button variant="outline" onClick={onCancel} disabled={isSaving}>
+          Cancel
+        </Button>
+        {isEditable && (
+          <>
+            <Button
+              variant="outline"
+              onClick={onPreview}
+              disabled={isSaving || !hasSelectedMilestones}
+              className="border-blue-500/50 text-blue-600 hover:bg-blue-500/10"
+            >
+              <Eye className="h-4 w-4 mr-2" />
+              Preview
+            </Button>
+            <Button
+              variant="secondary"
+              onClick={onSaveDraft}
+              disabled={isSaving || !hasSelectedMilestones}
+            >
+              {isSaving ? (
+                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+              ) : (
+                <Save className="h-4 w-4 mr-2" />
+              )}
+              Save as Draft
+            </Button>
+            <Button
+              onClick={onFinalize}
+              disabled={isSaving || !hasSelectedMilestones}
+              className="bg-gradient-to-r from-green-600 to-teal-600 hover:from-green-700 hover:to-teal-700"
+            >
+              {isSaving ? (
+                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+              ) : (
+                <CheckCircle className="h-4 w-4 mr-2" />
+              )}
+              Finalize Invoice
+            </Button>
+          </>
+        )}
+      </div>
+    </div>
+  );
+}
+
+interface FirmDetailsCardProps {
+  allFirmSettings: FirmSettings[];
+  selectedFirm: FirmSettings | undefined;
+  isEditable: boolean;
+  basePath: string;
+  onSelectFirm: (firmId: string) => void;
+}
+
+function FirmDetailsCard({
+  allFirmSettings,
+  selectedFirm,
+  isEditable,
+  basePath,
+  onSelectFirm,
+}: FirmDetailsCardProps) {
+  return (
+    <Card className="relative overflow-hidden bg-card/50 backdrop-blur-sm border-border/50">
+      <div className="absolute inset-0 bg-gradient-to-br from-amber-500/[0.02] to-orange-500/[0.02] dark:from-amber-400/[0.05] dark:to-orange-400/[0.05]"></div>
+      <CardHeader className="relative">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="p-2 bg-amber-500/10 rounded-lg border border-amber-500/20">
+              <Briefcase className="h-5 w-5 text-amber-600 dark:text-amber-400" />
+            </div>
+            <CardTitle className="text-foreground">Firm Details</CardTitle>
+          </div>
+          <Link
+            href={`/${basePath.split("/")[1]}/firm-settings`}
+            className="text-xs text-muted-foreground hover:text-foreground flex items-center gap-1 transition-colors"
+          >
+            Manage Firms
+            <ExternalLink className="h-3 w-3" />
+          </Link>
+        </div>
+      </CardHeader>
+      <CardContent className="relative space-y-4">
+        {allFirmSettings.length === 0 ? (
+          <div className="text-center py-4">
+            <p className="text-sm text-muted-foreground mb-2">
+              No firm settings configured yet.
+            </p>
+            <Link
+              href={`/${basePath.split("/")[1]}/firm-settings`}
+              className="text-sm text-purple-600 hover:text-purple-700 underline"
+            >
+              Add firm details
+            </Link>
+          </div>
+        ) : (
+          <>
+            <div className="space-y-2">
+              <Label className="text-sm">
+                Select Firm <span className="text-red-500">*</span>
+              </Label>
+              <Select
+                value={selectedFirm?.id || ""}
+                onValueChange={(value) => onSelectFirm(value)}
+                disabled={!isEditable}
+              >
+                <SelectTrigger className="text-sm">
+                  <SelectValue placeholder="Select a firm..." />
+                </SelectTrigger>
+                <SelectContent>
+                  {allFirmSettings.map((firm) => (
+                    <SelectItem key={firm.id} value={firm.id}>
+                      {firm.name}
+                      {firm.isDefault ? " (Default)" : ""}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            {selectedFirm && (
+              <div className="flex items-start gap-4 p-3 rounded-lg bg-muted/50 border border-border/50">
+                {selectedFirm.logo || selectedFirm.logoKey ? (
+                  <img
+                    src={
+                      selectedFirm.logo ||
+                      getCloudFrontUrl(selectedFirm.logoKey) ||
+                      ""
+                    }
+                    alt={selectedFirm.name}
+                    className="w-12 h-12 object-contain rounded-lg border border-gray-200 dark:border-gray-700 bg-white flex-shrink-0"
+                  />
+                ) : (
+                  <div className="w-12 h-12 bg-gradient-to-br from-purple-500 to-blue-500 rounded-lg flex items-center justify-center flex-shrink-0">
+                    <span className="text-sm font-bold text-white">
+                      {selectedFirm.name.substring(0, 2).toUpperCase()}
+                    </span>
+                  </div>
+                )}
+                <div className="min-w-0 flex-1 space-y-1">
+                  <p className="font-medium text-sm text-foreground truncate">
+                    {selectedFirm.name}
+                  </p>
+                  <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                    <Phone className="h-3 w-3 flex-shrink-0" />
+                    <span className="truncate">{selectedFirm.phone}</span>
+                  </div>
+                  <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                    <Mail className="h-3 w-3 flex-shrink-0" />
+                    <span className="truncate">{selectedFirm.email}</span>
+                  </div>
+                  <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                    <MapPin className="h-3 w-3 flex-shrink-0" />
+                    <span className="truncate">
+                      {selectedFirm.address}, {selectedFirm.city}
+                    </span>
+                  </div>
+                </div>
+              </div>
+            )}
+          </>
+        )}
+      </CardContent>
+    </Card>
+  );
+}
+
+interface BasicInfoCardProps {
+  invoiceDate: string;
+  invoiceReference: string;
+  notes: string;
+  isEditable: boolean;
+  onSetDate: (date: string) => void;
+  onSetNotes: (notes: string) => void;
+}
+
+function BasicInfoCard({
+  invoiceDate,
+  invoiceReference,
+  notes,
+  isEditable,
+  onSetDate,
+  onSetNotes,
+}: BasicInfoCardProps) {
+  return (
+    <Card className="relative overflow-hidden bg-card/50 backdrop-blur-sm border-border/50">
+      <div className="absolute inset-0 bg-gradient-to-br from-blue-500/[0.02] to-purple-500/[0.02] dark:from-blue-400/[0.05] dark:to-purple-400/[0.05]"></div>
+      <CardHeader className="relative">
+        <div className="flex items-center gap-3">
+          <div className="p-2 bg-blue-500/10 rounded-lg border border-blue-500/20">
+            <Calendar className="h-5 w-5 text-blue-600 dark:text-blue-400" />
+          </div>
+          <CardTitle className="text-foreground">Basic Information</CardTitle>
+        </div>
+      </CardHeader>
+      <CardContent className="relative space-y-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="space-y-2">
+            <Label htmlFor="invoiceDate" className="text-sm">
+              Invoice Date <span className="text-red-500">*</span>
+            </Label>
+            <Input
+              id="invoiceDate"
+              type="date"
+              value={invoiceDate}
+              onChange={(e) => onSetDate(e.target.value)}
+              disabled={!isEditable}
+              className="text-sm"
+            />
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="invoiceReference" className="text-sm">
+              Invoice Reference
+            </Label>
+            <Input
+              id="invoiceReference"
+              value={invoiceReference}
+              disabled
+              className="text-sm bg-muted"
+            />
+          </div>
+        </div>
+
+        <div className="space-y-2">
+          <Label htmlFor="notes" className="text-sm">
+            Notes
+          </Label>
+          <Textarea
+            id="notes"
+            value={notes}
+            onChange={(e) => onSetNotes(e.target.value)}
+            placeholder="Add any notes or special terms..."
+            rows={3}
+            disabled={!isEditable}
+            className="text-sm resize-none"
+          />
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
+interface MilestoneSelectionCardProps {
+  milestonesWithStatus: MilestoneWithInvoicing[];
+  selectedMilestones: typeof initialInvoiceFormState.selectedMilestones;
+  expandedMilestones: Set<string>;
+  isEditable: boolean;
+  onToggleMilestone: (id: string, milestone: MilestoneWithInvoicing) => void;
+  onUpdateRate: (
+    id: string,
+    data: { rate: number; quantity: number; calculatedAmount: number }
+  ) => void;
+  onUpdateAmount: (id: string, amount: number) => void;
+  onToggleExpand: (milestoneId: string) => void;
+}
+
+function MilestoneSelectionCard({
+  milestonesWithStatus,
+  selectedMilestones,
+  expandedMilestones,
+  isEditable,
+  onToggleMilestone,
+  onUpdateRate,
+  onUpdateAmount,
+  onToggleExpand,
+}: MilestoneSelectionCardProps) {
+  return (
+    <Card className="relative overflow-hidden bg-card/50 backdrop-blur-sm border-border/50">
+      <div className="absolute inset-0 bg-gradient-to-br from-purple-500/[0.02] to-blue-500/[0.02] dark:from-purple-400/[0.05] dark:to-blue-400/[0.05]"></div>
+      <CardHeader className="relative">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="p-2 bg-purple-500/10 rounded-lg border border-purple-500/20">
+              <FileText className="h-5 w-5 text-purple-600 dark:text-purple-400" />
+            </div>
+            <CardTitle className="text-foreground">
+              Select Milestones <span className="text-red-500">*</span>
+            </CardTitle>
+          </div>
+          <p className="text-sm text-muted-foreground">
+            {selectedMilestones.size} milestone(s) selected
+          </p>
+        </div>
+      </CardHeader>
+      <CardContent className="relative">
+        <MilestoneSelectionTable
+          milestones={milestonesWithStatus}
+          selectedMilestones={selectedMilestones}
+          onToggleMilestone={(id, milestone) => {
+            if (isEditable) {
+              onToggleMilestone(id, milestone);
+            }
+          }}
+          onUpdateRate={(id, data) => {
+            if (isEditable) {
+              onUpdateRate(id, data);
+            }
+          }}
+          onUpdateAmount={(id, amount) => {
+            if (isEditable) {
+              onUpdateAmount(id, amount);
+            }
+          }}
+          expandedMilestones={expandedMilestones}
+          onToggleExpand={onToggleExpand}
+        />
+      </CardContent>
+    </Card>
+  );
+}
+
+interface MobileActionButtonsProps {
+  isEditable: boolean;
+  isSaving: boolean;
+  hasSelectedMilestones: boolean;
+  onCancel: () => void;
+  onPreview: () => void;
+  onSaveDraft: () => void;
+  onFinalize: () => void;
+}
+
+function MobileActionButtons({
+  isEditable,
+  isSaving,
+  hasSelectedMilestones,
+  onCancel,
+  onPreview,
+  onSaveDraft,
+  onFinalize,
+}: MobileActionButtonsProps) {
+  return (
+    <>
+      <div className="md:hidden fixed bottom-0 left-0 right-0 p-4 bg-background/95 backdrop-blur border-t border-border">
+        <div className="flex items-center gap-2">
+          <Button
+            variant="outline"
+            onClick={onCancel}
+            disabled={isSaving}
+            size="sm"
+          >
+            Cancel
+          </Button>
+          {isEditable && (
+            <>
+              <Button
+                variant="outline"
+                onClick={onPreview}
+                disabled={isSaving || !hasSelectedMilestones}
+                size="sm"
+                className="border-blue-500/50 text-blue-600"
+              >
+                <Eye className="h-4 w-4" />
+              </Button>
+              <Button
+                variant="secondary"
+                onClick={onSaveDraft}
+                disabled={isSaving || !hasSelectedMilestones}
+                size="sm"
+                className="flex-1"
+              >
+                Draft
+              </Button>
+              <Button
+                onClick={onFinalize}
+                disabled={isSaving || !hasSelectedMilestones}
+                size="sm"
+                className="flex-1 bg-gradient-to-r from-green-600 to-teal-600"
+              >
+                Finalize
+              </Button>
+            </>
+          )}
+        </div>
+      </div>
+
+      <div className="md:hidden h-20"></div>
+    </>
+  );
+}
+
 export function CreateInvoicePage({
   projectId,
   basePath,
@@ -431,308 +860,73 @@ export function CreateInvoicePage({
     );
   }
 
+  const hasSelectedMilestones = state.selectedMilestones.size > 0;
+
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-4">
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={handleCancel}
-            className="rounded-full"
-          >
-            <ArrowLeft className="h-5 w-5" />
-          </Button>
-          <div>
-            <h1 className="text-2xl font-bold text-foreground flex items-center gap-3">
-              <div className="p-2 bg-blue-500/10 rounded-lg border border-blue-500/20">
-                <FileText className="h-6 w-6 text-blue-600 dark:text-blue-400" />
-              </div>
-              {isEditMode ? "Edit Invoice" : "Create New Invoice"}
-            </h1>
-            <p className="text-sm text-muted-foreground mt-1">
-              {project?.name} • {state.invoiceReference}
-            </p>
-          </div>
-        </div>
+      <InvoiceHeaderSection
+        isEditMode={isEditMode}
+        projectName={project?.name}
+        invoiceReference={state.invoiceReference}
+        isEditable={isEditable}
+        isSaving={isSaving}
+        hasSelectedMilestones={hasSelectedMilestones}
+        onCancel={handleCancel}
+        onPreview={handlePreview}
+        onSaveDraft={handleSaveDraft}
+        onFinalize={handleFinalize}
+      />
 
-        {/* Action Buttons - Desktop */}
-        <div className="hidden md:flex items-center gap-3">
-          <Button variant="outline" onClick={handleCancel} disabled={isSaving}>
-            Cancel
-          </Button>
-          {isEditable && (
-            <>
-              <Button
-                variant="outline"
-                onClick={handlePreview}
-                disabled={isSaving || state.selectedMilestones.size === 0}
-                className="border-blue-500/50 text-blue-600 hover:bg-blue-500/10"
-              >
-                <Eye className="h-4 w-4 mr-2" />
-                Preview
-              </Button>
-              <Button
-                variant="secondary"
-                onClick={handleSaveDraft}
-                disabled={isSaving || state.selectedMilestones.size === 0}
-              >
-                {isSaving ? (
-                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                ) : (
-                  <Save className="h-4 w-4 mr-2" />
-                )}
-                Save as Draft
-              </Button>
-              <Button
-                onClick={handleFinalize}
-                disabled={isSaving || state.selectedMilestones.size === 0}
-                className="bg-gradient-to-r from-green-600 to-teal-600 hover:from-green-700 hover:to-teal-700"
-              >
-                {isSaving ? (
-                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                ) : (
-                  <CheckCircle className="h-4 w-4 mr-2" />
-                )}
-                Finalize Invoice
-              </Button>
-            </>
-          )}
-        </div>
-      </div>
-
-      {/* Main Content */}
       <div className="flex flex-col lg:flex-row gap-6">
-        {/* Left Column - Form */}
         <div className="flex-1 space-y-6">
-          {/* Firm Details Card */}
-          <Card className="relative overflow-hidden bg-card/50 backdrop-blur-sm border-border/50">
-            <div className="absolute inset-0 bg-gradient-to-br from-amber-500/[0.02] to-orange-500/[0.02] dark:from-amber-400/[0.05] dark:to-orange-400/[0.05]"></div>
-            <CardHeader className="relative">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <div className="p-2 bg-amber-500/10 rounded-lg border border-amber-500/20">
-                    <Briefcase className="h-5 w-5 text-amber-600 dark:text-amber-400" />
-                  </div>
-                  <CardTitle className="text-foreground">
-                    Firm Details
-                  </CardTitle>
-                </div>
-                <Link
-                  href={`/${basePath.split("/")[1]}/firm-settings`}
-                  className="text-xs text-muted-foreground hover:text-foreground flex items-center gap-1 transition-colors"
-                >
-                  Manage Firms
-                  <ExternalLink className="h-3 w-3" />
-                </Link>
-              </div>
-            </CardHeader>
-            <CardContent className="relative space-y-4">
-              {allFirmSettings.length === 0 ? (
-                <div className="text-center py-4">
-                  <p className="text-sm text-muted-foreground mb-2">
-                    No firm settings configured yet.
-                  </p>
-                  <Link
-                    href={`/${basePath.split("/")[1]}/firm-settings`}
-                    className="text-sm text-purple-600 hover:text-purple-700 underline"
-                  >
-                    Add firm details
-                  </Link>
-                </div>
-              ) : (
-                <>
-                  <div className="space-y-2">
-                    <Label className="text-sm">
-                      Select Firm <span className="text-red-500">*</span>
-                    </Label>
-                    <Select
-                      value={selectedFirm?.id || ""}
-                      onValueChange={(value) => setSelectedFirmId(value)}
-                      disabled={!isEditable}
-                    >
-                      <SelectTrigger className="text-sm">
-                        <SelectValue placeholder="Select a firm..." />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {allFirmSettings.map((firm) => (
-                          <SelectItem key={firm.id} value={firm.id}>
-                            {firm.name}
-                            {firm.isDefault ? " (Default)" : ""}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
+          <FirmDetailsCard
+            allFirmSettings={allFirmSettings}
+            selectedFirm={selectedFirm}
+            isEditable={isEditable}
+            basePath={basePath}
+            onSelectFirm={setSelectedFirmId}
+          />
 
-                  {/* Selected Firm Preview */}
-                  {selectedFirm && (
-                    <div className="flex items-start gap-4 p-3 rounded-lg bg-muted/50 border border-border/50">
-                      {/* Logo */}
-                      {selectedFirm.logo || selectedFirm.logoKey ? (
-                        <img
-                          src={
-                            selectedFirm.logo ||
-                            getCloudFrontUrl(selectedFirm.logoKey) ||
-                            ""
-                          }
-                          alt={selectedFirm.name}
-                          className="w-12 h-12 object-contain rounded-lg border border-gray-200 dark:border-gray-700 bg-white flex-shrink-0"
-                        />
-                      ) : (
-                        <div className="w-12 h-12 bg-gradient-to-br from-purple-500 to-blue-500 rounded-lg flex items-center justify-center flex-shrink-0">
-                          <span className="text-sm font-bold text-white">
-                            {selectedFirm.name.substring(0, 2).toUpperCase()}
-                          </span>
-                        </div>
-                      )}
-                      <div className="min-w-0 flex-1 space-y-1">
-                        <p className="font-medium text-sm text-foreground truncate">
-                          {selectedFirm.name}
-                        </p>
-                        <div className="flex items-center gap-1 text-xs text-muted-foreground">
-                          <Phone className="h-3 w-3 flex-shrink-0" />
-                          <span className="truncate">{selectedFirm.phone}</span>
-                        </div>
-                        <div className="flex items-center gap-1 text-xs text-muted-foreground">
-                          <Mail className="h-3 w-3 flex-shrink-0" />
-                          <span className="truncate">{selectedFirm.email}</span>
-                        </div>
-                        <div className="flex items-center gap-1 text-xs text-muted-foreground">
-                          <MapPin className="h-3 w-3 flex-shrink-0" />
-                          <span className="truncate">
-                            {selectedFirm.address}, {selectedFirm.city}
-                          </span>
-                        </div>
-                      </div>
-                    </div>
-                  )}
-                </>
-              )}
-            </CardContent>
-          </Card>
+          <BasicInfoCard
+            invoiceDate={state.invoiceDate}
+            invoiceReference={state.invoiceReference}
+            notes={state.notes}
+            isEditable={isEditable}
+            onSetDate={(date) =>
+              dispatch({ type: "SET_INVOICE_DATE", payload: date })
+            }
+            onSetNotes={(notes) =>
+              dispatch({ type: "SET_NOTES", payload: notes })
+            }
+          />
 
-          {/* Basic Info Card */}
-          <Card className="relative overflow-hidden bg-card/50 backdrop-blur-sm border-border/50">
-            <div className="absolute inset-0 bg-gradient-to-br from-blue-500/[0.02] to-purple-500/[0.02] dark:from-blue-400/[0.05] dark:to-purple-400/[0.05]"></div>
-            <CardHeader className="relative">
-              <div className="flex items-center gap-3">
-                <div className="p-2 bg-blue-500/10 rounded-lg border border-blue-500/20">
-                  <Calendar className="h-5 w-5 text-blue-600 dark:text-blue-400" />
-                </div>
-                <CardTitle className="text-foreground">
-                  Basic Information
-                </CardTitle>
-              </div>
-            </CardHeader>
-            <CardContent className="relative space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="invoiceDate" className="text-sm">
-                    Invoice Date <span className="text-red-500">*</span>
-                  </Label>
-                  <Input
-                    id="invoiceDate"
-                    type="date"
-                    value={state.invoiceDate}
-                    onChange={(e) =>
-                      dispatch({
-                        type: "SET_INVOICE_DATE",
-                        payload: e.target.value,
-                      })
-                    }
-                    disabled={!isEditable}
-                    className="text-sm"
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="invoiceReference" className="text-sm">
-                    Invoice Reference
-                  </Label>
-                  <Input
-                    id="invoiceReference"
-                    value={state.invoiceReference}
-                    disabled
-                    className="text-sm bg-muted"
-                  />
-                </div>
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="notes" className="text-sm">
-                  Notes
-                </Label>
-                <Textarea
-                  id="notes"
-                  value={state.notes}
-                  onChange={(e) =>
-                    dispatch({ type: "SET_NOTES", payload: e.target.value })
-                  }
-                  placeholder="Add any notes or special terms..."
-                  rows={3}
-                  disabled={!isEditable}
-                  className="text-sm resize-none"
-                />
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Milestone Selection Card */}
-          <Card className="relative overflow-hidden bg-card/50 backdrop-blur-sm border-border/50">
-            <div className="absolute inset-0 bg-gradient-to-br from-purple-500/[0.02] to-blue-500/[0.02] dark:from-purple-400/[0.05] dark:to-blue-400/[0.05]"></div>
-            <CardHeader className="relative">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <div className="p-2 bg-purple-500/10 rounded-lg border border-purple-500/20">
-                    <FileText className="h-5 w-5 text-purple-600 dark:text-purple-400" />
-                  </div>
-                  <CardTitle className="text-foreground">
-                    Select Milestones <span className="text-red-500">*</span>
-                  </CardTitle>
-                </div>
-                <p className="text-sm text-muted-foreground">
-                  {state.selectedMilestones.size} milestone(s) selected
-                </p>
-              </div>
-            </CardHeader>
-            <CardContent className="relative">
-              <MilestoneSelectionTable
-                milestones={milestonesWithStatus}
-                selectedMilestones={state.selectedMilestones}
-                onToggleMilestone={(id, milestone) => {
-                  if (isEditable) {
-                    dispatch({
-                      type: "TOGGLE_MILESTONE",
-                      payload: { milestoneId: id, milestone },
-                    });
-                  }
-                }}
-                onUpdateRate={(id, data) => {
-                  if (isEditable) {
-                    dispatch({
-                      type: "UPDATE_MILESTONE_RATE",
-                      payload: { milestoneId: id, ...data },
-                    });
-                  }
-                }}
-                onUpdateAmount={(id, amount) => {
-                  if (isEditable) {
-                    dispatch({
-                      type: "UPDATE_MILESTONE_AMOUNT",
-                      payload: { milestoneId: id, amount },
-                    });
-                  }
-                }}
-                expandedMilestones={expandedMilestones}
-                onToggleExpand={handleToggleExpand}
-              />
-            </CardContent>
-          </Card>
+          <MilestoneSelectionCard
+            milestonesWithStatus={milestonesWithStatus}
+            selectedMilestones={state.selectedMilestones}
+            expandedMilestones={expandedMilestones}
+            isEditable={isEditable}
+            onToggleMilestone={(id, milestone) =>
+              dispatch({
+                type: "TOGGLE_MILESTONE",
+                payload: { milestoneId: id, milestone },
+              })
+            }
+            onUpdateRate={(id, data) =>
+              dispatch({
+                type: "UPDATE_MILESTONE_RATE",
+                payload: { milestoneId: id, ...data },
+              })
+            }
+            onUpdateAmount={(id, amount) =>
+              dispatch({
+                type: "UPDATE_MILESTONE_AMOUNT",
+                payload: { milestoneId: id, amount },
+              })
+            }
+            onToggleExpand={handleToggleExpand}
+          />
         </div>
 
-        {/* Right Column - Summary */}
         <div className="lg:w-80">
           <InvoiceSummaryPanel
             subtotal={state.subtotal}
@@ -756,52 +950,15 @@ export function CreateInvoicePage({
         </div>
       </div>
 
-      {/* Mobile Action Buttons */}
-      <div className="md:hidden fixed bottom-0 left-0 right-0 p-4 bg-background/95 backdrop-blur border-t border-border">
-        <div className="flex items-center gap-2">
-          <Button
-            variant="outline"
-            onClick={handleCancel}
-            disabled={isSaving}
-            size="sm"
-          >
-            Cancel
-          </Button>
-          {isEditable && (
-            <>
-              <Button
-                variant="outline"
-                onClick={handlePreview}
-                disabled={isSaving || state.selectedMilestones.size === 0}
-                size="sm"
-                className="border-blue-500/50 text-blue-600"
-              >
-                <Eye className="h-4 w-4" />
-              </Button>
-              <Button
-                variant="secondary"
-                onClick={handleSaveDraft}
-                disabled={isSaving || state.selectedMilestones.size === 0}
-                size="sm"
-                className="flex-1"
-              >
-                Draft
-              </Button>
-              <Button
-                onClick={handleFinalize}
-                disabled={isSaving || state.selectedMilestones.size === 0}
-                size="sm"
-                className="flex-1 bg-gradient-to-r from-green-600 to-teal-600"
-              >
-                Finalize
-              </Button>
-            </>
-          )}
-        </div>
-      </div>
-
-      {/* Spacer for mobile fixed buttons */}
-      <div className="md:hidden h-20"></div>
+      <MobileActionButtons
+        isEditable={isEditable}
+        isSaving={isSaving}
+        hasSelectedMilestones={hasSelectedMilestones}
+        onCancel={handleCancel}
+        onPreview={handlePreview}
+        onSaveDraft={handleSaveDraft}
+        onFinalize={handleFinalize}
+      />
     </div>
   );
 }
