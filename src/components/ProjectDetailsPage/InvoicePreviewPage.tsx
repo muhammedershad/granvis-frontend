@@ -106,7 +106,7 @@ function buildInvoiceData(opts: {
   project: { clientId?: string };
   params: ReturnType<typeof parseSearchParams>;
   firmSettings: FirmSettings;
-  firmSettingsData: FirmSettings | undefined;
+  firmSettingsData: FirmSettings | null | undefined;
   user: {
     firstName?: string;
     lastName?: string;

@@ -122,7 +122,10 @@ export function calculateDiscount(
 
 export function calculateMilestoneInvoicingStatus(
   milestone: Milestone,
-  invoices: Invoice[]
+  invoices: {
+    status: string;
+    milestoneItems: { milestoneId: string; editableAmount: number }[];
+  }[]
 ): { status: InvoicingStatus; totalBilled: number; remainingAmount: number } {
   // Filter finalized invoices (exclude drafts)
   const relevantInvoices = invoices.filter(

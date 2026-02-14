@@ -45,6 +45,7 @@ import { FirmSettings } from "@/types/firm-settings";
 import {
   CreateInvoiceDto,
   InvoiceMilestoneItem,
+  InvoiceStatus,
   useCreateInvoiceMutation,
   useGetInvoiceByIdQuery,
   useGetInvoicesByProjectQuery,
@@ -358,7 +359,7 @@ interface MilestoneSelectionCardProps {
   onToggleMilestone: (id: string, milestone: MilestoneWithInvoicing) => void;
   onUpdateRate: (
     id: string,
-    data: { rate: number; quantity: number; calculatedAmount: number }
+    data: { rateType: string; rate: number; quantity: number }
   ) => void;
   onUpdateAmount: (id: string, amount: number) => void;
   onToggleExpand: (milestoneId: string) => void;
@@ -775,7 +776,7 @@ export function CreateInvoicePage({
             paidAmount: invoiceData.paidAmount,
             notes: invoiceData.notes,
             defaultNotes: invoiceData.defaultNotes,
-            status: "sent",
+            status: InvoiceStatus.SENT,
           },
         }).unwrap();
         toast.success("Invoice finalized successfully");

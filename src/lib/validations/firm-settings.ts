@@ -58,7 +58,7 @@ export const createFirmSettingsSchema = z.object({
     .max(20, "Invoice prefix must not exceed 20 characters")
     .optional(),
   invoiceStartNumber: z.coerce
-    .number({ invalid_type_error: "Must be a number" })
+    .number({ error: "Must be a number" })
     .int("Must be a whole number")
     .min(1, "Invoice start number must be at least 1")
     .optional(),

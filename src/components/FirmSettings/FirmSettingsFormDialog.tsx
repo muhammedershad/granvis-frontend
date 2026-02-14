@@ -617,7 +617,8 @@ export function FirmSettingsFormDialog({
     watch,
     reset,
   } = useForm<CreateFirmSettingsFormData>({
-    resolver: zodResolver(createFirmSettingsSchema),
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    resolver: zodResolver(createFirmSettingsSchema) as any,
     mode: "onBlur",
     defaultValues: EMPTY_FORM_VALUES,
   });

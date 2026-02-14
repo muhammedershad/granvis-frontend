@@ -22,12 +22,14 @@ import {
   MilestoneInvoiceItem,
   MilestoneWithInvoicing,
 } from "./invoiceMockData";
-import { Milestone } from "@/types/milestone";
 
 interface MilestoneSelectionTableProps {
   milestones: MilestoneWithInvoicing[];
   selectedMilestones: Map<string, MilestoneInvoiceItem>;
-  onToggleMilestone: (milestoneId: string, milestone: Milestone) => void;
+  onToggleMilestone: (
+    milestoneId: string,
+    milestone: MilestoneWithInvoicing
+  ) => void;
   onUpdateRate: (
     milestoneId: string,
     data: { rateType: string; rate: number; quantity: number }
