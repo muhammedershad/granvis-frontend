@@ -258,7 +258,11 @@ export function ClientDetailsPage({
                 <Upload className="h-4 w-4 mr-2" />
                 Upload Documents
               </DropdownMenuItem>
-              <DropdownMenuItem>
+              <DropdownMenuItem
+                onClick={() =>
+                  router.push(`/admin/projects/new?clientId=${clientId}`)
+                }
+              >
                 <Plus className="h-4 w-4 mr-2" />
                 Create New Project
               </DropdownMenuItem>
@@ -301,13 +305,24 @@ export function ClientDetailsPage({
               </Button>
             </div>
           ) : (
-            <Button
-              onClick={handleEditToggle}
-              className="bg-blue-600 hover:bg-blue-700"
-            >
-              <Edit className="h-4 w-4 mr-2" />
-              Edit Client
-            </Button>
+            <>
+              <Button
+                onClick={() =>
+                  router.push(`/admin/projects/new?clientId=${clientId}`)
+                }
+                className="bg-gradient-to-r from-purple-500 to-blue-500 hover:from-purple-600 hover:to-blue-600"
+              >
+                <Plus className="h-4 w-4 mr-2" />
+                Add Project
+              </Button>
+              <Button
+                onClick={handleEditToggle}
+                className="bg-blue-600 hover:bg-blue-700"
+              >
+                <Edit className="h-4 w-4 mr-2" />
+                Edit Client
+              </Button>
+            </>
           )}
         </div>
       </div>

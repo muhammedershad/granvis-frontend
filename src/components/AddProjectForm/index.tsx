@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { toast } from "sonner";
@@ -46,6 +46,7 @@ interface AddProjectFormProps {
   isSubmitting?: boolean;
   initialData?: Project;
   mode?: "create" | "edit";
+  preSelectedClient?: Client;
 }
 
 // Helper to parse description for client requirements
@@ -288,6 +289,7 @@ export function AddProjectForm({
   isSubmitting = false,
   initialData,
   mode = "create",
+  preSelectedClient,
 }: AddProjectFormProps) {
   const router = useRouter();
   const isEditMode = mode === "edit" && !!initialData;
@@ -395,6 +397,15 @@ export function AddProjectForm({
     setValue("clientEmail", client.email || "");
     setValue("clientPhone", client.phone || "");
   };
+
+  // Auto-select pre-selected client (when navigating from client page)
+  useEffect(() => {
+    if (preSelectedClient && !selectedClient) {
+      handleClientSelect(preSelectedClient);
+      setExpandedSection("stakeholders");
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [preSelectedClient]);
 
   const uploadImage = async (): Promise<string[] | null> => {
     // Use blob if available (cropped image), otherwise no image to upload

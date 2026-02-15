@@ -1,18 +1,26 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import RoleGuard from "@/components/auth/RoleGuard";
 import { IAuthRoles } from "@/store/slices/authSlice";
 import { AddProjectForm } from "@/components/AddProjectForm";
 import { useCreateProjectMutation } from "@/lib/api/projectsApi";
+import { useGetClientByIdQuery } from "@/lib/api/clientsApi";
 import { toast } from "sonner";
 import { Project } from "@/types/project";
 
 export default function NewProjectPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const clientId = searchParams.get("clientId");
+
   const [createProject] = useCreateProjectMutation();
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const { data: preSelectedClient } = useGetClientByIdQuery(clientId!, {
+    skip: !clientId,
+  });
 
   const handleCreateProject = async (
     newProject: Omit<Project, "id" | "createdAt" | "updatedAt">
@@ -54,6 +62,7 @@ export default function NewProjectPage() {
           onSubmit={handleCreateProject}
           onCancel={handleCancel}
           isSubmitting={isSubmitting}
+          preSelectedClient={preSelectedClient}
         />
       </div>
     </RoleGuard>
