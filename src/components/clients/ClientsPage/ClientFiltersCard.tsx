@@ -41,7 +41,7 @@ export function ClientFiltersCard({
             <div className="relative">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
               <Input
-                placeholder="Search clients..."
+                placeholder="Search by name, phone number..."
                 value={filters.search}
                 onChange={(e) => onFilterChange("search", e.target.value)}
                 className="pl-10 pr-10 bg-white/60 dark:bg-white/5 border-white/40 dark:border-white/10 text-foreground placeholder:text-muted-foreground focus:ring-2 focus:ring-purple-500/50 shadow-sm"
