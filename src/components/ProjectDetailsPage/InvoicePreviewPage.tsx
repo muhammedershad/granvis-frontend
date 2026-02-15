@@ -22,8 +22,11 @@ import {
 import { useGetClientByIdQuery } from "@/lib/api/clientsApi";
 import {
   CreateInvoiceDto,
+  Invoice,
   InvoiceMilestoneItem,
   useCreateInvoiceMutation,
+  useGenerateInvoicePdfMutation,
+  useGetInvoiceByIdQuery,
 } from "@/lib/api/invoicesApi";
 import { useAppSelector } from "@/store/hooks";
 import { toast } from "sonner";
@@ -138,9 +141,131 @@ function buildInvoiceData(opts: {
   };
 }
 
+function deriveEffectiveParams(
+  isViewMode: boolean,
+  existingInvoice: Invoice | undefined,
+  params: ReturnType<typeof parseSearchParams>
+) {
+  if (!isViewMode || !existingInvoice) {
+    return params;
+  }
+  return {
+    invoiceDate: existingInvoice.invoiceDate?.split("T")[0] || "",
+    invoiceRef: existingInvoice.invoiceNumber,
+    notes: existingInvoice.notes
+      ? existingInvoice.notes.split("\n")
+      : existingInvoice.defaultNotes,
+    milestoneItems: existingInvoice.milestoneItems,
+    subtotal: existingInvoice.subtotal,
+    discountType: existingInvoice.discountType,
+    discountValue: existingInvoice.discountValue,
+    discountAmount: existingInvoice.discountAmount,
+    netTotal: existingInvoice.netTotal,
+    paidAmount: existingInvoice.paidAmount,
+    firmSettingsId: existingInvoice.firmSettingsId || "",
+  };
+}
+
+async function downloadInvoicePdf(
+  generatePdf: ReturnType<typeof useGenerateInvoicePdfMutation>[0],
+  invoiceId: string,
+  invoiceNumber: string
+) {
+  const result = await generatePdf(invoiceId).unwrap();
+  const byteCharacters = atob(result.pdfBase64);
+  const byteArray = new Uint8Array(byteCharacters.length);
+  for (let i = 0; i < byteCharacters.length; i++) {
+    byteArray[i] = byteCharacters.charCodeAt(i);
+  }
+  const blob = new Blob([byteArray], { type: "application/pdf" });
+  const blobUrl = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = blobUrl;
+  link.download = `${invoiceNumber}.pdf`;
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  URL.revokeObjectURL(blobUrl);
+}
+
+function useInvoiceData(projectId: string) {
+  const searchParams = useSearchParams();
+  const user = useAppSelector((state) => state.auth.user);
+  const [createInvoice, { isLoading: isCreating }] = useCreateInvoiceMutation();
+  const [generatePdf, { isLoading: isDownloading }] =
+    useGenerateInvoicePdfMutation();
+
+  const invoiceId = searchParams.get("invoiceId");
+  const isViewMode = !!invoiceId;
+  const params = parseSearchParams(searchParams);
+
+  const { data: existingInvoice, isLoading: isLoadingInvoice } =
+    useGetInvoiceByIdQuery(invoiceId || "", { skip: !invoiceId });
+
+  const effectiveParams = deriveEffectiveParams(
+    isViewMode,
+    existingInvoice,
+    params
+  );
+
+  const {
+    data: project,
+    isLoading: isLoadingProject,
+    error: projectError,
+  } = useGetProjectByIdQuery(projectId, { skip: !projectId });
+
+  const firmSettingsIdToFetch = effectiveParams.firmSettingsId;
+  const { data: selectedFirmData, isLoading: isLoadingSelectedFirm } =
+    useGetFirmSettingsByIdQuery(firmSettingsIdToFetch, {
+      skip: !firmSettingsIdToFetch,
+    });
+
+  const { data: defaultFirmData, isLoading: isLoadingDefaultFirm } =
+    useGetDefaultFirmSettingsQuery(undefined, {
+      skip: !!firmSettingsIdToFetch,
+    });
+
+  const isLoadingFirmSettings = firmSettingsIdToFetch
+    ? isLoadingSelectedFirm
+    : isLoadingDefaultFirm;
+  const firmSettingsData = selectedFirmData || defaultFirmData;
+  const firmSettings = firmSettingsData || defaultFirmSettingsFallback;
+
+  const { data: client, isLoading: isLoadingClient } = useGetClientByIdQuery(
+    project?.clientId || "",
+    { skip: !project?.clientId }
+  );
+
+  const isLoading =
+    isLoadingProject ||
+    isLoadingFirmSettings ||
+    (isViewMode ? isLoadingInvoice : false) ||
+    (project?.clientId ? isLoadingClient : false);
+
+  return {
+    user,
+    invoiceId,
+    isViewMode,
+    effectiveParams,
+    project,
+    projectError,
+    client,
+    firmSettings,
+    firmSettingsData,
+    existingInvoice,
+    isLoading,
+    isCreating,
+    isDownloading,
+    createInvoice,
+    generatePdf,
+  };
+}
+
 function PreviewActionBar({
   projectName,
   isBusy,
+  isViewMode,
+  invoiceNumber,
   onClose,
   onEdit,
   onPrint,
@@ -149,11 +274,13 @@ function PreviewActionBar({
 }: {
   projectName: string;
   isBusy: boolean;
+  isViewMode?: boolean;
+  invoiceNumber?: string;
   onClose: () => void;
-  onEdit: () => void;
+  onEdit?: () => void;
   onPrint: () => void;
   onDownload: () => void;
-  onFinalize: () => void;
+  onFinalize?: () => void;
 }) {
   return (
     <div className="print:hidden sticky top-0 z-50 bg-background/95 backdrop-blur border-b border-border">
@@ -168,16 +295,23 @@ function PreviewActionBar({
             <X className="h-5 w-5" />
           </Button>
           <div>
-            <h1 className="text-lg font-semibold">Invoice Preview</h1>
-            <p className="text-sm text-muted-foreground">{projectName}</p>
+            <h1 className="text-lg font-semibold">
+              {isViewMode ? "View Invoice" : "Invoice Preview"}
+            </h1>
+            <p className="text-sm text-muted-foreground">
+              {projectName}
+              {invoiceNumber ? ` • ${invoiceNumber}` : ""}
+            </p>
           </div>
         </div>
 
         <div className="flex items-center gap-3">
-          <Button variant="outline" onClick={onEdit} disabled={isBusy}>
-            <Edit className="h-4 w-4 mr-2" />
-            Edit
-          </Button>
+          {onEdit && (
+            <Button variant="outline" onClick={onEdit} disabled={isBusy}>
+              <Edit className="h-4 w-4 mr-2" />
+              Edit
+            </Button>
+          )}
           <Button variant="outline" onClick={onPrint} disabled={isBusy}>
             <Printer className="h-4 w-4 mr-2" />
             Print
@@ -190,18 +324,20 @@ function PreviewActionBar({
             )}
             Download PDF
           </Button>
-          <Button
-            onClick={onFinalize}
-            disabled={isBusy}
-            className="bg-gradient-to-r from-green-600 to-teal-600 hover:from-green-700 hover:to-teal-700"
-          >
-            {isBusy ? (
-              <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-            ) : (
-              <CheckCircle className="h-4 w-4 mr-2" />
-            )}
-            Finalize Invoice
-          </Button>
+          {onFinalize && (
+            <Button
+              onClick={onFinalize}
+              disabled={isBusy}
+              className="bg-gradient-to-r from-green-600 to-teal-600 hover:from-green-700 hover:to-teal-700"
+            >
+              {isBusy ? (
+                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+              ) : (
+                <CheckCircle className="h-4 w-4 mr-2" />
+              )}
+              Finalize Invoice
+            </Button>
+          )}
         </div>
       </div>
     </div>
@@ -213,57 +349,35 @@ export function InvoicePreviewPage({
   basePath,
 }: InvoicePreviewPageProps) {
   const router = useRouter();
-  const searchParams = useSearchParams();
   const printRef = useRef<HTMLDivElement>(null);
   const [isGenerating, setIsGenerating] = useState(false);
 
-  const user = useAppSelector((state) => state.auth.user);
-  const [createInvoice, { isLoading: isCreating }] = useCreateInvoiceMutation();
-
-  const params = parseSearchParams(searchParams);
-
-  // Fetch project details
   const {
-    data: project,
-    isLoading: isLoadingProject,
-    error: projectError,
-  } = useGetProjectByIdQuery(projectId, {
-    skip: !projectId,
-  });
+    user,
+    invoiceId,
+    isViewMode,
+    effectiveParams,
+    project,
+    projectError,
+    client,
+    firmSettings,
+    firmSettingsData,
+    existingInvoice,
+    isLoading,
+    isCreating,
+    isDownloading,
+    createInvoice,
+    generatePdf,
+  } = useInvoiceData(projectId);
 
-  // Fetch firm settings
-  const { data: selectedFirmData, isLoading: isLoadingSelectedFirm } =
-    useGetFirmSettingsByIdQuery(params.firmSettingsId, {
-      skip: !params.firmSettingsId,
-    });
-
-  const { data: defaultFirmData, isLoading: isLoadingDefaultFirm } =
-    useGetDefaultFirmSettingsQuery(undefined, {
-      skip: !!params.firmSettingsId,
-    });
-
-  const isLoadingFirmSettings = params.firmSettingsId
-    ? isLoadingSelectedFirm
-    : isLoadingDefaultFirm;
-  const firmSettingsData = selectedFirmData || defaultFirmData;
-  const firmSettings = firmSettingsData || defaultFirmSettingsFallback;
-
-  // Fetch client details
-  const { data: client, isLoading: isLoadingClient } = useGetClientByIdQuery(
-    project?.clientId || "",
-    {
-      skip: !project?.clientId,
-    }
-  );
-
-  const isLoading =
-    isLoadingProject ||
-    isLoadingFirmSettings ||
-    (project?.clientId ? isLoadingClient : false);
-  const isBusy = isGenerating || isCreating;
+  const isBusy = isGenerating || isCreating || isDownloading;
 
   const handleEdit = () => {
-    router.push(`${basePath}/${projectId}/invoices/new`);
+    if (isViewMode && existingInvoice?.status === "draft") {
+      router.push(`${basePath}/${projectId}/invoices/new?edit=${invoiceId}`);
+    } else {
+      router.push(`${basePath}/${projectId}/invoices/new`);
+    }
   };
 
   const handleClose = () => {
@@ -271,7 +385,7 @@ export function InvoicePreviewPage({
   };
 
   const handleFinalize = async () => {
-    if (params.milestoneItems.length === 0) {
+    if (effectiveParams.milestoneItems.length === 0) {
       toast.error("No milestone items found");
       return;
     }
@@ -281,7 +395,7 @@ export function InvoicePreviewPage({
       const invoiceData = buildInvoiceData({
         projectId,
         project: project || {},
-        params,
+        params: effectiveParams,
         firmSettings,
         firmSettingsData,
         user,
@@ -294,6 +408,22 @@ export function InvoicePreviewPage({
       toast.error("Failed to finalize invoice");
     } finally {
       setIsGenerating(false);
+    }
+  };
+
+  const handleDownload = async () => {
+    if (!isViewMode || !invoiceId) {
+      window.print();
+      return;
+    }
+    try {
+      await downloadInvoicePdf(
+        generatePdf,
+        invoiceId,
+        existingInvoice?.invoiceNumber || "invoice"
+      );
+    } catch {
+      toast.error("Failed to generate PDF. Please try again.");
     }
   };
 
@@ -328,7 +458,7 @@ export function InvoicePreviewPage({
     );
   }
 
-  if (params.milestoneItems.length === 0) {
+  if (effectiveParams.milestoneItems.length === 0 && !isViewMode) {
     return (
       <div className="flex flex-col items-center justify-center min-h-screen gap-4">
         <div className="flex items-center gap-2 text-amber-600">
@@ -350,18 +480,19 @@ export function InvoicePreviewPage({
     firmSettings,
     project,
     client: client || null,
-    milestoneItems: params.milestoneItems,
-    invoiceDate: params.invoiceDate,
-    invoiceRef: params.invoiceRef,
-    notes: params.notes,
-    subtotal: params.subtotal,
-    discountType: params.discountType,
-    discountValue: params.discountValue,
-    discountAmount: params.discountAmount,
-    netTotal: params.netTotal,
+    milestoneItems: effectiveParams.milestoneItems,
+    invoiceDate: effectiveParams.invoiceDate,
+    invoiceRef: effectiveParams.invoiceRef,
+    notes: effectiveParams.notes,
+    subtotal: effectiveParams.subtotal,
+    discountType: effectiveParams.discountType,
+    discountValue: effectiveParams.discountValue,
+    discountAmount: effectiveParams.discountAmount,
+    netTotal: effectiveParams.netTotal,
   };
 
   const isUsingFallbackFirmSettings = !firmSettingsData;
+  const isDraftInvoice = isViewMode && existingInvoice?.status === "draft";
 
   return (
     <div className="min-h-screen bg-gray-100 dark:bg-gray-900">
@@ -380,16 +511,13 @@ export function InvoicePreviewPage({
       <PreviewActionBar
         projectName={project.name}
         isBusy={isBusy}
+        isViewMode={isViewMode}
+        invoiceNumber={isViewMode ? existingInvoice?.invoiceNumber : undefined}
         onClose={handleClose}
-        onEdit={handleEdit}
+        onEdit={isDraftInvoice || !isViewMode ? handleEdit : undefined}
         onPrint={() => window.print()}
-        onDownload={() => {
-          toast.info(
-            "Use your browser's 'Save as PDF' option in the print dialog"
-          );
-          window.print();
-        }}
-        onFinalize={handleFinalize}
+        onDownload={handleDownload}
+        onFinalize={!isViewMode ? handleFinalize : undefined}
       />
 
       {/* Preview Container */}

@@ -14,12 +14,12 @@ import { Textarea } from "../ui/textarea";
 import { MilestoneSelectionTable } from "./MilestoneSelectionTable";
 import { InvoiceSummaryPanel } from "./InvoiceSummaryPanel";
 import {
-  Invoice,
   MilestoneWithInvoicing,
   calculateMilestoneInvoicingStatus,
   initialInvoiceFormState,
   invoiceFormReducer,
 } from "./invoiceMockData";
+import { Invoice } from "@/lib/api/invoicesApi";
 import { useGetMilestonesByProjectQuery } from "@/lib/api/milestonesApi";
 import { toast } from "sonner";
 
@@ -147,7 +147,7 @@ export function InvoiceFormDialog({
       return;
     }
 
-    const newInvoice: Invoice = {
+    const newInvoice = {
       id: invoice?.id || `inv-${Date.now()}`,
       invoiceNumber: state.invoiceReference,
       invoiceDate: state.invoiceDate,
@@ -160,11 +160,11 @@ export function InvoiceFormDialog({
       netTotal: state.netTotal,
       paidAmount: state.paidAmount,
       balance: state.balance,
-      status: "draft",
+      status: "draft" as const,
       createdAt: invoice?.createdAt || new Date().toISOString(),
       updatedAt: new Date().toISOString(),
       createdBy: invoice?.createdBy || "Current User",
-    };
+    } as unknown as Invoice;
 
     onSave(newInvoice);
     toast.success("Invoice saved as draft");
@@ -177,7 +177,7 @@ export function InvoiceFormDialog({
       return;
     }
 
-    const newInvoice: Invoice = {
+    const newInvoice = {
       id: invoice?.id || `inv-${Date.now()}`,
       invoiceNumber: state.invoiceReference,
       invoiceDate: state.invoiceDate,
@@ -190,11 +190,11 @@ export function InvoiceFormDialog({
       netTotal: state.netTotal,
       paidAmount: state.paidAmount,
       balance: state.balance,
-      status: "sent",
+      status: "sent" as const,
       createdAt: invoice?.createdAt || new Date().toISOString(),
       updatedAt: new Date().toISOString(),
       createdBy: invoice?.createdBy || "Current User",
-    };
+    } as unknown as Invoice;
 
     onSave(newInvoice);
     toast.success("Invoice finalized successfully");

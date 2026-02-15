@@ -257,7 +257,7 @@ export function MilestoneSelectionTable({
                                 type="number"
                                 min="0"
                                 step="0.01"
-                                value={milestoneItem.rate}
+                                value={milestoneItem.rate || ""}
                                 onChange={(e) => {
                                   onUpdateRate(milestone.id, {
                                     rateType: milestoneItem.rateType,
@@ -283,7 +283,7 @@ export function MilestoneSelectionTable({
                                   type="number"
                                   min="1"
                                   step="1"
-                                  value={milestoneItem.quantity}
+                                  value={milestoneItem.quantity || ""}
                                   onChange={(e) => {
                                     onUpdateRate(milestone.id, {
                                       rateType: milestoneItem.rateType,
@@ -324,7 +324,7 @@ export function MilestoneSelectionTable({
                               type="number"
                               min="0"
                               step="0.01"
-                              value={milestoneItem.editableAmount}
+                              value={milestoneItem.editableAmount || ""}
                               onChange={(e) => {
                                 onUpdateAmount(
                                   milestone.id,

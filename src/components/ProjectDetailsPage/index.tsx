@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useCallback, useState } from "react";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { AlertCircle, Loader2 } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "../ui/tabs";
 import { Card } from "../ui/card";
@@ -16,6 +17,15 @@ import { TimelineItemModal } from "./TimelineItemModal";
 import { useGetProjectByIdQuery } from "@/lib/api/projectsApi";
 import type { TimelineItem } from "./types";
 
+const VALID_TABS = [
+  "overview",
+  "timeline",
+  "schedule",
+  "payments",
+  "documents",
+  "invoices",
+] as const;
+
 interface ProjectDetailsPageProps {
   projectId: string;
   onBack: () => void;
@@ -27,9 +37,37 @@ export function ProjectDetailsPage({
   onBack,
   basePath = "/super-admin/projects",
 }: ProjectDetailsPageProps) {
+  const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+
+  const tabFromUrl = searchParams.get("tab");
+  const initialTab = VALID_TABS.includes(
+    tabFromUrl as (typeof VALID_TABS)[number]
+  )
+    ? (tabFromUrl as string)
+    : "overview";
+
   const [selectedTimelineItem, setSelectedTimelineItem] =
     useState<TimelineItem | null>(null);
-  const [activeTab, setActiveTab] = useState("overview");
+  const [activeTab, setActiveTab] = useState(initialTab);
+
+  const handleTabChange = useCallback(
+    (tab: string) => {
+      setActiveTab(tab);
+      const params = new URLSearchParams(searchParams.toString());
+      if (tab === "overview") {
+        params.delete("tab");
+      } else {
+        params.set("tab", tab);
+      }
+      const query = params.toString();
+      router.replace(`${pathname}${query ? `?${query}` : ""}`, {
+        scroll: false,
+      });
+    },
+    [router, pathname, searchParams]
+  );
 
   const {
     data: project,
@@ -76,7 +114,7 @@ export function ProjectDetailsPage({
 
       <Tabs
         value={activeTab}
-        onValueChange={setActiveTab}
+        onValueChange={handleTabChange}
         className="space-y-6"
       >
         <TabsList className="grid grid-cols-6 w-full bg-muted/30 p-1 rounded-xl">
@@ -133,7 +171,7 @@ export function ProjectDetailsPage({
         <TabsContent value="payments" className="space-y-6">
           <PaymentsTab
             project={project}
-            onNavigateToInvoices={() => setActiveTab("invoices")}
+            onNavigateToInvoices={() => handleTabChange("invoices")}
           />
         </TabsContent>
 

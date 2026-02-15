@@ -1,12 +1,19 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { FileText, Plus } from "lucide-react";
+import { FileText, Loader2, Plus } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
 import { Button } from "../ui/button";
 import { InvoiceListTable } from "./InvoiceListTable";
-import { InvoiceFormDialog } from "./InvoiceFormDialog";
-import { Invoice, mockInvoices } from "./invoiceMockData";
+import {
+  Invoice,
+  useCancelInvoiceMutation,
+  useDeleteInvoiceMutation,
+  useGenerateInvoicePdfMutation,
+  useGetInvoicesByProjectQuery,
+  useMarkInvoiceAsSentMutation,
+} from "@/lib/api/invoicesApi";
 import type { Project } from "@/types/project";
+import { toast } from "sonner";
 
 interface InvoicesTabProps {
   project: Project;
@@ -15,39 +22,87 @@ interface InvoicesTabProps {
 
 export function InvoicesTab({ project, basePath }: InvoicesTabProps) {
   const router = useRouter();
-  const [invoices, setInvoices] = useState<Invoice[]>(mockInvoices);
-  const [viewingInvoice, setViewingInvoice] = useState<Invoice | null>(null);
-  const [showViewDialog, setShowViewDialog] = useState(false);
+
+  // Fetch invoices from API
+  const {
+    data: invoices = [],
+    isLoading,
+    isError,
+  } = useGetInvoicesByProjectQuery(project.id);
+
+  // Mutations
+  const [deleteInvoice] = useDeleteInvoiceMutation();
+  const [markAsSent] = useMarkInvoiceAsSentMutation();
+  const [cancelInvoice] = useCancelInvoiceMutation();
+  const [generatePdf] = useGenerateInvoicePdfMutation();
+  const [downloadingInvoiceId, setDownloadingInvoiceId] = useState<
+    string | null
+  >(null);
 
   const handleCreateInvoice = () => {
-    // Navigate to create invoice page
     router.push(`${basePath}/${project.id}/invoices/new`);
   };
 
+  const handleViewInvoice = (invoice: Invoice) => {
+    router.push(
+      `${basePath}/${project.id}/invoices/preview?invoiceId=${invoice.id}`
+    );
+  };
+
   const handleEditInvoice = (invoice: Invoice) => {
-    if (invoice.status === "draft") {
-      // Navigate to edit invoice page
-      router.push(`${basePath}/${project.id}/invoices/new?edit=${invoice.id}`);
-    } else {
-      // View non-draft invoices in dialog (read-only)
-      setViewingInvoice(invoice);
-      setShowViewDialog(true);
+    router.push(`${basePath}/${project.id}/invoices/new?edit=${invoice.id}`);
+  };
+
+  const handleDeleteInvoice = async (invoiceId: string) => {
+    try {
+      await deleteInvoice({ id: invoiceId, projectId: project.id }).unwrap();
+      toast.success("Invoice deleted successfully");
+    } catch {
+      toast.error("Failed to delete invoice");
     }
   };
 
-  const handleViewInvoice = (invoice: Invoice) => {
-    setViewingInvoice(invoice);
-    setShowViewDialog(true);
+  const handleMarkAsSent = async (invoice: Invoice) => {
+    try {
+      await markAsSent(invoice.id).unwrap();
+      toast.success("Invoice marked as sent");
+    } catch {
+      toast.error("Failed to mark invoice as sent");
+    }
   };
 
-  const handleDeleteInvoice = (invoiceId: string) => {
-    setInvoices((prev) => prev.filter((inv) => inv.id !== invoiceId));
+  const handleCancelInvoice = async (invoice: Invoice) => {
+    try {
+      await cancelInvoice(invoice.id).unwrap();
+      toast.success("Invoice cancelled");
+    } catch {
+      toast.error("Failed to cancel invoice");
+    }
   };
 
-  // This is kept for viewing invoices (read-only)
-  const handleCloseViewDialog = () => {
-    setShowViewDialog(false);
-    setViewingInvoice(null);
+  const handleDownloadInvoice = async (invoice: Invoice) => {
+    setDownloadingInvoiceId(invoice.id);
+    try {
+      const result = await generatePdf(invoice.id).unwrap();
+      const byteCharacters = atob(result.pdfBase64);
+      const byteArray = new Uint8Array(byteCharacters.length);
+      for (let i = 0; i < byteCharacters.length; i++) {
+        byteArray[i] = byteCharacters.charCodeAt(i);
+      }
+      const blob = new Blob([byteArray], { type: "application/pdf" });
+      const blobUrl = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = blobUrl;
+      link.download = `${invoice.invoiceNumber}.pdf`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(blobUrl);
+    } catch {
+      toast.error("Failed to generate PDF. Please try again.");
+    } finally {
+      setDownloadingInvoiceId(null);
+    }
   };
 
   return (
@@ -81,24 +136,33 @@ export function InvoicesTab({ project, basePath }: InvoicesTabProps) {
           </div>
         </CardHeader>
         <CardContent className="relative">
-          <InvoiceListTable
-            invoices={invoices}
-            onEdit={handleEditInvoice}
-            onDelete={handleDeleteInvoice}
-            onView={handleViewInvoice}
-          />
+          {isLoading ? (
+            <div className="flex items-center justify-center py-12">
+              <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
+              <span className="ml-2 text-sm text-muted-foreground">
+                Loading invoices...
+              </span>
+            </div>
+          ) : isError ? (
+            <div className="text-center py-12">
+              <p className="text-sm text-red-500">
+                Failed to load invoices. Please try again.
+              </p>
+            </div>
+          ) : (
+            <InvoiceListTable
+              invoices={invoices}
+              onView={handleViewInvoice}
+              onEdit={handleEditInvoice}
+              onDelete={handleDeleteInvoice}
+              onDownload={handleDownloadInvoice}
+              downloadingInvoiceId={downloadingInvoiceId}
+              onMarkAsSent={handleMarkAsSent}
+              onCancel={handleCancelInvoice}
+            />
+          )}
         </CardContent>
       </Card>
-
-      {/* View Invoice Dialog (Read-only) */}
-      <InvoiceFormDialog
-        open={showViewDialog}
-        onOpenChange={handleCloseViewDialog}
-        invoice={viewingInvoice}
-        projectId={project.id}
-        existingInvoices={invoices}
-        onSave={() => {}} // No-op for view mode
-      />
     </div>
   );
 }

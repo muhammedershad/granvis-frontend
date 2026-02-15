@@ -95,7 +95,7 @@ export function InvoiceSummaryPanel({
                 min="0"
                 max={discountType === "percentage" ? 100 : undefined}
                 step={discountType === "percentage" ? 1 : 0.01}
-                value={discountValue}
+                value={discountValue || ""}
                 onChange={(e) =>
                   onSetDiscount(discountType, parseFloat(e.target.value) || 0)
                 }
@@ -134,7 +134,7 @@ export function InvoiceSummaryPanel({
               min="0"
               max={netTotal}
               step="0.01"
-              value={paidAmount}
+              value={paidAmount || ""}
               onChange={(e) => onSetPaidAmount(parseFloat(e.target.value) || 0)}
               placeholder="Enter paid amount"
               className="text-sm"

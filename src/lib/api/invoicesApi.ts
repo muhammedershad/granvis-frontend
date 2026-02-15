@@ -361,6 +361,17 @@ export const invoicesApi = apiSlice.injectEndpoints({
         { type: "Invoice" as const, id: `SUMMARY_${projectId}` },
       ],
     }),
+
+    // Generate invoice PDF
+    generateInvoicePdf: builder.mutation<
+      { pdfKey: string; pdfUrl: string; pdfBase64: string },
+      string
+    >({
+      query: (invoiceId) => ({
+        url: `/pdf/invoice/${invoiceId}`,
+        method: "POST",
+      }),
+    }),
   }),
   overrideExisting: false,
 });
@@ -378,4 +389,5 @@ export const {
   useRecordInvoicePaymentMutation,
   useCancelInvoiceMutation,
   useDeleteInvoiceMutation,
+  useGenerateInvoicePdfMutation,
 } = invoicesApi;

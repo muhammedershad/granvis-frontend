@@ -1,4 +1,14 @@
-import { Edit2, Eye, FileText, Trash2 } from "lucide-react";
+import {
+  Download,
+  Edit2,
+  Eye,
+  FileText,
+  Loader2,
+  MoreVertical,
+  Send,
+  Trash2,
+  XCircle,
+} from "lucide-react";
 import {
   Table,
   TableBody,
@@ -8,14 +18,25 @@ import {
   TableRow,
 } from "../ui/table";
 import { Button } from "../ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "../ui/dropdown-menu";
 import { InvoiceStatusBadge } from "./InvoiceStatusBadge";
-import { Invoice } from "./invoiceMockData";
+import { Invoice, InvoiceStatus } from "@/lib/api/invoicesApi";
 
 interface InvoiceListTableProps {
   invoices: Invoice[];
+  onView: (invoice: Invoice) => void;
   onEdit: (invoice: Invoice) => void;
   onDelete: (invoiceId: string) => void;
-  onView?: (invoice: Invoice) => void;
+  onDownload: (invoice: Invoice) => void;
+  downloadingInvoiceId?: string | null;
+  onMarkAsSent?: (invoice: Invoice) => void;
+  onCancel?: (invoice: Invoice) => void;
 }
 
 const formatCurrency = (amount: number): string => {
@@ -45,11 +66,25 @@ const formatDiscount = (invoice: Invoice): string => {
   return formatCurrency(invoice.discountAmount);
 };
 
+function hasDropdownActions(invoice: Invoice): boolean {
+  const s = invoice.status;
+  return (
+    s === InvoiceStatus.DRAFT ||
+    s === InvoiceStatus.SENT ||
+    s === InvoiceStatus.PARTIALLY_PAID ||
+    s === InvoiceStatus.OVERDUE
+  );
+}
+
 export function InvoiceListTable({
   invoices,
+  onView,
   onEdit,
   onDelete,
-  onView,
+  onDownload,
+  downloadingInvoiceId,
+  onMarkAsSent,
+  onCancel,
 }: InvoiceListTableProps) {
   if (invoices.length === 0) {
     return (
@@ -108,50 +143,121 @@ export function InvoiceListTable({
                 <InvoiceStatusBadge status={invoice.status} type="invoice" />
               </TableCell>
               <TableCell className="text-right">
-                <div className="flex items-center justify-end gap-2">
-                  {onView && (
+                <div className="flex items-center justify-end gap-1">
+                  {/* View Invoice (all statuses) */}
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-8 w-8"
+                    onClick={() => onView(invoice)}
+                    title="View Invoice"
+                  >
+                    <Eye className="h-4 w-4" />
+                  </Button>
+
+                  {/* Download PDF (non-draft) */}
+                  {invoice.status !== InvoiceStatus.DRAFT && (
                     <Button
                       variant="ghost"
                       size="icon"
                       className="h-8 w-8"
-                      onClick={() => onView(invoice)}
-                      title="View Invoice"
+                      onClick={() => onDownload(invoice)}
+                      disabled={downloadingInvoiceId === invoice.id}
+                      title="Download PDF"
                     >
-                      <Eye className="h-4 w-4" />
+                      {downloadingInvoiceId === invoice.id ? (
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                      ) : (
+                        <Download className="h-4 w-4" />
+                      )}
                     </Button>
                   )}
-                  {invoice.status === "draft" && (
-                    <>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-8 w-8"
-                        onClick={() => onEdit(invoice)}
-                        title="Edit Invoice"
-                      >
-                        <Edit2 className="h-4 w-4" />
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-8 w-8 text-red-600 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300"
-                        onClick={() => {
-                          if (
-                            confirm(`Delete invoice ${invoice.invoiceNumber}?`)
-                          ) {
-                            onDelete(invoice.id);
-                          }
-                        }}
-                        title="Delete Invoice"
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    </>
+
+                  {/* Edit (draft only) */}
+                  {invoice.status === InvoiceStatus.DRAFT && (
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-8 w-8"
+                      onClick={() => onEdit(invoice)}
+                      title="Edit Invoice"
+                    >
+                      <Edit2 className="h-4 w-4" />
+                    </Button>
                   )}
-                  {invoice.status !== "draft" && (
-                    <div className="text-xs text-muted-foreground italic px-2">
-                      {invoice.status === "sent" ? "Sent" : "Paid"}
-                    </div>
+
+                  {/* Actions dropdown */}
+                  {hasDropdownActions(invoice) && (
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-8 w-8"
+                          title="More Actions"
+                        >
+                          <MoreVertical className="h-4 w-4" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end">
+                        {/* Mark as Sent (draft only) */}
+                        {invoice.status === InvoiceStatus.DRAFT &&
+                          onMarkAsSent && (
+                            <DropdownMenuItem
+                              onClick={() => onMarkAsSent(invoice)}
+                            >
+                              <Send className="h-4 w-4 mr-2" />
+                              Mark as Sent
+                            </DropdownMenuItem>
+                          )}
+
+                        {/* Cancel (non-paid, non-cancelled) */}
+                        {invoice.status !== InvoiceStatus.PAID &&
+                          invoice.status !== InvoiceStatus.CANCELLED &&
+                          onCancel && (
+                            <>
+                              <DropdownMenuSeparator />
+                              <DropdownMenuItem
+                                variant="destructive"
+                                onClick={() => {
+                                  if (
+                                    confirm(
+                                      `Cancel invoice ${invoice.invoiceNumber}?`
+                                    )
+                                  ) {
+                                    onCancel(invoice);
+                                  }
+                                }}
+                              >
+                                <XCircle className="h-4 w-4 mr-2" />
+                                Cancel Invoice
+                              </DropdownMenuItem>
+                            </>
+                          )}
+
+                        {/* Delete (draft only) */}
+                        {invoice.status === InvoiceStatus.DRAFT && (
+                          <>
+                            <DropdownMenuSeparator />
+                            <DropdownMenuItem
+                              variant="destructive"
+                              onClick={() => {
+                                if (
+                                  confirm(
+                                    `Delete invoice ${invoice.invoiceNumber}?`
+                                  )
+                                ) {
+                                  onDelete(invoice.id);
+                                }
+                              }}
+                            >
+                              <Trash2 className="h-4 w-4 mr-2" />
+                              Delete Invoice
+                            </DropdownMenuItem>
+                          </>
+                        )}
+                      </DropdownMenuContent>
+                    </DropdownMenu>
                   )}
                 </div>
               </TableCell>
