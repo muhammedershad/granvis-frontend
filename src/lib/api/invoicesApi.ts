@@ -161,10 +161,13 @@ export interface InvoiceSummary {
   draftCount: number;
   sentCount: number;
   paidCount: number;
+  partiallyPaidCount: number;
   overdueCount: number;
   totalAmount: number;
   paidAmount: number;
   pendingAmount: number;
+  overdueAmount: number;
+  percentageCompleted: number;
 }
 
 // Paginated Response Interface

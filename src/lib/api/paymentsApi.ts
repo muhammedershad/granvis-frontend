@@ -1,5 +1,6 @@
 import { apiSlice } from "./apiSlice";
 import {
+  CreateInvoicePaymentDto,
   CreatePaymentDto,
   MarkPaymentPaidDto,
   Payment,
@@ -62,6 +63,15 @@ export const paymentsApi = apiSlice.injectEndpoints({
       ],
     }),
 
+    // Get payments by invoice
+    getPaymentsByInvoice: builder.query<Payment[], string>({
+      query: (invoiceId) => `/payments/invoice/${invoiceId}`,
+      providesTags: (result, _error, invoiceId) => [
+        { type: "Payment" as const, id: `INVOICE_${invoiceId}` },
+        ...(result?.map(({ id }) => ({ type: "Payment" as const, id })) || []),
+      ],
+    }),
+
     // Get project payment summary
     getProjectPaymentSummary: builder.query<ProjectPaymentSummary, string>({
       query: (projectId) => `/payments/project/${projectId}/summary`,
@@ -92,6 +102,34 @@ export const paymentsApi = apiSlice.injectEndpoints({
         },
         { type: "Payment" as const, id: `MILESTONE_${result?.milestoneId}` },
         { type: "Milestone" as const, id: result?.milestoneId },
+        { type: "Milestone" as const, id: `PROJECT_${result?.projectId}` },
+        {
+          type: "Milestone" as const,
+          id: `PROJECT_${result?.projectId}_SUMMARY`,
+        },
+        { type: "Project" as const, id: result?.projectId },
+      ],
+    }),
+
+    // Create payment against an invoice
+    createInvoicePayment: builder.mutation<Payment, CreateInvoicePaymentDto>({
+      query: (data) => ({
+        url: "/payments/invoice",
+        method: "POST",
+        body: data,
+      }),
+      invalidatesTags: (result) => [
+        { type: "Payment" as const, id: "LIST" },
+        { type: "Payment" as const, id: `PROJECT_${result?.projectId}` },
+        {
+          type: "Payment" as const,
+          id: `PROJECT_${result?.projectId}_SUMMARY`,
+        },
+        { type: "Payment" as const, id: `INVOICE_${result?.invoiceId}` },
+        { type: "Invoice" as const, id: result?.invoiceId },
+        { type: "Invoice" as const, id: "LIST" },
+        { type: "Invoice" as const, id: `PROJECT_${result?.projectId}` },
+        { type: "Invoice" as const, id: `SUMMARY_${result?.projectId}` },
         { type: "Milestone" as const, id: `PROJECT_${result?.projectId}` },
         {
           type: "Milestone" as const,
@@ -197,9 +235,11 @@ export const {
   useGetPaymentsQuery,
   useGetPaymentsByProjectQuery,
   useGetPaymentsByMilestoneQuery,
+  useGetPaymentsByInvoiceQuery,
   useGetProjectPaymentSummaryQuery,
   useGetPaymentByIdQuery,
   useCreatePaymentMutation,
+  useCreateInvoicePaymentMutation,
   useUpdatePaymentMutation,
   useMarkPaymentPaidMutation,
   useDeletePaymentMutation,

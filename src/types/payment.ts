@@ -20,7 +20,8 @@ export enum PaymentMethod {
 export interface Payment {
   id: string;
   projectId: string;
-  milestoneId: string;
+  milestoneId?: string;
+  invoiceId?: string;
   clientId: string;
 
   amount: number;
@@ -34,7 +35,7 @@ export interface Payment {
   paidDate?: string;
 
   // Invoice Details
-  invoiceNumber: string;
+  invoiceNumber?: string;
   description?: string;
   notes?: string;
   transactionReference?: string;
@@ -80,9 +81,21 @@ export interface Payment {
 }
 
 // DTOs for API calls
+export interface CreateInvoicePaymentDto {
+  invoiceId: string;
+  amount: number;
+  paymentDate: string;
+  method?: PaymentMethod;
+  transactionReference?: string;
+  notes?: string;
+  createdBy: string;
+  createdById?: string;
+}
+
 export interface CreatePaymentDto {
   projectId: string;
-  milestoneId: string;
+  milestoneId?: string;
+  invoiceId?: string;
   clientId: string;
   amount: number;
   currency?: string;
