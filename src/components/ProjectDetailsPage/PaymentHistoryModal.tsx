@@ -11,6 +11,12 @@ import {
   TableRow,
 } from "../ui/table";
 import { Badge } from "../ui/badge";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "../ui/tooltip";
 import type { Invoice } from "@/lib/api/invoicesApi";
 import { useGetPaymentsByInvoiceQuery } from "@/lib/api/paymentsApi";
 import { PaymentMethod } from "@/types/payment";
@@ -119,6 +125,7 @@ export function PaymentHistoryModal({
                   <TableHead>Method</TableHead>
                   <TableHead>Reference</TableHead>
                   <TableHead>Notes</TableHead>
+                  <TableHead>Recorded By</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -135,11 +142,50 @@ export function PaymentHistoryModal({
                         {getMethodLabel(payment.method)}
                       </Badge>
                     </TableCell>
-                    <TableCell className="max-w-[120px] truncate text-sm text-muted-foreground">
-                      {payment.transactionReference || "-"}
+                    <TableCell className="max-w-[120px] text-sm text-muted-foreground">
+                      {payment.transactionReference ? (
+                        <TooltipProvider>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <span className="block truncate cursor-default">
+                                {payment.transactionReference}
+                              </span>
+                            </TooltipTrigger>
+                            <TooltipContent
+                              side="bottom"
+                              className="max-w-xs break-all"
+                            >
+                              {payment.transactionReference}
+                            </TooltipContent>
+                          </Tooltip>
+                        </TooltipProvider>
+                      ) : (
+                        "-"
+                      )}
                     </TableCell>
-                    <TableCell className="max-w-[120px] truncate text-sm text-muted-foreground">
-                      {payment.notes || "-"}
+                    <TableCell className="max-w-[120px] text-sm text-muted-foreground">
+                      {payment.notes ? (
+                        <TooltipProvider>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <span className="block truncate cursor-default">
+                                {payment.notes}
+                              </span>
+                            </TooltipTrigger>
+                            <TooltipContent
+                              side="bottom"
+                              className="max-w-xs break-all"
+                            >
+                              {payment.notes}
+                            </TooltipContent>
+                          </Tooltip>
+                        </TooltipProvider>
+                      ) : (
+                        "-"
+                      )}
+                    </TableCell>
+                    <TableCell className="whitespace-nowrap text-sm text-muted-foreground">
+                      {payment.createdBy || "-"}
                     </TableCell>
                   </TableRow>
                 ))}

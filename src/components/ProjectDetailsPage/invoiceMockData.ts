@@ -49,6 +49,7 @@ export interface MilestoneWithInvoicing extends Milestone {
 
 export interface InvoiceFormState {
   invoiceDate: string;
+  dueDate: string;
   invoiceReference: string;
   notes: string;
   selectedMilestones: Map<string, MilestoneInvoiceItem>;
@@ -63,6 +64,7 @@ export interface InvoiceFormState {
 
 export type InvoiceFormAction =
   | { type: "SET_INVOICE_DATE"; payload: string }
+  | { type: "SET_DUE_DATE"; payload: string }
   | { type: "SET_INVOICE_REFERENCE"; payload: string }
   | { type: "SET_NOTES"; payload: string }
   | {
@@ -301,6 +303,7 @@ function handleUpdateMilestoneAmount(
 function handleLoadDraft(payload: Invoice | unknown): InvoiceFormState {
   const invoice = payload as Invoice & {
     milestoneItems?: MilestoneInvoiceItem[];
+    dueDate?: string;
   };
   const selectedMilestones = new Map<string, MilestoneInvoiceItem>();
 
@@ -328,6 +331,11 @@ function handleLoadDraft(payload: Invoice | unknown): InvoiceFormState {
       typeof invoice.invoiceDate === "string"
         ? invoice.invoiceDate.split("T")[0]
         : new Date(invoice.invoiceDate).toISOString().split("T")[0],
+    dueDate: invoice.dueDate
+      ? typeof invoice.dueDate === "string"
+        ? invoice.dueDate.split("T")[0]
+        : new Date(invoice.dueDate).toISOString().split("T")[0]
+      : "",
     invoiceReference: invoice.invoiceNumber,
     notes: invoice.notes || "",
     selectedMilestones,
@@ -350,6 +358,9 @@ export function invoiceFormReducer(
   switch (action.type) {
     case "SET_INVOICE_DATE":
       return { ...state, invoiceDate: action.payload };
+
+    case "SET_DUE_DATE":
+      return { ...state, dueDate: action.payload };
 
     case "SET_INVOICE_REFERENCE":
       return { ...state, invoiceReference: action.payload };
@@ -410,6 +421,7 @@ export function invoiceFormReducer(
 
 export const initialInvoiceFormState: InvoiceFormState = {
   invoiceDate: new Date().toISOString().split("T")[0],
+  dueDate: "",
   invoiceReference: "GRIHA-2026-0001",
   notes: "",
   selectedMilestones: new Map(),

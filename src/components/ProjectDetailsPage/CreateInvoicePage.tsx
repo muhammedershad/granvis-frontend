@@ -3,13 +3,14 @@
 import { useEffect, useReducer, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import {
-  ArrowLeft,
   Briefcase,
   Calendar,
   CheckCircle,
+  ChevronRight,
   ExternalLink,
   Eye,
   FileText,
+  Home,
   Loader2,
   Mail,
   MapPin,
@@ -54,6 +55,8 @@ import {
 } from "@/lib/api/invoicesApi";
 import { useAppSelector } from "@/store/hooks";
 import { toast } from "sonner";
+import { DatePicker } from "../ui/date-picker";
+import { dateToUTC, utcToDate } from "@/lib/utils/date";
 
 interface CreateInvoicePageProps {
   projectId: string;
@@ -63,6 +66,8 @@ interface CreateInvoicePageProps {
 interface InvoiceHeaderSectionProps {
   isEditMode: boolean;
   projectName: string | undefined;
+  projectId: string;
+  basePath: string;
   invoiceReference: string;
   isEditable: boolean;
   isSaving: boolean;
@@ -76,6 +81,8 @@ interface InvoiceHeaderSectionProps {
 function InvoiceHeaderSection({
   isEditMode,
   projectName,
+  projectId,
+  basePath,
   invoiceReference,
   isEditable,
   isSaving,
@@ -86,16 +93,39 @@ function InvoiceHeaderSection({
   onFinalize,
 }: InvoiceHeaderSectionProps) {
   return (
-    <div className="flex items-center justify-between">
-      <div className="flex items-center gap-4">
-        <Button
-          variant="ghost"
-          size="icon"
-          onClick={onCancel}
-          className="rounded-full"
+    <div className="space-y-4">
+      {/* Breadcrumb Navigation */}
+      <div className="flex items-center gap-2 text-sm">
+        <Link
+          href={basePath}
+          className="flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors group"
         >
-          <ArrowLeft className="h-5 w-5" />
-        </Button>
+          <div className="p-1.5 rounded-lg bg-background/50 border border-border/50 group-hover:border-primary/50 group-hover:bg-primary/5 transition-all">
+            <Home className="h-4 w-4" />
+          </div>
+          <span className="font-medium">Projects</span>
+        </Link>
+        <ChevronRight className="h-4 w-4 text-muted-foreground" />
+        <Link
+          href={`${basePath}/${projectId}?tab=invoices`}
+          className="text-muted-foreground hover:text-foreground transition-colors font-medium"
+        >
+          {projectName}
+        </Link>
+        <ChevronRight className="h-4 w-4 text-muted-foreground" />
+        <Link
+          href={`${basePath}/${projectId}?tab=invoices`}
+          className="text-muted-foreground hover:text-foreground transition-colors font-medium"
+        >
+          Invoices
+        </Link>
+        <ChevronRight className="h-4 w-4 text-muted-foreground" />
+        <span className="text-foreground font-medium">
+          {isEditMode ? "Edit" : "Create"}
+        </span>
+      </div>
+
+      <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold text-foreground flex items-center gap-3">
             <div className="p-2 bg-blue-500/10 rounded-lg border border-blue-500/20">
@@ -107,49 +137,49 @@ function InvoiceHeaderSection({
             {projectName} • {invoiceReference}
           </p>
         </div>
-      </div>
 
-      <div className="hidden md:flex items-center gap-3">
-        <Button variant="outline" onClick={onCancel} disabled={isSaving}>
-          Cancel
-        </Button>
-        {isEditable && (
-          <>
-            <Button
-              variant="outline"
-              onClick={onPreview}
-              disabled={isSaving || !hasSelectedMilestones}
-              className="border-blue-500/50 text-blue-600 hover:bg-blue-500/10"
-            >
-              <Eye className="h-4 w-4 mr-2" />
-              Preview
-            </Button>
-            <Button
-              variant="secondary"
-              onClick={onSaveDraft}
-              disabled={isSaving || !hasSelectedMilestones}
-            >
-              {isSaving ? (
-                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-              ) : (
-                <Save className="h-4 w-4 mr-2" />
-              )}
-              Save as Draft
-            </Button>
-            <Button
-              onClick={onFinalize}
-              disabled={isSaving || !hasSelectedMilestones}
-              className="bg-gradient-to-r from-green-600 to-teal-600 hover:from-green-700 hover:to-teal-700"
-            >
-              {isSaving ? (
-                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-              ) : (
-                <CheckCircle className="h-4 w-4 mr-2" />
-              )}
-              Finalize Invoice
-            </Button>
-          </>
-        )}
+        <div className="hidden md:flex items-center gap-3">
+          <Button variant="outline" onClick={onCancel} disabled={isSaving}>
+            Cancel
+          </Button>
+          {isEditable && (
+            <>
+              <Button
+                variant="outline"
+                onClick={onPreview}
+                disabled={isSaving || !hasSelectedMilestones}
+                className="border-blue-500/50 text-blue-600 hover:bg-blue-500/10"
+              >
+                <Eye className="h-4 w-4 mr-2" />
+                Preview
+              </Button>
+              <Button
+                variant="secondary"
+                onClick={onSaveDraft}
+                disabled={isSaving || !hasSelectedMilestones}
+              >
+                {isSaving ? (
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                ) : (
+                  <Save className="h-4 w-4 mr-2" />
+                )}
+                Save as Draft
+              </Button>
+              <Button
+                onClick={onFinalize}
+                disabled={isSaving || !hasSelectedMilestones}
+                className="bg-gradient-to-r from-green-600 to-teal-600 hover:from-green-700 hover:to-teal-700"
+              >
+                {isSaving ? (
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                ) : (
+                  <CheckCircle className="h-4 w-4 mr-2" />
+                )}
+                Finalize Invoice
+              </Button>
+            </>
+          )}
+        </div>
       </div>
     </div>
   );
@@ -277,19 +307,23 @@ function FirmDetailsCard({
 
 interface BasicInfoCardProps {
   invoiceDate: string;
+  dueDate: string;
   invoiceReference: string;
   notes: string;
   isEditable: boolean;
   onSetDate: (date: string) => void;
+  onSetDueDate: (date: string) => void;
   onSetNotes: (notes: string) => void;
 }
 
 function BasicInfoCard({
   invoiceDate,
+  dueDate,
   invoiceReference,
   notes,
   isEditable,
   onSetDate,
+  onSetDueDate,
   onSetNotes,
 }: BasicInfoCardProps) {
   return (
@@ -304,18 +338,28 @@ function BasicInfoCard({
         </div>
       </CardHeader>
       <CardContent className="relative space-y-4">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div className="space-y-2">
-            <Label htmlFor="invoiceDate" className="text-sm">
+            <Label className="text-sm">
               Invoice Date <span className="text-red-500">*</span>
             </Label>
-            <Input
-              id="invoiceDate"
-              type="date"
-              value={invoiceDate}
-              onChange={(e) => onSetDate(e.target.value)}
+            <DatePicker
+              date={utcToDate(invoiceDate)}
+              onDateChange={(date) => onSetDate(dateToUTC(date))}
+              placeholder="Select invoice date"
               disabled={!isEditable}
-              className="text-sm"
+              className="text-sm h-9"
+            />
+          </div>
+
+          <div className="space-y-2">
+            <Label className="text-sm">Due Date</Label>
+            <DatePicker
+              date={utcToDate(dueDate)}
+              onDateChange={(date) => onSetDueDate(dateToUTC(date))}
+              placeholder="Select due date"
+              disabled={!isEditable}
+              className="text-sm h-9"
             />
           </div>
 
@@ -696,6 +740,7 @@ export function CreateInvoicePage({
       projectId,
       clientId: project?.clientId || "",
       invoiceDate: state.invoiceDate,
+      dueDate: state.dueDate || undefined,
       milestoneItems,
       subtotal: state.subtotal,
       discountType: state.discountType,
@@ -729,6 +774,7 @@ export function CreateInvoicePage({
           id: invoiceId,
           data: {
             invoiceDate: invoiceData.invoiceDate,
+            dueDate: invoiceData.dueDate,
             milestoneItems: invoiceData.milestoneItems,
             subtotal: invoiceData.subtotal,
             discountType: invoiceData.discountType,
@@ -767,6 +813,7 @@ export function CreateInvoicePage({
           id: invoiceId,
           data: {
             invoiceDate: invoiceData.invoiceDate,
+            dueDate: invoiceData.dueDate,
             milestoneItems: invoiceData.milestoneItems,
             subtotal: invoiceData.subtotal,
             discountType: invoiceData.discountType,
@@ -805,6 +852,9 @@ export function CreateInvoicePage({
     // Build URL params for preview with complete form state
     const params = new URLSearchParams();
     params.set("date", state.invoiceDate);
+    if (state.dueDate) {
+      params.set("dueDate", state.dueDate);
+    }
     params.set("invoiceRef", state.invoiceReference);
     if (state.notes) {
       params.set("notes", state.notes.split("\n").join("|"));
@@ -868,6 +918,8 @@ export function CreateInvoicePage({
       <InvoiceHeaderSection
         isEditMode={isEditMode}
         projectName={project?.name}
+        projectId={projectId}
+        basePath={basePath}
         invoiceReference={state.invoiceReference}
         isEditable={isEditable}
         isSaving={isSaving}
@@ -890,11 +942,15 @@ export function CreateInvoicePage({
 
           <BasicInfoCard
             invoiceDate={state.invoiceDate}
+            dueDate={state.dueDate}
             invoiceReference={state.invoiceReference}
             notes={state.notes}
             isEditable={isEditable}
             onSetDate={(date) =>
               dispatch({ type: "SET_INVOICE_DATE", payload: date })
+            }
+            onSetDueDate={(date) =>
+              dispatch({ type: "SET_DUE_DATE", payload: date })
             }
             onSetNotes={(notes) =>
               dispatch({ type: "SET_NOTES", payload: notes })

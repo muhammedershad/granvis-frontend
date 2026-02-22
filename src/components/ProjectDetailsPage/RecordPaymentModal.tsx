@@ -25,6 +25,8 @@ import { useCreateInvoicePaymentMutation } from "@/lib/api/paymentsApi";
 import { PaymentMethod } from "@/types/payment";
 import { useAppSelector } from "@/store/hooks";
 import { toast } from "sonner";
+import { DatePicker } from "../ui/date-picker";
+import { dateToUTC, utcToDate } from "@/lib/utils/date";
 
 interface RecordPaymentModalProps {
   invoice: Invoice;
@@ -99,7 +101,7 @@ export function RecordPaymentModal({
 
   return (
     <Dialog open={open} onOpenChange={(v) => !v && onClose()}>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent className="sm:max-w-md md:max-w-xl lg:max-w-xl xl:max-w-xl overflow-hidden">
         <DialogHeader>
           <DialogTitle>Record Payment</DialogTitle>
         </DialogHeader>
@@ -157,14 +159,14 @@ export function RecordPaymentModal({
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="payment-date">
+            <Label>
               Payment Date <span className="text-red-500">*</span>
             </Label>
-            <Input
-              id="payment-date"
-              type="date"
-              value={paymentDate}
-              onChange={(e) => setPaymentDate(e.target.value)}
+            <DatePicker
+              date={utcToDate(paymentDate)}
+              onDateChange={(date) => setPaymentDate(dateToUTC(date))}
+              placeholder="Select payment date"
+              className="h-9"
             />
           </div>
 
@@ -192,8 +194,10 @@ export function RecordPaymentModal({
             <Input
               id="payment-reference"
               placeholder="e.g., UTR number, cheque number"
+              maxLength={100}
               value={transactionReference}
               onChange={(e) => setTransactionReference(e.target.value)}
+              className="overflow-hidden text-ellipsis"
             />
           </div>
 
@@ -202,9 +206,11 @@ export function RecordPaymentModal({
             <Textarea
               id="payment-notes"
               placeholder="Optional notes"
-              rows={2}
+              rows={3}
+              maxLength={500}
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
+              className="[field-sizing:fixed] max-h-24 overflow-y-auto break-all custom-scrollbar"
             />
           </div>
         </div>
@@ -216,6 +222,12 @@ export function RecordPaymentModal({
           <Button
             onClick={handleSubmit}
             disabled={!isAmountValid || !paymentDate || isLoading}
+            className="max-w-[200px] overflow-hidden"
+            title={
+              parsedAmount > 0
+                ? `Record ${formatCurrency(parsedAmount)}`
+                : undefined
+            }
           >
             {isLoading ? (
               <>
@@ -223,7 +235,9 @@ export function RecordPaymentModal({
                 Recording...
               </>
             ) : (
-              `Record ${parsedAmount > 0 ? formatCurrency(parsedAmount) : "Payment"}`
+              <span className="truncate">
+                {`Record ${parsedAmount > 0 ? formatCurrency(parsedAmount) : "Payment"}`}
+              </span>
             )}
           </Button>
         </DialogFooter>
