@@ -153,6 +153,15 @@ export function InvoiceFormDialog({
       invoiceDate: state.invoiceDate,
       notes: state.notes,
       milestoneItems: Array.from(state.selectedMilestones.values()),
+      lineItems: state.lineItems
+        .filter((item) => item.description.trim() || item.amount > 0)
+        .map((item) => ({
+          description: item.description,
+          rateType: item.rateType,
+          rate: item.rate,
+          quantity: item.quantity,
+          amount: item.amount,
+        })),
       subtotal: state.subtotal,
       discountType: state.discountType,
       discountValue: state.discountValue,
@@ -183,6 +192,15 @@ export function InvoiceFormDialog({
       invoiceDate: state.invoiceDate,
       notes: state.notes,
       milestoneItems: Array.from(state.selectedMilestones.values()),
+      lineItems: state.lineItems
+        .filter((item) => item.description.trim() || item.amount > 0)
+        .map((item) => ({
+          description: item.description,
+          rateType: item.rateType,
+          rate: item.rate,
+          quantity: item.quantity,
+          amount: item.amount,
+        })),
       subtotal: state.subtotal,
       discountType: state.discountType,
       discountValue: state.discountValue,

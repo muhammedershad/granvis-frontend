@@ -22,6 +22,16 @@ export interface InvoiceMilestoneItem {
   editableAmount: number;
 }
 
+// Generic Line Item Interface (not tied to milestones)
+export interface InvoiceLineItem {
+  phase?: string;
+  description: string;
+  rateType?: "per_sqft" | "per_visit" | "fixed";
+  rate: number;
+  quantity: number;
+  amount: number;
+}
+
 // Invoice Interface
 export interface Invoice {
   id: string;
@@ -31,6 +41,7 @@ export interface Invoice {
   invoiceDate: string;
   dueDate?: string;
   milestoneItems: InvoiceMilestoneItem[];
+  lineItems?: InvoiceLineItem[];
   subtotal: number;
   discountType: "percentage" | "flat";
   discountValue: number;
@@ -94,7 +105,8 @@ export interface CreateInvoiceDto {
   clientId: string;
   invoiceDate: string;
   dueDate?: string;
-  milestoneItems: InvoiceMilestoneItem[];
+  milestoneItems?: InvoiceMilestoneItem[];
+  lineItems?: InvoiceLineItem[];
   subtotal: number;
   discountType?: "percentage" | "flat";
   discountValue?: number;
@@ -114,6 +126,7 @@ export interface UpdateInvoiceDto {
   invoiceDate?: string;
   dueDate?: string;
   milestoneItems?: InvoiceMilestoneItem[];
+  lineItems?: InvoiceLineItem[];
   subtotal?: number;
   discountType?: "percentage" | "flat";
   discountValue?: number;
@@ -260,10 +273,15 @@ export const invoicesApi = apiSlice.injectEndpoints({
         method: "POST",
         body: data,
       }),
-      invalidatesTags: (_result, _error, { projectId }) => [
+      invalidatesTags: (result, _error, { projectId }) => [
         { type: "Invoice" as const, id: "LIST" },
         { type: "Invoice" as const, id: `PROJECT_${projectId}` },
         { type: "Invoice" as const, id: `SUMMARY_${projectId}` },
+        { type: "Payment" as const, id: "LIST" },
+        { type: "Payment" as const, id: `PROJECT_${projectId}` },
+        ...(result?.id
+          ? [{ type: "Payment" as const, id: `INVOICE_${result.id}` }]
+          : []),
       ],
     }),
 

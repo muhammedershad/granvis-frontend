@@ -24,8 +24,10 @@ export interface Invoice {
   id: string;
   invoiceNumber: string;
   invoiceDate: string;
+  dueDate?: string;
   notes?: string;
   milestoneItems: MilestoneInvoiceItem[];
+  lineItems?: GenericLineItem[];
   subtotal: number;
   discountType: "percentage" | "flat";
   discountValue: number;
@@ -37,6 +39,16 @@ export interface Invoice {
   createdAt: string;
   updatedAt: string;
   createdBy: string;
+}
+
+export interface GenericLineItem {
+  id: string;
+  phase: string;
+  description: string;
+  rateType: "per_sqft" | "per_visit" | "fixed";
+  rate: number;
+  quantity: number;
+  amount: number;
 }
 
 export interface MilestoneWithInvoicing extends Milestone {
@@ -53,6 +65,7 @@ export interface InvoiceFormState {
   invoiceReference: string;
   notes: string;
   selectedMilestones: Map<string, MilestoneInvoiceItem>;
+  lineItems: GenericLineItem[];
   subtotal: number;
   discountType: "percentage" | "flat";
   discountValue: number;
@@ -89,8 +102,19 @@ export type InvoiceFormAction =
       payload: { type: "percentage" | "flat"; value: number };
     }
   | { type: "SET_PAID_AMOUNT"; payload: number }
+  | { type: "ADD_LINE_ITEM" }
+  | {
+      type: "UPDATE_LINE_ITEM";
+      payload: {
+        id: string;
+        field: keyof GenericLineItem;
+        value: string | number;
+      };
+    }
+  | { type: "REMOVE_LINE_ITEM"; payload: string }
   | { type: "RESET_FORM" }
-  | { type: "LOAD_DRAFT"; payload: Invoice | unknown };
+  | { type: "LOAD_DRAFT"; payload: Invoice | unknown }
+  | { type: "RESTORE_FROM_SESSION"; payload: InvoiceFormState };
 
 // ==================== HELPER FUNCTIONS ====================
 
@@ -189,11 +213,17 @@ export function getInvoicingStatusBadgeColor(status: InvoicingStatus): string {
 
 function recalculateTotals(
   selectedMilestones: Map<string, MilestoneInvoiceItem>,
+  lineItems: GenericLineItem[],
   discountType: "percentage" | "flat",
   discountValue: number,
   paidAmount: number
 ) {
-  const subtotal = calculateSubtotal(selectedMilestones);
+  const milestoneSubtotal = calculateSubtotal(selectedMilestones);
+  const lineItemSubtotal = lineItems.reduce(
+    (sum, item) => sum + item.amount,
+    0
+  );
+  const subtotal = milestoneSubtotal + lineItemSubtotal;
   const discountAmount = calculateDiscount(
     subtotal,
     discountType,
@@ -231,6 +261,7 @@ function handleToggleMilestone(
 
   const totals = recalculateTotals(
     newSelectedMilestones,
+    state.lineItems,
     state.discountType,
     state.discountValue,
     state.paidAmount
@@ -268,6 +299,7 @@ function handleUpdateMilestoneRate(
 
   const totals = recalculateTotals(
     newSelectedMilestones,
+    state.lineItems,
     state.discountType,
     state.discountValue,
     state.paidAmount
@@ -292,6 +324,7 @@ function handleUpdateMilestoneAmount(
 
   const totals = recalculateTotals(
     newSelectedMilestones,
+    state.lineItems,
     state.discountType,
     state.discountValue,
     state.paidAmount
@@ -301,10 +334,7 @@ function handleUpdateMilestoneAmount(
 }
 
 function handleLoadDraft(payload: Invoice | unknown): InvoiceFormState {
-  const invoice = payload as Invoice & {
-    milestoneItems?: MilestoneInvoiceItem[];
-    dueDate?: string;
-  };
+  const invoice = payload as Invoice;
   const selectedMilestones = new Map<string, MilestoneInvoiceItem>();
 
   if (invoice.milestoneItems) {
@@ -326,6 +356,38 @@ function handleLoadDraft(payload: Invoice | unknown): InvoiceFormState {
     });
   }
 
+  // Access lineItems from the raw payload to handle both API response format
+  // (InvoiceLineItem without id) and local format (GenericLineItem with id)
+  const rawLineItems =
+    (payload as Record<string, unknown>)?.lineItems ?? invoice.lineItems ?? [];
+  const lineItems: GenericLineItem[] = (
+    rawLineItems as {
+      phase?: string;
+      description: string;
+      rateType?: "per_sqft" | "per_visit" | "fixed";
+      rate: number;
+      quantity: number;
+      amount: number;
+    }[]
+  ).map((item, index) => ({
+    id: `li-${Date.now()}-${index}-${Math.random().toString(36).substr(2, 9)}`,
+    phase: item.phase || "",
+    description: item.description,
+    rateType: item.rateType || "fixed",
+    rate: item.rate,
+    quantity: item.quantity ?? 1,
+    amount: item.amount,
+  }));
+
+  // Recalculate totals from loaded data to ensure consistency
+  const totals = recalculateTotals(
+    selectedMilestones,
+    lineItems,
+    invoice.discountType,
+    invoice.discountValue,
+    invoice.paidAmount
+  );
+
   return {
     invoiceDate:
       typeof invoice.invoiceDate === "string"
@@ -339,13 +401,11 @@ function handleLoadDraft(payload: Invoice | unknown): InvoiceFormState {
     invoiceReference: invoice.invoiceNumber,
     notes: invoice.notes || "",
     selectedMilestones,
-    subtotal: invoice.subtotal,
+    lineItems,
     discountType: invoice.discountType,
     discountValue: invoice.discountValue,
-    discountAmount: invoice.discountAmount,
-    netTotal: invoice.netTotal,
     paidAmount: invoice.paidAmount,
-    balance: invoice.balance,
+    ...totals,
   };
 }
 
@@ -387,22 +447,84 @@ export function invoiceFormReducer(
 
     case "SET_DISCOUNT": {
       const { type, value } = action.payload;
-      const discountAmount = calculateDiscount(state.subtotal, type, value);
-      const netTotal = Math.max(0, state.subtotal - discountAmount);
-      const balance = Math.max(0, netTotal - state.paidAmount);
+      const totals = recalculateTotals(
+        state.selectedMilestones,
+        state.lineItems,
+        type,
+        value,
+        state.paidAmount
+      );
       return {
         ...state,
         discountType: type,
         discountValue: value,
-        discountAmount,
-        netTotal,
-        balance,
+        ...totals,
       };
     }
 
     case "SET_PAID_AMOUNT": {
       const balance = Math.max(0, state.netTotal - action.payload);
       return { ...state, paidAmount: action.payload, balance };
+    }
+
+    case "ADD_LINE_ITEM": {
+      const newItem: GenericLineItem = {
+        id: `li-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+        phase: "",
+        description: "",
+        rateType: "fixed",
+        rate: 0,
+        quantity: 1,
+        amount: 0,
+      };
+      const newLineItems = [...state.lineItems, newItem];
+      const addTotals = recalculateTotals(
+        state.selectedMilestones,
+        newLineItems,
+        state.discountType,
+        state.discountValue,
+        state.paidAmount
+      );
+      return { ...state, lineItems: newLineItems, ...addTotals };
+    }
+
+    case "UPDATE_LINE_ITEM": {
+      const { id, field, value } = action.payload;
+      const updatedLineItems = state.lineItems.map((item) => {
+        if (item.id !== id) {
+          return item;
+        }
+        const updated = { ...item, [field]: value };
+        if (field === "rate" || field === "quantity" || field === "rateType") {
+          updated.amount =
+            updated.rateType === "fixed"
+              ? updated.rate
+              : updated.rate * updated.quantity;
+        }
+        return updated;
+      });
+      const updateTotals = recalculateTotals(
+        state.selectedMilestones,
+        updatedLineItems,
+        state.discountType,
+        state.discountValue,
+        state.paidAmount
+      );
+      return { ...state, lineItems: updatedLineItems, ...updateTotals };
+    }
+
+    case "REMOVE_LINE_ITEM": {
+      const filteredLineItems = state.lineItems.filter(
+        (item) => item.id !== action.payload
+      );
+      const removeTotals = recalculateTotals(
+        state.selectedMilestones,
+        filteredLineItems,
+        state.discountType,
+        state.discountValue,
+        state.paidAmount
+      );
+      return { ...state, lineItems: filteredLineItems, ...removeTotals };
     }
 
     case "RESET_FORM":
@@ -413,6 +535,9 @@ export function invoiceFormReducer(
 
     case "LOAD_DRAFT":
       return handleLoadDraft(action.payload);
+
+    case "RESTORE_FROM_SESSION":
+      return action.payload;
 
     default:
       return state;
@@ -425,6 +550,7 @@ export const initialInvoiceFormState: InvoiceFormState = {
   invoiceReference: "GRIHA-2026-0001",
   notes: "",
   selectedMilestones: new Map(),
+  lineItems: [],
   subtotal: 0,
   discountType: "percentage",
   discountValue: 0,
@@ -433,6 +559,46 @@ export const initialInvoiceFormState: InvoiceFormState = {
   paidAmount: 0,
   balance: 0,
 };
+
+// ==================== SESSION PERSISTENCE ====================
+
+const SESSION_KEY = "invoice_form_state";
+
+export function saveFormStateToSession(state: InvoiceFormState): void {
+  try {
+    const serializable = {
+      ...state,
+      selectedMilestones: Array.from(state.selectedMilestones.entries()),
+    };
+    sessionStorage.setItem(SESSION_KEY, JSON.stringify(serializable));
+  } catch {
+    // sessionStorage full or unavailable — silently ignore
+  }
+}
+
+export function loadFormStateFromSession(): InvoiceFormState | null {
+  try {
+    const raw = sessionStorage.getItem(SESSION_KEY);
+    if (!raw) {
+      return null;
+    }
+    const parsed = JSON.parse(raw);
+    return {
+      ...parsed,
+      selectedMilestones: new Map(parsed.selectedMilestones),
+    };
+  } catch {
+    return null;
+  }
+}
+
+export function clearFormStateSession(): void {
+  try {
+    sessionStorage.removeItem(SESSION_KEY);
+  } catch {
+    // ignore
+  }
+}
 
 // ==================== MOCK DATA ====================
 

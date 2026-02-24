@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useReducer, useState } from "react";
+import { Suspense, useEffect, useReducer, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import {
   Briefcase,
@@ -15,7 +15,9 @@ import {
   Mail,
   MapPin,
   Phone,
+  Plus,
   Save,
+  Trash2,
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
 import { Button } from "../ui/button";
@@ -32,10 +34,14 @@ import {
 import { MilestoneSelectionTable } from "./MilestoneSelectionTable";
 import { InvoiceSummaryPanel } from "./InvoiceSummaryPanel";
 import {
+  GenericLineItem,
   MilestoneWithInvoicing,
   calculateMilestoneInvoicingStatus,
+  clearFormStateSession,
   initialInvoiceFormState,
   invoiceFormReducer,
+  loadFormStateFromSession,
+  saveFormStateToSession,
 } from "./invoiceMockData";
 import { useGetMilestonesByProjectQuery } from "@/lib/api/milestonesApi";
 import { useGetProjectByIdQuery } from "@/lib/api/projectsApi";
@@ -45,6 +51,7 @@ import Link from "next/link";
 import { FirmSettings } from "@/types/firm-settings";
 import {
   CreateInvoiceDto,
+  InvoiceLineItem,
   InvoiceMilestoneItem,
   InvoiceStatus,
   useCreateInvoiceMutation,
@@ -71,7 +78,7 @@ interface InvoiceHeaderSectionProps {
   invoiceReference: string;
   isEditable: boolean;
   isSaving: boolean;
-  hasSelectedMilestones: boolean;
+  hasItems: boolean;
   onCancel: () => void;
   onPreview: () => void;
   onSaveDraft: () => void;
@@ -86,7 +93,7 @@ function InvoiceHeaderSection({
   invoiceReference,
   isEditable,
   isSaving,
-  hasSelectedMilestones,
+  hasItems,
   onCancel,
   onPreview,
   onSaveDraft,
@@ -147,7 +154,7 @@ function InvoiceHeaderSection({
               <Button
                 variant="outline"
                 onClick={onPreview}
-                disabled={isSaving || !hasSelectedMilestones}
+                disabled={isSaving || !hasItems}
                 className="border-blue-500/50 text-blue-600 hover:bg-blue-500/10"
               >
                 <Eye className="h-4 w-4 mr-2" />
@@ -156,7 +163,7 @@ function InvoiceHeaderSection({
               <Button
                 variant="secondary"
                 onClick={onSaveDraft}
-                disabled={isSaving || !hasSelectedMilestones}
+                disabled={isSaving || !hasItems}
               >
                 {isSaving ? (
                   <Loader2 className="h-4 w-4 mr-2 animate-spin" />
@@ -167,7 +174,7 @@ function InvoiceHeaderSection({
               </Button>
               <Button
                 onClick={onFinalize}
-                disabled={isSaving || !hasSelectedMilestones}
+                disabled={isSaving || !hasItems}
                 className="bg-gradient-to-r from-green-600 to-teal-600 hover:from-green-700 hover:to-teal-700"
               >
                 {isSaving ? (
@@ -464,10 +471,190 @@ function MilestoneSelectionCard({
   );
 }
 
+interface LineItemsCardProps {
+  lineItems: GenericLineItem[];
+  isEditable: boolean;
+  onAddItem: () => void;
+  onUpdateItem: (
+    id: string,
+    field: keyof GenericLineItem,
+    value: string | number
+  ) => void;
+  onRemoveItem: (id: string) => void;
+}
+
+function LineItemsCard({
+  lineItems,
+  isEditable,
+  onAddItem,
+  onUpdateItem,
+  onRemoveItem,
+}: LineItemsCardProps) {
+  return (
+    <Card className="relative overflow-hidden bg-card/50 backdrop-blur-sm border-border/50">
+      <div className="absolute inset-0 bg-gradient-to-br from-teal-500/[0.02] to-cyan-500/[0.02] dark:from-teal-400/[0.05] dark:to-cyan-400/[0.05]"></div>
+      <CardHeader className="relative">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="p-2 bg-teal-500/10 rounded-lg border border-teal-500/20">
+              <Plus className="h-5 w-5 text-teal-600 dark:text-teal-400" />
+            </div>
+            <CardTitle className="text-foreground">
+              Additional Line Items
+            </CardTitle>
+          </div>
+          <div className="flex items-center gap-3">
+            <p className="text-sm text-muted-foreground">
+              {lineItems.length} item(s)
+            </p>
+            {isEditable && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={onAddItem}
+                className="border-teal-500/50 text-teal-600 hover:bg-teal-500/10"
+              >
+                <Plus className="h-4 w-4 mr-1" />
+                Add Item
+              </Button>
+            )}
+          </div>
+        </div>
+      </CardHeader>
+      <CardContent className="relative">
+        {lineItems.length === 0 ? (
+          <div className="text-center py-6 text-sm text-muted-foreground">
+            <p>No additional line items added.</p>
+            <p className="mt-1 text-xs">
+              Add custom items that are not tied to any milestone.
+            </p>
+          </div>
+        ) : (
+          <div className="space-y-3">
+            {/* Header */}
+            <div className="grid grid-cols-12 gap-3 text-xs font-medium text-muted-foreground uppercase tracking-wider px-1">
+              <div className="col-span-2">Phase</div>
+              <div className="col-span-3">Description</div>
+              <div className="col-span-2">Rate Type</div>
+              <div className="col-span-1">Rate</div>
+              <div className="col-span-1">Qty</div>
+              <div className="col-span-2">Amount</div>
+              <div className="col-span-1"></div>
+            </div>
+            {/* Items */}
+            {lineItems.map((item) => (
+              <div
+                key={item.id}
+                className="grid grid-cols-12 gap-3 items-center p-2 rounded-lg bg-muted/30 border border-border/30"
+              >
+                <div className="col-span-2">
+                  <Input
+                    value={item.phase}
+                    onChange={(e) =>
+                      onUpdateItem(item.id, "phase", e.target.value)
+                    }
+                    placeholder="Phase"
+                    disabled={!isEditable}
+                    className="text-sm h-9"
+                  />
+                </div>
+                <div className="col-span-3">
+                  <Input
+                    value={item.description}
+                    onChange={(e) =>
+                      onUpdateItem(item.id, "description", e.target.value)
+                    }
+                    placeholder="Item description"
+                    disabled={!isEditable}
+                    className="text-sm h-9"
+                  />
+                </div>
+                <div className="col-span-2">
+                  <Select
+                    value={item.rateType}
+                    onValueChange={(value) =>
+                      onUpdateItem(item.id, "rateType", value)
+                    }
+                    disabled={!isEditable}
+                  >
+                    <SelectTrigger className="text-sm h-9">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="fixed">Fixed</SelectItem>
+                      <SelectItem value="per_sqft">Per Sqft</SelectItem>
+                      <SelectItem value="per_visit">Per Visit</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="col-span-1">
+                  <Input
+                    type="number"
+                    value={item.rate || ""}
+                    onChange={(e) =>
+                      onUpdateItem(
+                        item.id,
+                        "rate",
+                        parseFloat(e.target.value) || 0
+                      )
+                    }
+                    placeholder="0"
+                    disabled={!isEditable}
+                    className="text-sm h-9"
+                    min={0}
+                  />
+                </div>
+                <div className="col-span-1">
+                  <Input
+                    type="number"
+                    value={item.quantity || ""}
+                    onChange={(e) =>
+                      onUpdateItem(
+                        item.id,
+                        "quantity",
+                        parseInt(e.target.value) || 1
+                      )
+                    }
+                    placeholder="1"
+                    disabled={item.rateType === "fixed" || !isEditable}
+                    className="text-sm h-9"
+                    min={1}
+                  />
+                </div>
+                <div className="col-span-2">
+                  <div className="text-sm font-medium text-foreground px-2 py-1.5">
+                    {new Intl.NumberFormat("en-IN", {
+                      style: "currency",
+                      currency: "INR",
+                      maximumFractionDigits: 0,
+                    }).format(item.amount)}
+                  </div>
+                </div>
+                <div className="col-span-1 flex justify-center">
+                  {isEditable && (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => onRemoveItem(item.id)}
+                      className="h-8 w-8 p-0 text-red-500 hover:text-red-700 hover:bg-red-500/10"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </CardContent>
+    </Card>
+  );
+}
+
 interface MobileActionButtonsProps {
   isEditable: boolean;
   isSaving: boolean;
-  hasSelectedMilestones: boolean;
+  hasItems: boolean;
   onCancel: () => void;
   onPreview: () => void;
   onSaveDraft: () => void;
@@ -477,7 +664,7 @@ interface MobileActionButtonsProps {
 function MobileActionButtons({
   isEditable,
   isSaving,
-  hasSelectedMilestones,
+  hasItems,
   onCancel,
   onPreview,
   onSaveDraft,
@@ -500,7 +687,7 @@ function MobileActionButtons({
               <Button
                 variant="outline"
                 onClick={onPreview}
-                disabled={isSaving || !hasSelectedMilestones}
+                disabled={isSaving || !hasItems}
                 size="sm"
                 className="border-blue-500/50 text-blue-600"
               >
@@ -509,7 +696,7 @@ function MobileActionButtons({
               <Button
                 variant="secondary"
                 onClick={onSaveDraft}
-                disabled={isSaving || !hasSelectedMilestones}
+                disabled={isSaving || !hasItems}
                 size="sm"
                 className="flex-1"
               >
@@ -517,7 +704,7 @@ function MobileActionButtons({
               </Button>
               <Button
                 onClick={onFinalize}
-                disabled={isSaving || !hasSelectedMilestones}
+                disabled={isSaving || !hasItems}
                 size="sm"
                 className="flex-1 bg-gradient-to-r from-green-600 to-teal-600"
               >
@@ -533,7 +720,22 @@ function MobileActionButtons({
   );
 }
 
-export function CreateInvoicePage({
+export function CreateInvoicePage(props: CreateInvoicePageProps) {
+  return (
+    <Suspense
+      fallback={
+        <div className="flex items-center justify-center py-16">
+          <Loader2 className="w-8 h-8 animate-spin text-purple-500" />
+          <span className="ml-3 text-lg text-muted-foreground">Loading...</span>
+        </div>
+      }
+    >
+      <CreateInvoicePageContent {...props} />
+    </Suspense>
+  );
+}
+
+function CreateInvoicePageContent({
   projectId,
   basePath,
 }: CreateInvoicePageProps) {
@@ -546,6 +748,7 @@ export function CreateInvoicePage({
   const [expandedMilestones, setExpandedMilestones] = useState<Set<string>>(
     new Set()
   );
+  const formInitializedRef = useRef(false);
 
   // Get current user from auth state
   const user = useAppSelector((state) => state.auth.user);
@@ -630,28 +833,51 @@ export function CreateInvoicePage({
     const initForm = async () => {
       if (isEditMode && existingInvoice) {
         // Load existing invoice for editing
+        // NOTE: Do NOT guard this with formInitializedRef — during Next.js
+        // hydration useSearchParams() may initially return empty params,
+        // causing the !isEditMode branch to fire RESET_FORM first.
+        // LOAD_DRAFT must always be allowed to run so it can override
+        // any stale RESET_FORM that occurred before search params hydrated.
         dispatch({ type: "LOAD_DRAFT", payload: existingInvoice });
         // Auto-expand selected milestones
         const selectedIds = new Set(
           existingInvoice.milestoneItems.map((item) => item.milestoneId)
         );
         setExpandedMilestones(selectedIds);
+        formInitializedRef.current = true;
       } else if (!isEditMode) {
-        // Reset for new invoice
-        dispatch({ type: "RESET_FORM" });
-        setExpandedMilestones(new Set());
+        // Check if we have saved state from a preview round-trip
+        const savedState = loadFormStateFromSession();
+        if (savedState) {
+          dispatch({ type: "RESTORE_FROM_SESSION", payload: savedState });
+          // Re-expand milestones that were selected
+          const selectedIds = new Set(savedState.selectedMilestones.keys());
+          setExpandedMilestones(selectedIds);
+          clearFormStateSession();
+          formInitializedRef.current = true;
+        } else if (!formInitializedRef.current) {
+          // Reset for new invoice (only on first initialization)
+          dispatch({ type: "RESET_FORM" });
+          setExpandedMilestones(new Set());
 
-        // Generate invoice number
-        try {
-          const result = await generateInvoiceNumber(firmSettings?.id).unwrap();
-          dispatch({
-            type: "SET_INVOICE_REFERENCE",
-            payload: result.invoiceNumber,
-          });
-        } catch {
-          // Use fallback invoice number
-          const fallbackNumber = `INV-${new Date().getFullYear()}-${String(Date.now()).slice(-4)}`;
-          dispatch({ type: "SET_INVOICE_REFERENCE", payload: fallbackNumber });
+          // Generate invoice number
+          try {
+            const result = await generateInvoiceNumber(
+              firmSettings?.id
+            ).unwrap();
+            dispatch({
+              type: "SET_INVOICE_REFERENCE",
+              payload: result.invoiceNumber,
+            });
+          } catch {
+            // Use fallback invoice number
+            const fallbackNumber = `INV-${new Date().getFullYear()}-${String(Date.now()).slice(-4)}`;
+            dispatch({
+              type: "SET_INVOICE_REFERENCE",
+              payload: fallbackNumber,
+            });
+          }
+          formInitializedRef.current = true;
         }
       }
     };
@@ -689,11 +915,14 @@ export function CreateInvoicePage({
   };
 
   const validateDraft = (): string | null => {
+    if (!project?.clientId) {
+      return "Project is missing a client. Please assign a client to the project before creating an invoice.";
+    }
     if (!state.invoiceDate) {
       return "Invoice date is required";
     }
-    if (state.selectedMilestones.size === 0) {
-      return "Please select at least one milestone";
+    if (state.selectedMilestones.size === 0 && state.lineItems.length === 0) {
+      return "Please select at least one milestone or add a line item";
     }
     return null;
   };
@@ -708,6 +937,16 @@ export function CreateInvoicePage({
     for (const item of state.selectedMilestones.values()) {
       if (item.editableAmount <= 0) {
         return `Milestone "${item.milestoneTitle}" has invalid amount`;
+      }
+    }
+
+    // Check all line items have valid data
+    for (const item of state.lineItems) {
+      if (!item.description.trim()) {
+        return "All line items must have a description";
+      }
+      if (item.amount <= 0) {
+        return `Line item "${item.description}" has invalid amount`;
       }
     }
 
@@ -736,12 +975,24 @@ export function CreateInvoicePage({
       editableAmount: item.editableAmount,
     }));
 
+    const lineItems: InvoiceLineItem[] = state.lineItems
+      .filter((item) => item.description.trim() || item.amount > 0)
+      .map((item) => ({
+        phase: item.phase,
+        description: item.description,
+        rateType: item.rateType,
+        rate: item.rate,
+        quantity: item.quantity,
+        amount: item.amount,
+      }));
+
     return {
       projectId,
-      clientId: project?.clientId || "",
+      clientId: project!.clientId,
       invoiceDate: state.invoiceDate,
       dueDate: state.dueDate || undefined,
       milestoneItems,
+      lineItems,
       subtotal: state.subtotal,
       discountType: state.discountType,
       discountValue: state.discountValue,
@@ -776,6 +1027,7 @@ export function CreateInvoicePage({
             invoiceDate: invoiceData.invoiceDate,
             dueDate: invoiceData.dueDate,
             milestoneItems: invoiceData.milestoneItems,
+            lineItems: invoiceData.lineItems,
             subtotal: invoiceData.subtotal,
             discountType: invoiceData.discountType,
             discountValue: invoiceData.discountValue,
@@ -792,6 +1044,7 @@ export function CreateInvoicePage({
         toast.success("Invoice saved as draft");
       }
 
+      clearFormStateSession();
       router.push(`${basePath}/${projectId}?tab=invoices`);
     } catch {
       toast.error("Failed to save invoice");
@@ -815,6 +1068,7 @@ export function CreateInvoicePage({
             invoiceDate: invoiceData.invoiceDate,
             dueDate: invoiceData.dueDate,
             milestoneItems: invoiceData.milestoneItems,
+            lineItems: invoiceData.lineItems,
             subtotal: invoiceData.subtotal,
             discountType: invoiceData.discountType,
             discountValue: invoiceData.discountValue,
@@ -832,6 +1086,7 @@ export function CreateInvoicePage({
         toast.success("Invoice finalized successfully");
       }
 
+      clearFormStateSession();
       router.push(`${basePath}/${projectId}?tab=invoices`);
     } catch {
       toast.error("Failed to finalize invoice");
@@ -839,6 +1094,7 @@ export function CreateInvoicePage({
   };
 
   const handleCancel = () => {
+    clearFormStateSession();
     router.push(`${basePath}/${projectId}?tab=invoices`);
   };
 
@@ -875,6 +1131,23 @@ export function CreateInvoicePage({
     );
     params.set("items", btoa(JSON.stringify(milestoneItems)));
 
+    // Serialize line items if any
+    if (state.lineItems.length > 0) {
+      const lineItemsData = state.lineItems
+        .filter((item) => item.description.trim() || item.amount > 0)
+        .map((item) => ({
+          phase: item.phase,
+          description: item.description,
+          rateType: item.rateType,
+          rate: item.rate,
+          quantity: item.quantity,
+          amount: item.amount,
+        }));
+      if (lineItemsData.length > 0) {
+        params.set("lineItems", btoa(JSON.stringify(lineItemsData)));
+      }
+    }
+
     // Pass financial summary
     params.set("subtotal", String(state.subtotal));
     params.set("discountType", state.discountType);
@@ -887,6 +1160,9 @@ export function CreateInvoicePage({
     if (selectedFirm?.id) {
       params.set("firmSettingsId", selectedFirm.id);
     }
+
+    // Persist form state so it survives the round-trip to the preview page
+    saveFormStateToSession(state);
 
     router.push(
       `${basePath}/${projectId}/invoices/preview?${params.toString()}`
@@ -911,7 +1187,8 @@ export function CreateInvoicePage({
     );
   }
 
-  const hasSelectedMilestones = state.selectedMilestones.size > 0;
+  const hasItems =
+    state.selectedMilestones.size > 0 || state.lineItems.length > 0;
 
   return (
     <div className="space-y-6">
@@ -923,7 +1200,7 @@ export function CreateInvoicePage({
         invoiceReference={state.invoiceReference}
         isEditable={isEditable}
         isSaving={isSaving}
-        hasSelectedMilestones={hasSelectedMilestones}
+        hasItems={hasItems}
         onCancel={handleCancel}
         onPreview={handlePreview}
         onSaveDraft={handleSaveDraft}
@@ -982,6 +1259,21 @@ export function CreateInvoicePage({
             }
             onToggleExpand={handleToggleExpand}
           />
+
+          <LineItemsCard
+            lineItems={state.lineItems}
+            isEditable={isEditable}
+            onAddItem={() => dispatch({ type: "ADD_LINE_ITEM" })}
+            onUpdateItem={(id, field, value) =>
+              dispatch({
+                type: "UPDATE_LINE_ITEM",
+                payload: { id, field, value },
+              })
+            }
+            onRemoveItem={(id) =>
+              dispatch({ type: "REMOVE_LINE_ITEM", payload: id })
+            }
+          />
         </div>
 
         <div className="lg:w-80">
@@ -1010,7 +1302,7 @@ export function CreateInvoicePage({
       <MobileActionButtons
         isEditable={isEditable}
         isSaving={isSaving}
-        hasSelectedMilestones={hasSelectedMilestones}
+        hasItems={hasItems}
         onCancel={handleCancel}
         onPreview={handlePreview}
         onSaveDraft={handleSaveDraft}

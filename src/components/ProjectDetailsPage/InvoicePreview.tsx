@@ -4,7 +4,7 @@ import { Mail, MapPin, Phone } from "lucide-react";
 import { FirmSettings } from "@/types/firm-settings";
 import { Project } from "@/types/project";
 import { Client } from "@/types/client";
-import { InvoiceMilestoneItem } from "@/lib/api/invoicesApi";
+import { InvoiceLineItem, InvoiceMilestoneItem } from "@/lib/api/invoicesApi";
 import { getCloudFrontUrl } from "@/lib/utils/cloudfront";
 
 export interface InvoicePreviewData {
@@ -12,6 +12,7 @@ export interface InvoicePreviewData {
   project: Project;
   client: Client | null;
   milestoneItems: InvoiceMilestoneItem[];
+  lineItems?: InvoiceLineItem[];
   invoiceDate: string;
   invoiceRef?: string;
   notes?: string[];
@@ -22,12 +23,13 @@ export interface InvoicePreviewData {
   netTotal: number;
 }
 
-interface MilestoneTableRow {
+interface InvoiceTableRow {
+  type: "milestone" | "lineItem";
   phase: string;
   phaseName: string;
-  rateType: string;
+  rateType?: string;
   rate: string;
-  quantity: number;
+  quantity: number | string;
   amount: number;
 }
 
@@ -61,21 +63,34 @@ function formatInvoiceDate(dateString: string): string {
 }
 
 function buildTableRows(
-  milestoneItems: InvoiceMilestoneItem[]
-): MilestoneTableRow[] {
-  // Sort by stage number
-  const sorted = [...milestoneItems].sort(
-    (a, b) => a.milestoneStageNumber - b.milestoneStageNumber
-  );
+  milestoneItems: InvoiceMilestoneItem[],
+  lineItems?: InvoiceLineItem[]
+): InvoiceTableRow[] {
+  // Milestone rows sorted by stage number
+  const milestoneRows: InvoiceTableRow[] = [...milestoneItems]
+    .sort((a, b) => a.milestoneStageNumber - b.milestoneStageNumber)
+    .map((item) => ({
+      type: "milestone" as const,
+      phase: `STAGE ${item.milestoneStageNumber}`,
+      phaseName: item.milestoneTitle.toUpperCase(),
+      rateType: item.rateType,
+      rate: formatRate(item.rateType, item.rate),
+      quantity: item.quantity,
+      amount: item.editableAmount,
+    }));
 
-  return sorted.map((item) => ({
-    phase: `STAGE ${item.milestoneStageNumber}`,
-    phaseName: item.milestoneTitle.toUpperCase(),
-    rateType: item.rateType,
-    rate: formatRate(item.rateType, item.rate),
+  // Generic line item rows
+  const lineItemRows: InvoiceTableRow[] = (lineItems || []).map((item) => ({
+    type: "lineItem" as const,
+    phase: (item.phase || "").toUpperCase(),
+    phaseName: item.description.toUpperCase(),
+    rateType: item.rateType || "fixed",
+    rate: formatRate(item.rateType || "fixed", item.rate),
     quantity: item.quantity,
-    amount: item.editableAmount,
+    amount: item.amount,
   }));
+
+  return [...milestoneRows, ...lineItemRows];
 }
 
 export function InvoicePreview({ data }: { data: InvoicePreviewData }) {
@@ -84,6 +99,7 @@ export function InvoicePreview({ data }: { data: InvoicePreviewData }) {
     project,
     client,
     milestoneItems,
+    lineItems,
     invoiceDate,
     invoiceRef,
     notes,
@@ -94,7 +110,7 @@ export function InvoicePreview({ data }: { data: InvoicePreviewData }) {
     netTotal,
   } = data;
 
-  const tableRows = buildTableRows(milestoneItems);
+  const tableRows = buildTableRows(milestoneItems, lineItems);
 
   // Get client name
   const clientName = client?.name || project.client || "N/A";
@@ -239,9 +255,11 @@ export function InvoicePreview({ data }: { data: InvoicePreviewData }) {
                       <div className="font-semibold text-[#1e3a5f] text-[10px]">
                         {row.phase}
                       </div>
-                      <div className="font-semibold text-[#1e3a5f] text-[10px]">
-                        {row.phaseName}
-                      </div>
+                      {row.type === "milestone" && (
+                        <div className="font-semibold text-[#1e3a5f] text-[10px]">
+                          {row.phaseName}
+                        </div>
+                      )}
                     </div>
                   </td>
                   <td className="border border-gray-300 px-2 py-2 align-top text-[11px]">
@@ -251,7 +269,9 @@ export function InvoicePreview({ data }: { data: InvoicePreviewData }) {
                     {row.rate}
                   </td>
                   <td className="border border-gray-300 px-2 py-2 text-center align-top text-[11px]">
-                    {row.rateType !== "fixed" ? row.quantity : "-"}
+                    {row.type === "milestone" && row.rateType === "fixed"
+                      ? "-"
+                      : row.quantity}
                   </td>
                   <td className="border border-gray-300 px-2 py-2 text-right align-top font-mono text-[11px]">
                     {formatCurrency(row.amount)}

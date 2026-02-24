@@ -23,6 +23,7 @@ import { useGetClientByIdQuery } from "@/lib/api/clientsApi";
 import {
   CreateInvoiceDto,
   Invoice,
+  InvoiceLineItem,
   InvoiceMilestoneItem,
   useCreateInvoiceMutation,
   useGenerateInvoicePdfMutation,
@@ -79,6 +80,18 @@ function parseSearchParams(searchParams: URLSearchParams) {
     }
   })();
 
+  const lineItemsParam = searchParams.get("lineItems");
+  const lineItems: InvoiceLineItem[] = (() => {
+    if (!lineItemsParam) {
+      return [];
+    }
+    try {
+      return JSON.parse(atob(lineItemsParam));
+    } catch {
+      return [];
+    }
+  })();
+
   const subtotal = parseFloat(searchParams.get("subtotal") || "0");
   const discountType = (searchParams.get("discountType") || "percentage") as
     | "percentage"
@@ -94,6 +107,7 @@ function parseSearchParams(searchParams: URLSearchParams) {
     invoiceRef,
     notes,
     milestoneItems,
+    lineItems,
     subtotal,
     discountType,
     discountValue,
@@ -123,7 +137,9 @@ function buildInvoiceData(opts: {
     projectId,
     clientId: project?.clientId || "",
     invoiceDate: params.invoiceDate,
-    milestoneItems: params.milestoneItems,
+    milestoneItems:
+      params.milestoneItems.length > 0 ? params.milestoneItems : undefined,
+    lineItems: params.lineItems.length > 0 ? params.lineItems : undefined,
     subtotal: params.subtotal,
     discountType: params.discountType,
     discountValue: params.discountValue,
@@ -156,6 +172,7 @@ function deriveEffectiveParams(
       ? existingInvoice.notes.split("\n")
       : existingInvoice.defaultNotes,
     milestoneItems: existingInvoice.milestoneItems,
+    lineItems: existingInvoice.lineItems || [],
     subtotal: existingInvoice.subtotal,
     discountType: existingInvoice.discountType,
     discountValue: existingInvoice.discountValue,
@@ -385,8 +402,11 @@ export function InvoicePreviewPage({
   };
 
   const handleFinalize = async () => {
-    if (effectiveParams.milestoneItems.length === 0) {
-      toast.error("No milestone items found");
+    if (
+      effectiveParams.milestoneItems.length === 0 &&
+      effectiveParams.lineItems.length === 0
+    ) {
+      toast.error("No items found");
       return;
     }
 
@@ -458,15 +478,19 @@ export function InvoicePreviewPage({
     );
   }
 
-  if (effectiveParams.milestoneItems.length === 0 && !isViewMode) {
+  if (
+    effectiveParams.milestoneItems.length === 0 &&
+    effectiveParams.lineItems.length === 0 &&
+    !isViewMode
+  ) {
     return (
       <div className="flex flex-col items-center justify-center min-h-screen gap-4">
         <div className="flex items-center gap-2 text-amber-600">
           <AlertCircle className="h-6 w-6" />
-          <p className="text-lg font-medium">No milestones selected</p>
+          <p className="text-lg font-medium">No items added</p>
         </div>
         <p className="text-muted-foreground">
-          Please go back and select at least one milestone for the invoice.
+          Please go back and select at least one milestone or add a line item.
         </p>
         <Button variant="outline" onClick={handleEdit}>
           <ArrowLeft className="h-4 w-4 mr-2" />
@@ -481,6 +505,7 @@ export function InvoicePreviewPage({
     project,
     client: client || null,
     milestoneItems: effectiveParams.milestoneItems,
+    lineItems: effectiveParams.lineItems,
     invoiceDate: effectiveParams.invoiceDate,
     invoiceRef: effectiveParams.invoiceRef,
     notes: effectiveParams.notes,
