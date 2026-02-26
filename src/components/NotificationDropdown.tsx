@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useMemo } from "react";
 import {
   AlertCircle,
   Bell,
@@ -9,6 +9,7 @@ import {
   ExternalLink,
   Eye,
   Info,
+  Loader2,
   Settings,
   Users,
   XCircle,
@@ -22,76 +23,12 @@ import {
 } from "./ui/dropdown-menu";
 import { ScrollArea } from "./ui/scroll-area";
 import { Separator } from "./ui/separator";
-import { Notification } from "../types/notification";
-
-// Mock notification data (first 5 most recent)
-const mockRecentNotifications: Notification[] = [
-  {
-    id: "1",
-    title: "Payment Overdue",
-    message:
-      "Villa project payment of $85,000 is 5 days overdue from John & Sarah Williams",
-    type: "error",
-    category: "payment",
-    priority: "urgent",
-    read: false,
-    timestamp: "2024-07-10T09:30:00Z",
-    actionUrl: "/payments",
-    actionLabel: "View Payment",
-  },
-  {
-    id: "2",
-    title: "Project Milestone Completed",
-    message:
-      "Interior Construction phase completed for Modern Villa Residence project",
-    type: "success",
-    category: "project",
-    priority: "medium",
-    read: false,
-    timestamp: "2024-07-09T14:22:00Z",
-    actionUrl: "/projects/1",
-    actionLabel: "View Project",
-  },
-  {
-    id: "4",
-    title: "Client Meeting Reminder",
-    message:
-      "Progress review meeting with Williams Family scheduled for tomorrow at 10:00 AM",
-    type: "info",
-    category: "reminder",
-    priority: "high",
-    read: false,
-    timestamp: "2024-07-09T08:45:00Z",
-    actionUrl: "/calendar",
-    actionLabel: "View Calendar",
-  },
-  {
-    id: "5",
-    title: "Budget Alert",
-    message:
-      "University Campus Landscape project has exceeded 85% of allocated budget",
-    type: "warning",
-    category: "project",
-    priority: "high",
-    read: false,
-    timestamp: "2024-07-08T16:30:00Z",
-    actionUrl: "/projects/4",
-    actionLabel: "Review Budget",
-  },
-  {
-    id: "7",
-    title: "New Enquiry Received",
-    message:
-      "New project enquiry from Tech Innovations Inc. for office renovation",
-    type: "info",
-    category: "client",
-    priority: "medium",
-    read: false,
-    timestamp: "2024-07-08T10:15:00Z",
-    actionUrl: "/enquiries",
-    actionLabel: "View Enquiry",
-  },
-];
+import {
+  useGetNotificationsQuery,
+  useGetNotificationStatsQuery,
+  useMarkNotificationReadMutation,
+  useMarkAllNotificationsReadMutation,
+} from "@/lib/api/notificationsApi";
 
 interface NotificationDropdownProps {
   onNavigateToNotifications: () => void;
@@ -100,13 +37,19 @@ interface NotificationDropdownProps {
 export function NotificationDropdown({
   onNavigateToNotifications,
 }: NotificationDropdownProps) {
-  const [notifications, setNotifications] = useState<Notification[]>(
-    mockRecentNotifications
-  );
+  const { data: notificationsData, isLoading } = useGetNotificationsQuery({
+    page: 1,
+    limit: 5,
+  });
+  const { data: stats } = useGetNotificationStatsQuery();
+  const [markRead] = useMarkNotificationReadMutation();
+  const [markAllRead] = useMarkAllNotificationsReadMutation();
 
-  const unreadCount = useMemo(() => {
-    return notifications.filter((n) => !n.read).length;
-  }, [notifications]);
+  const notifications = useMemo(
+    () => notificationsData?.data || [],
+    [notificationsData]
+  );
+  const unreadCount = stats?.unread || 0;
 
   const getTypeIcon = (type: string) => {
     switch (type) {
@@ -155,13 +98,11 @@ export function NotificationDropdown({
   };
 
   const handleMarkAsRead = (id: string) => {
-    setNotifications((prev) =>
-      prev.map((n) => (n.id === id ? { ...n, read: true } : n))
-    );
+    markRead(id);
   };
 
   const handleMarkAllAsRead = () => {
-    setNotifications((prev) => prev.map((n) => ({ ...n, read: true })));
+    markAllRead();
   };
 
   return (
@@ -213,7 +154,12 @@ export function NotificationDropdown({
         {/* Notifications List */}
         <ScrollArea className="h-80">
           <div className="p-2">
-            {notifications.length === 0 ? (
+            {isLoading ? (
+              <div className="p-6 text-center">
+                <Loader2 className="mx-auto h-8 w-8 text-muted-foreground mb-2 animate-spin" />
+                <p className="text-muted-foreground text-sm">Loading...</p>
+              </div>
+            ) : notifications.length === 0 ? (
               <div className="p-6 text-center">
                 <Bell className="mx-auto h-8 w-8 text-muted-foreground mb-2" />
                 <p className="text-muted-foreground text-sm">
@@ -251,7 +197,7 @@ export function NotificationDropdown({
                             </p>
                             <div className="flex items-center gap-2 mt-2">
                               <span className="text-xs text-muted-foreground">
-                                {formatTimeAgo(notification.timestamp)}
+                                {formatTimeAgo(notification.createdAt)}
                               </span>
                               {notification.priority === "urgent" && (
                                 <Badge className="text-xs px-1.5 py-0.5 bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300">

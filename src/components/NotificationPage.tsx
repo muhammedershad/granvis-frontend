@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import {
   AlertCircle,
   AlertTriangle,
@@ -7,12 +7,15 @@ import {
   Calendar,
   CheckCheck,
   CheckCircle,
+  ChevronLeft,
+  ChevronRight,
   Clock,
   DollarSign,
   ExternalLink,
   Eye,
   Filter,
   Info,
+  Loader2,
   MoreHorizontal,
   Search,
   Settings,
@@ -41,172 +44,16 @@ import {
   DropdownMenuTrigger,
 } from "./ui/dropdown-menu";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "./ui/tabs";
+import { NotificationFilters } from "../types/notification";
 import {
-  Notification,
-  NotificationFilters,
-  NotificationStats,
-} from "../types/notification";
-
-// Mock notification data
-const mockNotifications: Notification[] = [
-  {
-    id: "1",
-    title: "Payment Overdue",
-    message:
-      "Villa project payment of $85,000 is 5 days overdue from John & Sarah Williams",
-    type: "error",
-    category: "payment",
-    priority: "urgent",
-    read: false,
-    timestamp: "2024-07-10T09:30:00Z",
-    actionUrl: "/payments",
-    actionLabel: "View Payment",
-    metadata: {
-      paymentId: "PAY-001",
-      amount: 85000,
-      dueDate: "2024-07-05",
-    },
-  },
-  {
-    id: "2",
-    title: "Project Milestone Completed",
-    message:
-      "Interior Construction phase completed for Modern Villa Residence project",
-    type: "success",
-    category: "project",
-    priority: "medium",
-    read: false,
-    timestamp: "2024-07-09T14:22:00Z",
-    actionUrl: "/projects/1",
-    actionLabel: "View Project",
-    metadata: {
-      projectId: "1",
-    },
-  },
-  {
-    id: "3",
-    title: "New Team Member Added",
-    message:
-      "Michael Chen has been added to the Downtown Office Complex project team",
-    type: "info",
-    category: "team",
-    priority: "low",
-    read: true,
-    timestamp: "2024-07-09T11:15:00Z",
-    actionUrl: "/employees",
-    actionLabel: "View Team",
-    metadata: {
-      employeeId: "3",
-      projectId: "2",
-    },
-  },
-  {
-    id: "4",
-    title: "Client Meeting Reminder",
-    message:
-      "Progress review meeting with Williams Family scheduled for tomorrow at 10:00 AM",
-    type: "info",
-    category: "reminder",
-    priority: "high",
-    read: false,
-    timestamp: "2024-07-09T08:45:00Z",
-    actionUrl: "/calendar",
-    actionLabel: "View Calendar",
-  },
-  {
-    id: "5",
-    title: "Budget Alert",
-    message:
-      "University Campus Landscape project has exceeded 85% of allocated budget",
-    type: "warning",
-    category: "project",
-    priority: "high",
-    read: false,
-    timestamp: "2024-07-08T16:30:00Z",
-    actionUrl: "/projects/4",
-    actionLabel: "Review Budget",
-    metadata: {
-      projectId: "4",
-    },
-  },
-  {
-    id: "6",
-    title: "System Maintenance",
-    message:
-      "Scheduled system maintenance will occur tonight from 2:00 AM to 4:00 AM",
-    type: "info",
-    category: "system",
-    priority: "medium",
-    read: true,
-    timestamp: "2024-07-08T13:00:00Z",
-  },
-  {
-    id: "7",
-    title: "New Enquiry Received",
-    message:
-      "New project enquiry from Tech Innovations Inc. for office renovation",
-    type: "info",
-    category: "client",
-    priority: "medium",
-    read: false,
-    timestamp: "2024-07-08T10:15:00Z",
-    actionUrl: "/enquiries",
-    actionLabel: "View Enquiry",
-  },
-  {
-    id: "8",
-    title: "Payment Received",
-    message:
-      "Received $255,000 milestone payment for Modern Villa Residence project",
-    type: "success",
-    category: "payment",
-    priority: "medium",
-    read: true,
-    timestamp: "2024-07-07T15:45:00Z",
-    actionUrl: "/payments",
-    actionLabel: "View Payment",
-    metadata: {
-      amount: 255000,
-      projectId: "1",
-    },
-  },
-  {
-    id: "9",
-    title: "Document Upload Required",
-    message:
-      "Building permits pending upload for Downtown Office Complex project",
-    type: "warning",
-    category: "project",
-    priority: "high",
-    read: false,
-    timestamp: "2024-07-07T12:20:00Z",
-    actionUrl: "/projects/2",
-    actionLabel: "Upload Documents",
-    metadata: {
-      projectId: "2",
-    },
-  },
-  {
-    id: "10",
-    title: "Task Assignment",
-    message:
-      "You've been assigned to review electrical plans for Boutique Hotel Interior",
-    type: "info",
-    category: "project",
-    priority: "medium",
-    read: true,
-    timestamp: "2024-07-06T09:30:00Z",
-    actionUrl: "/projects/3",
-    actionLabel: "View Task",
-    metadata: {
-      projectId: "3",
-    },
-  },
-];
+  useGetNotificationsQuery,
+  useGetNotificationStatsQuery,
+  useMarkNotificationReadMutation,
+  useMarkAllNotificationsReadMutation,
+  useDeleteNotificationMutation,
+} from "@/lib/api/notificationsApi";
 
 export function NotificationPage() {
-  const [notifications, setNotifications] =
-    useState<Notification[]>(mockNotifications);
   const [filters, setFilters] = useState<NotificationFilters>({
     type: "all",
     category: "all",
@@ -215,92 +62,38 @@ export function NotificationPage() {
     search: "",
   });
   const [activeTab, setActiveTab] = useState("all");
+  const [page, setPage] = useState(1);
 
-  // Calculate statistics
-  const stats = useMemo((): NotificationStats => {
-    const total = notifications.length;
-    const unread = notifications.filter((n) => !n.read).length;
-    const urgent = notifications.filter((n) => n.priority === "urgent").length;
+  // Build query params from filters + tab
+  const queryParams = {
+    page,
+    limit: 20,
+    type: filters.type !== "all" ? filters.type : undefined,
+    category:
+      activeTab !== "all"
+        ? activeTab
+        : filters.category !== "all"
+          ? filters.category
+          : undefined,
+    priority: filters.priority !== "all" ? filters.priority : undefined,
+    read:
+      filters.read !== "all"
+        ? filters.read === "read"
+          ? "true"
+          : "false"
+        : undefined,
+    search: filters.search || undefined,
+  };
 
-    const now = new Date();
-    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-    const weekAgo = new Date(today.getTime() - 7 * 24 * 60 * 60 * 1000);
+  const { data: notificationsData, isLoading } =
+    useGetNotificationsQuery(queryParams);
+  const { data: stats } = useGetNotificationStatsQuery();
+  const [markRead] = useMarkNotificationReadMutation();
+  const [markAllRead] = useMarkAllNotificationsReadMutation();
+  const [deleteNotification] = useDeleteNotificationMutation();
 
-    const todayCount = notifications.filter((n) => {
-      const notifDate = new Date(n.timestamp);
-      return notifDate >= today;
-    }).length;
-
-    const thisWeekCount = notifications.filter((n) => {
-      const notifDate = new Date(n.timestamp);
-      return notifDate >= weekAgo;
-    }).length;
-
-    return {
-      total,
-      unread,
-      urgent,
-      today: todayCount,
-      thisWeek: thisWeekCount,
-    };
-  }, [notifications]);
-
-  // Filter notifications
-  const filteredNotifications = useMemo(() => {
-    let filtered = notifications.filter((notification) => {
-      const matchesSearch =
-        !filters.search ||
-        notification.title
-          .toLowerCase()
-          .includes(filters.search.toLowerCase()) ||
-        notification.message
-          .toLowerCase()
-          .includes(filters.search.toLowerCase());
-
-      const matchesType =
-        filters.type === "all" || notification.type === filters.type;
-      const matchesCategory =
-        filters.category === "all" ||
-        notification.category === filters.category;
-      const matchesPriority =
-        filters.priority === "all" ||
-        notification.priority === filters.priority;
-      const matchesRead =
-        filters.read === "all" ||
-        (filters.read === "read" && notification.read) ||
-        (filters.read === "unread" && !notification.read);
-
-      return (
-        matchesSearch &&
-        matchesType &&
-        matchesCategory &&
-        matchesPriority &&
-        matchesRead
-      );
-    });
-
-    // Filter by tab
-    if (activeTab !== "all") {
-      filtered = filtered.filter((n) => n.category === activeTab);
-    }
-
-    return filtered.sort((a, b) => {
-      // Sort by read status (unread first), then by priority, then by timestamp
-      if (a.read !== b.read) {
-        return a.read ? 1 : -1;
-      }
-
-      const priorityOrder = { urgent: 0, high: 1, medium: 2, low: 3 };
-      const aPriority = priorityOrder[a.priority];
-      const bPriority = priorityOrder[b.priority];
-
-      if (aPriority !== bPriority) {
-        return aPriority - bPriority;
-      }
-
-      return new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime();
-    });
-  }, [notifications, filters, activeTab]);
+  const notifications = notificationsData?.data || [];
+  const pagination = notificationsData?.pagination;
 
   const getTypeIcon = (type: string) => {
     switch (type) {
@@ -385,23 +178,26 @@ export function NotificationPage() {
   };
 
   const handleMarkAsRead = (id: string) => {
-    setNotifications((prev) =>
-      prev.map((n) => (n.id === id ? { ...n, read: true } : n))
-    );
-  };
-
-  const handleMarkAsUnread = (id: string) => {
-    setNotifications((prev) =>
-      prev.map((n) => (n.id === id ? { ...n, read: false } : n))
-    );
+    markRead(id);
   };
 
   const handleMarkAllAsRead = () => {
-    setNotifications((prev) => prev.map((n) => ({ ...n, read: true })));
+    markAllRead();
   };
 
   const handleDeleteNotification = (id: string) => {
-    setNotifications((prev) => prev.filter((n) => n.id !== id));
+    deleteNotification(id);
+  };
+
+  // Reset page when filters or tab change
+  const handleFilterChange = (newFilters: Partial<NotificationFilters>) => {
+    setFilters((prev) => ({ ...prev, ...newFilters }));
+    setPage(1);
+  };
+
+  const handleTabChange = (tab: string) => {
+    setActiveTab(tab);
+    setPage(1);
   };
 
   return (
@@ -443,7 +239,9 @@ export function NotificationPage() {
               </div>
               <div>
                 <p className="text-sm text-muted-foreground">Total</p>
-                <p className="text-xl text-foreground">{stats.total}</p>
+                <p className="text-xl text-foreground">
+                  {stats?.total ?? 0}
+                </p>
               </div>
             </div>
           </CardContent>
@@ -458,7 +256,9 @@ export function NotificationPage() {
               </div>
               <div>
                 <p className="text-sm text-muted-foreground">Unread</p>
-                <p className="text-xl text-foreground">{stats.unread}</p>
+                <p className="text-xl text-foreground">
+                  {stats?.unread ?? 0}
+                </p>
               </div>
             </div>
           </CardContent>
@@ -473,7 +273,9 @@ export function NotificationPage() {
               </div>
               <div>
                 <p className="text-sm text-muted-foreground">Urgent</p>
-                <p className="text-xl text-foreground">{stats.urgent}</p>
+                <p className="text-xl text-foreground">
+                  {stats?.urgent ?? 0}
+                </p>
               </div>
             </div>
           </CardContent>
@@ -488,7 +290,9 @@ export function NotificationPage() {
               </div>
               <div>
                 <p className="text-sm text-muted-foreground">Today</p>
-                <p className="text-xl text-foreground">{stats.today}</p>
+                <p className="text-xl text-foreground">
+                  {stats?.today ?? 0}
+                </p>
               </div>
             </div>
           </CardContent>
@@ -503,7 +307,9 @@ export function NotificationPage() {
               </div>
               <div>
                 <p className="text-sm text-muted-foreground">This Week</p>
-                <p className="text-xl text-foreground">{stats.thisWeek}</p>
+                <p className="text-xl text-foreground">
+                  {stats?.thisWeek ?? 0}
+                </p>
               </div>
             </div>
           </CardContent>
@@ -525,10 +331,7 @@ export function NotificationPage() {
                     placeholder="Search notifications..."
                     value={filters.search}
                     onChange={(e) =>
-                      setFilters((prev) => ({
-                        ...prev,
-                        search: e.target.value,
-                      }))
+                      handleFilterChange({ search: e.target.value })
                     }
                     className="pl-10 bg-background/50"
                   />
@@ -537,9 +340,7 @@ export function NotificationPage() {
 
               <Select
                 value={filters.type}
-                onValueChange={(value) =>
-                  setFilters((prev) => ({ ...prev, type: value }))
-                }
+                onValueChange={(value) => handleFilterChange({ type: value })}
               >
                 <SelectTrigger className="bg-background/50">
                   <SelectValue placeholder="Type" />
@@ -556,7 +357,7 @@ export function NotificationPage() {
               <Select
                 value={filters.priority}
                 onValueChange={(value) =>
-                  setFilters((prev) => ({ ...prev, priority: value }))
+                  handleFilterChange({ priority: value })
                 }
               >
                 <SelectTrigger className="bg-background/50">
@@ -573,9 +374,7 @@ export function NotificationPage() {
 
               <Select
                 value={filters.read}
-                onValueChange={(value) =>
-                  setFilters((prev) => ({ ...prev, read: value }))
-                }
+                onValueChange={(value) => handleFilterChange({ read: value })}
               >
                 <SelectTrigger className="bg-background/50">
                   <SelectValue placeholder="Status" />
@@ -589,15 +388,16 @@ export function NotificationPage() {
 
               <Button
                 variant="outline"
-                onClick={() =>
+                onClick={() => {
                   setFilters({
                     type: "all",
                     category: "all",
                     priority: "all",
                     read: "all",
                     search: "",
-                  })
-                }
+                  });
+                  setPage(1);
+                }}
                 className="bg-background/50 hover:bg-muted/50"
               >
                 <Filter className="w-4 h-4 mr-2" />
@@ -609,7 +409,7 @@ export function NotificationPage() {
       </Card>
 
       {/* Notification Tabs */}
-      <Tabs value={activeTab} onValueChange={setActiveTab}>
+      <Tabs value={activeTab} onValueChange={handleTabChange}>
         <TabsList className="grid grid-cols-8 w-full bg-muted/30 p-1 rounded-xl">
           <TabsTrigger
             value="all"
@@ -663,7 +463,16 @@ export function NotificationPage() {
 
         <TabsContent value={activeTab} className="mt-6">
           <div className="space-y-4">
-            {filteredNotifications.length === 0 ? (
+            {isLoading ? (
+              <Card className="relative overflow-hidden bg-card/50 backdrop-blur-sm border-border/50">
+                <CardContent className="p-12 text-center">
+                  <Loader2 className="mx-auto h-12 w-12 text-muted-foreground mb-4 animate-spin" />
+                  <p className="text-muted-foreground">
+                    Loading notifications...
+                  </p>
+                </CardContent>
+              </Card>
+            ) : notifications.length === 0 ? (
               <Card className="relative overflow-hidden bg-card/50 backdrop-blur-sm border-border/50">
                 <CardContent className="p-12 text-center">
                   <Bell className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
@@ -676,7 +485,7 @@ export function NotificationPage() {
                 </CardContent>
               </Card>
             ) : (
-              filteredNotifications.map((notification) => (
+              notifications.map((notification) => (
                 <Card
                   key={notification.id}
                   className={`relative overflow-hidden bg-card/50 backdrop-blur-sm border-border/50 transition-all hover:shadow-md ${
@@ -717,7 +526,7 @@ export function NotificationPage() {
 
                             <div className="flex items-center gap-4 text-xs text-muted-foreground">
                               <span>
-                                {formatTimeAgo(notification.timestamp)}
+                                {formatTimeAgo(notification.createdAt)}
                               </span>
                               <span className="capitalize">
                                 {notification.category}
@@ -755,16 +564,7 @@ export function NotificationPage() {
                                 </Button>
                               </DropdownMenuTrigger>
                               <DropdownMenuContent align="end">
-                                {notification.read ? (
-                                  <DropdownMenuItem
-                                    onClick={() =>
-                                      handleMarkAsUnread(notification.id)
-                                    }
-                                  >
-                                    <Eye className="h-4 w-4 mr-2" />
-                                    Mark as Unread
-                                  </DropdownMenuItem>
-                                ) : (
+                                {!notification.read && (
                                   <DropdownMenuItem
                                     onClick={() =>
                                       handleMarkAsRead(notification.id)
@@ -793,6 +593,43 @@ export function NotificationPage() {
                   </CardContent>
                 </Card>
               ))
+            )}
+
+            {/* Pagination */}
+            {pagination && pagination.totalPages > 1 && (
+              <div className="flex items-center justify-between pt-4">
+                <p className="text-sm text-muted-foreground">
+                  Showing {(pagination.page - 1) * pagination.limit + 1} to{" "}
+                  {Math.min(
+                    pagination.page * pagination.limit,
+                    pagination.total
+                  )}{" "}
+                  of {pagination.total} notifications
+                </p>
+                <div className="flex items-center gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setPage((p) => Math.max(1, p - 1))}
+                    disabled={!pagination.hasPrevPage}
+                  >
+                    <ChevronLeft className="h-4 w-4" />
+                    Previous
+                  </Button>
+                  <span className="text-sm text-muted-foreground">
+                    Page {pagination.page} of {pagination.totalPages}
+                  </span>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setPage((p) => p + 1)}
+                    disabled={!pagination.hasNextPage}
+                  >
+                    Next
+                    <ChevronRight className="h-4 w-4" />
+                  </Button>
+                </div>
+              </div>
             )}
           </div>
         </TabsContent>

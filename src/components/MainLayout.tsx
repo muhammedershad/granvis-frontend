@@ -7,6 +7,7 @@ import { getAuthDetails } from "@/store/slices/authSlice";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { useSelector } from "react-redux";
+import { useNotificationSocket } from "@/hooks/useNotificationSocket";
 
 type PageType =
   | "dashboard"
@@ -32,6 +33,9 @@ const MainLayout = ({ children }: { children: React.ReactNode }) => {
   const accessToken = getCookie("accessToken");
   const { isCollapsed, isMobile } = useSidebar();
   const [currentPage, setCurrentPage] = useState<PageType>("dashboard");
+
+  // Establish WebSocket connection for real-time notifications
+  useNotificationSocket();
 
   // Update current page based on pathname
   useEffect(() => {

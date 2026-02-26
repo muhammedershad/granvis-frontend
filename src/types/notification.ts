@@ -21,7 +21,8 @@ export interface Notification {
     | "alert";
   priority: "low" | "medium" | "high" | "urgent";
   read: boolean;
-  timestamp: string;
+  createdAt: string;
+  updatedAt: string;
   actionUrl?: string;
   actionLabel?: string;
   metadata?: {
