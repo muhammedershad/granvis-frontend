@@ -22,6 +22,7 @@ export interface ProjectQueryParams {
   startDateTo?: string;
   minBudget?: number;
   maxBudget?: number;
+  userId?: string;
 }
 
 export interface PaginatedResponse<T> {

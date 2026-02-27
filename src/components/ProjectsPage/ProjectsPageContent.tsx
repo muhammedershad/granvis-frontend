@@ -34,6 +34,8 @@ import {
   useGetProjectsQuery,
 } from "@/lib/api/projectsApi";
 import { useDebounce } from "@/hooks/useDebounce";
+import { useAppSelector } from "@/store/hooks";
+import { IAuthRoles } from "@/store/slices/authSlice";
 import { ProjectStatsCards } from "./ProjectStatsCards";
 import { ProjectFiltersCard } from "./ProjectFiltersCard";
 import { ProjectCardView } from "./ProjectCardView";
@@ -347,6 +349,64 @@ function buildURLParams(
   return params;
 }
 
+function buildProjectQuery({
+  currentPage,
+  debouncedSearchTerm,
+  filters,
+  sort,
+  shouldFilterByUser,
+  userId,
+}: {
+  currentPage: number;
+  debouncedSearchTerm: string;
+  filters: ProjectFilters;
+  sort: ProjectSort;
+  shouldFilterByUser: boolean;
+  userId?: string;
+}) {
+  return {
+    page: currentPage,
+    limit: ITEMS_PER_PAGE,
+    search: debouncedSearchTerm || undefined,
+    type: filters.type !== "all" ? filters.type : undefined,
+    status: filters.status !== "all" ? filters.status : undefined,
+    priority: filters.priority !== "all" ? filters.priority : undefined,
+    projectManager: filters.projectManager || undefined,
+    sortBy: sort.field as
+      | "createdAt"
+      | "name"
+      | "startDate"
+      | "totalBudget"
+      | "progressPercentage"
+      | "priority"
+      | "status",
+    sortOrder: sort.direction,
+    userId: shouldFilterByUser ? userId : undefined,
+  };
+}
+
+function computeProjectStats(statisticsData?: {
+  totalProjects?: number;
+  byStatus?: Array<{ _id: string; count: number }>;
+}) {
+  const total = statisticsData?.totalProjects ?? 0;
+  const byStatus = statisticsData?.byStatus || [];
+
+  const getStatusCount = (status: string) => {
+    const found = byStatus.find((s) => s._id === status);
+    return found?.count ?? 0;
+  };
+
+  return {
+    total,
+    planning: getStatusCount("Planning"),
+    inProgress: getStatusCount("In Progress"),
+    onHold: getStatusCount("On Hold"),
+    completed: getStatusCount("Completed"),
+    cancelled: getStatusCount("Cancelled"),
+  };
+}
+
 export function ProjectsPageContent({
   onProjectSelect,
   projectsBasePath = "/projects",
@@ -368,6 +428,11 @@ export function ProjectsPageContent({
     handleClearFilters,
   } = useURLFiltersSync(projectsBasePath, searchParams);
 
+  const authUser = useAppSelector((state) => state.auth.user);
+  const shouldFilterByUser =
+    authUser?.role === IAuthRoles.EMPLOYEE ||
+    authUser?.role === IAuthRoles.MANAGER;
+
   const {
     deleteConfirmation,
     openDeleteConfirmation,
@@ -385,24 +450,16 @@ export function ProjectsPageContent({
     [onProjectSelect, projectsBasePath, router]
   );
 
-  const { data, isLoading, isFetching, error } = useGetProjectsQuery({
-    page: currentPage,
-    limit: ITEMS_PER_PAGE,
-    search: debouncedSearchTerm || undefined,
-    type: filters.type !== "all" ? filters.type : undefined,
-    status: filters.status !== "all" ? filters.status : undefined,
-    priority: filters.priority !== "all" ? filters.priority : undefined,
-    projectManager: filters.projectManager || undefined,
-    sortBy: sort.field as
-      | "createdAt"
-      | "name"
-      | "startDate"
-      | "totalBudget"
-      | "progressPercentage"
-      | "priority"
-      | "status",
-    sortOrder: sort.direction,
-  });
+  const { data, isLoading, isFetching, error } = useGetProjectsQuery(
+    buildProjectQuery({
+      currentPage,
+      debouncedSearchTerm,
+      filters,
+      sort,
+      shouldFilterByUser,
+      userId: authUser?._id,
+    })
+  );
 
   const [deleteProject] = useDeleteProjectMutation();
 
@@ -422,24 +479,10 @@ export function ProjectsPageContent({
   ];
   const priorities = ["Low", "Medium", "High", "Critical"];
 
-  const stats = useMemo(() => {
-    const total = statisticsData?.totalProjects ?? 0;
-    const byStatus = statisticsData?.byStatus || [];
-
-    const getStatusCount = (status: string) => {
-      const found = byStatus.find((s) => s._id === status);
-      return found?.count ?? 0;
-    };
-
-    return {
-      total,
-      planning: getStatusCount("Planning"),
-      inProgress: getStatusCount("In Progress"),
-      onHold: getStatusCount("On Hold"),
-      completed: getStatusCount("Completed"),
-      cancelled: getStatusCount("Cancelled"),
-    };
-  }, [statisticsData]);
+  const stats = useMemo(
+    () => computeProjectStats(statisticsData),
+    [statisticsData]
+  );
 
   const handleDeleteProject = async () => {
     if (!deleteConfirmation.projectId) {
