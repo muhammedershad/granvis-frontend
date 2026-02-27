@@ -122,6 +122,7 @@ export const projectsApi = apiSlice.injectEndpoints({
       }),
       providesTags: (result, error, clientId) => [
         { type: "Project" as const, id: `CLIENT_${clientId}` },
+        { type: "Project" as const, id: "CLIENT_LIST" },
       ],
       keepUnusedDataFor: 300,
     }),
@@ -134,6 +135,7 @@ export const projectsApi = apiSlice.injectEndpoints({
       }),
       providesTags: (result, error, employeeId) => [
         { type: "Project" as const, id: `EMPLOYEE_${employeeId}` },
+        { type: "Project" as const, id: "EMPLOYEE_LIST" },
       ],
       keepUnusedDataFor: 300,
     }),
@@ -162,6 +164,8 @@ export const projectsApi = apiSlice.injectEndpoints({
         { type: "Project" as const, id: "LIST" },
         { type: "Project" as const, id: "ALL" },
         { type: "Project" as const, id: "STATS" },
+        { type: "Project" as const, id: "EMPLOYEE_LIST" },
+        { type: "Project" as const, id: "CLIENT_LIST" },
       ],
     }),
 
@@ -180,6 +184,8 @@ export const projectsApi = apiSlice.injectEndpoints({
         { type: "Project" as const, id: "LIST" },
         { type: "Project" as const, id: "ALL" },
         { type: "Project" as const, id: "STATS" },
+        { type: "Project" as const, id: "EMPLOYEE_LIST" },
+        { type: "Project" as const, id: "CLIENT_LIST" },
       ],
     }),
 
@@ -194,6 +200,8 @@ export const projectsApi = apiSlice.injectEndpoints({
         { type: "Project" as const, id: "LIST" },
         { type: "Project" as const, id: "ALL" },
         { type: "Project" as const, id: "STATS" },
+        { type: "Project" as const, id: "EMPLOYEE_LIST" },
+        { type: "Project" as const, id: "CLIENT_LIST" },
       ],
     }),
 
@@ -208,6 +216,8 @@ export const projectsApi = apiSlice.injectEndpoints({
         { type: "Project" as const, id: "LIST" },
         { type: "Project" as const, id: "ALL" },
         { type: "Project" as const, id: "STATS" },
+        { type: "Project" as const, id: "EMPLOYEE_LIST" },
+        { type: "Project" as const, id: "CLIENT_LIST" },
       ],
     }),
 
@@ -222,6 +232,8 @@ export const projectsApi = apiSlice.injectEndpoints({
         { type: "Project" as const, id: "LIST" },
         { type: "Project" as const, id: "ALL" },
         { type: "Project" as const, id: "STATS" },
+        { type: "Project" as const, id: "EMPLOYEE_LIST" },
+        { type: "Project" as const, id: "CLIENT_LIST" },
       ],
     }),
   }),

@@ -279,6 +279,9 @@ export const invoicesApi = apiSlice.injectEndpoints({
         { type: "Invoice" as const, id: `SUMMARY_${projectId}` },
         { type: "Payment" as const, id: "LIST" },
         { type: "Payment" as const, id: `PROJECT_${projectId}` },
+        { type: "Milestone" as const, id: `PROJECT_${projectId}` },
+        { type: "Milestone" as const, id: `PROJECT_${projectId}_SUMMARY` },
+        { type: "Project" as const, id: projectId },
         ...(result?.id
           ? [{ type: "Payment" as const, id: `INVOICE_${result.id}` }]
           : []),
@@ -344,7 +347,19 @@ export const invoicesApi = apiSlice.injectEndpoints({
         result
           ? { type: "Invoice" as const, id: `SUMMARY_${result.projectId}` }
           : { type: "Invoice" as const, id: "LIST" },
-        { type: "Milestone" as const, id: "LIST" },
+        ...(result
+          ? [
+              {
+                type: "Milestone" as const,
+                id: `PROJECT_${result.projectId}`,
+              },
+              {
+                type: "Milestone" as const,
+                id: `PROJECT_${result.projectId}_SUMMARY`,
+              },
+              { type: "Project" as const, id: result.projectId },
+            ]
+          : []),
       ],
     }),
 

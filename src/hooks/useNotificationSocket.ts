@@ -60,8 +60,10 @@ export function useNotificationSocket() {
     );
   }, [dispatch]);
 
+  const userId = user?.id;
+
   useEffect(() => {
-    if (!isAuthenticated || !user) {
+    if (!isAuthenticated || !userId) {
       if (socketRef.current) {
         socketRef.current.disconnect();
         socketRef.current = null;
@@ -82,20 +84,8 @@ export function useNotificationSocket() {
       reconnectionAttempts: 10,
     });
 
-    socket.on("connect", () => {
-      // Socket connected
-    });
-
     socket.on("notification:new", handleNewNotification);
     socket.on("notification:count", handleCountUpdate);
-
-    socket.on("disconnect", () => {
-      // Socket disconnected
-    });
-
-    socket.on("connect_error", () => {
-      // Socket connection error
-    });
 
     socketRef.current = socket;
 
@@ -103,7 +93,7 @@ export function useNotificationSocket() {
       socket.disconnect();
       socketRef.current = null;
     };
-  }, [isAuthenticated, user, handleNewNotification, handleCountUpdate]);
+  }, [isAuthenticated, userId, handleNewNotification, handleCountUpdate]);
 
   return { socket: socketRef.current };
 }

@@ -145,6 +145,7 @@ export const milestonesApi = apiSlice.injectEndpoints({
       }),
       invalidatesTags: (_result, _error, { projectId }) => [
         { type: "Milestone" as const, id: `PROJECT_${projectId}` },
+        { type: "Milestone" as const, id: `PROJECT_${projectId}_SUMMARY` },
       ],
     }),
   }),

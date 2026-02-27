@@ -30,7 +30,12 @@ export const bgNavigationItems: NavigationItem[] = [
     icon: Bell,
     page: "notifications",
     badge: "5",
-    roles: [IAuthRoles.SUPER_ADMIN, IAuthRoles.ADMIN, IAuthRoles.MANAGER],
+    roles: [
+      IAuthRoles.SUPER_ADMIN,
+      IAuthRoles.ADMIN,
+      IAuthRoles.MANAGER,
+      IAuthRoles.EMPLOYEE,
+    ],
   },
   {
     title: "Projects",

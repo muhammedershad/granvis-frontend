@@ -466,6 +466,7 @@ export function ProjectsPageContent({
   const { data: statisticsData } = useGetProjectStatisticsQuery();
 
   const projects = useMemo(() => data?.data || [], [data?.data]);
+
   const pagination = data?.pagination;
   const totalPages = pagination?.totalPages || 1;
 
