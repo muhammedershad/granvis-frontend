@@ -331,7 +331,8 @@ export function ClientsPageContent({ onClientSelect }: ClientsPageProps) {
       router.push(queryString ? `${pathname}?${queryString}` : pathname);
       setCurrentPage(1);
     }
-  }, [debouncedSearchForUrl]); // eslint-disable-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- only trigger on debounced search change to avoid re-render loops
+  }, [debouncedSearchForUrl]);
 
   const apiFilters = useMemo(
     () => buildApiFilters(filters, debouncedSearchTerm, currentPage),

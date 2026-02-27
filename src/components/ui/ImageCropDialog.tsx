@@ -243,7 +243,7 @@ export function ImageCropDialog({
                 aspect={aspectRatio}
                 circularCrop={circularCrop}
               >
-                {/* eslint-disable-next-line @next/next/no-img-element */}
+                {/* eslint-disable-next-line @next/next/no-img-element -- ReactCrop requires a native <img> element with ref */}
                 <img
                   ref={imgRef}
                   alt="Crop preview"

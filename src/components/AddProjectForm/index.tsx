@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { toast } from "sonner";
@@ -390,13 +390,16 @@ export function AddProjectForm({
 
   const formData = watch();
 
-  const handleClientSelect = (client: Client) => {
-    setSelectedClient(client);
-    setValue("client", client.name);
-    setValue("clientId", client.id);
-    setValue("clientEmail", client.email || "");
-    setValue("clientPhone", client.phone || "");
-  };
+  const handleClientSelect = useCallback(
+    (client: Client) => {
+      setSelectedClient(client);
+      setValue("client", client.name);
+      setValue("clientId", client.id);
+      setValue("clientEmail", client.email || "");
+      setValue("clientPhone", client.phone || "");
+    },
+    [setValue]
+  );
 
   // Auto-select pre-selected client (when navigating from client page)
   useEffect(() => {
@@ -404,8 +407,7 @@ export function AddProjectForm({
       handleClientSelect(preSelectedClient);
       setExpandedSection("stakeholders");
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [preSelectedClient]);
+  }, [preSelectedClient, selectedClient, handleClientSelect]);
 
   const uploadImage = async (): Promise<string[] | null> => {
     // Use blob if available (cropped image), otherwise no image to upload

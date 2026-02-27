@@ -619,7 +619,7 @@ export function FirmSettingsFormDialog({
     watch,
     reset,
   } = useForm<CreateFirmSettingsFormData>({
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any -- zodResolver type compatibility with react-hook-form
     resolver: zodResolver(createFirmSettingsSchema) as any,
     mode: "onBlur",
     defaultValues: EMPTY_FORM_VALUES,
@@ -664,8 +664,7 @@ export function FirmSettingsFormDialog({
     if (open) {
       setExpandedSection("basic");
     }
-    // imageCrop.reset is intentionally excluded to avoid infinite re-renders
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- imageCrop.reset is intentionally excluded to avoid infinite re-renders
   }, [open, editingFirm, reset]);
 
   const onSubmit = async (data: CreateFirmSettingsFormData) => {

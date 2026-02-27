@@ -293,7 +293,7 @@ export function EmployeesPageContent({ onEmployeeSelect }: EmployeesPageProps) {
   useEffect(() => {
     const newFilters = { ...filters, search: debouncedSearchTerm };
     updateURLParams(newFilters, currentPage);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- individual filter fields listed to avoid re-triggering on object identity changes
   }, [
     debouncedSearchTerm,
     currentPage,
@@ -308,8 +308,7 @@ export function EmployeesPageContent({ onEmployeeSelect }: EmployeesPageProps) {
       ...buildApiFilters(filters, debouncedSearchTerm, currentPage),
       includeStats: true, // Include statistics in the listing API response
     }),
-    // Individual filter fields are listed instead of `filters` to avoid unnecessary re-computation
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- individual filter fields listed to avoid unnecessary re-computation
     [
       filters.department,
       filters.position,
