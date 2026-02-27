@@ -177,9 +177,9 @@ export function DatePicker({
           toYear={toYear}
           captionLayout="dropdown"
           classNames={{
-            caption: "hidden",
+            month_caption: "hidden",
           }}
-          initialFocus
+          autoFocus
         />
       </PopoverContent>
     </Popover>
