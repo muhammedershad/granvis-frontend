@@ -60,7 +60,7 @@ export function useNotificationSocket() {
     );
   }, [dispatch]);
 
-  const userId = user?.id;
+  const userId = user?._id;
 
   useEffect(() => {
     if (!isAuthenticated || !userId) {
