@@ -18,7 +18,7 @@ export default function NewProjectPage() {
   const [createProject] = useCreateProjectMutation();
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const { data: preSelectedClient } = useGetClientByIdQuery(clientId!, {
+  const { data: preSelectedClient } = useGetClientByIdQuery(clientId ?? "", {
     skip: !clientId,
   });
 

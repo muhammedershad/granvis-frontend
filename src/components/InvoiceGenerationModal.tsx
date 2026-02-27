@@ -128,11 +128,11 @@ function SuccessView({ onDownloadPdf, onClose }: SuccessViewProps) {
 }
 
 interface ProjectMilestoneSectionProps {
-  control: any;
-  errors: any;
+  control: ReturnType<typeof useForm<InvoiceFormData>>["control"];
+  errors: ReturnType<typeof useForm<InvoiceFormData>>["formState"]["errors"];
   isLoadingProjects: boolean;
   isLoadingMilestones: boolean;
-  projects: any[];
+  projects: { id: string; name: string; clientId?: string }[];
   milestones: Milestone[];
   selectedProjectId: string;
 }
@@ -169,21 +169,23 @@ function ProjectMilestoneSection({
                     <SelectValue placeholder="Select project" />
                   </SelectTrigger>
                   <SelectContent>
-                    {isLoadingProjects ? (
+                    {isLoadingProjects && (
                       <SelectItem value="loading" disabled>
                         Loading projects...
                       </SelectItem>
-                    ) : projects.length === 0 ? (
+                    )}
+                    {!isLoadingProjects && projects.length === 0 && (
                       <SelectItem value="none" disabled>
                         No projects found
                       </SelectItem>
-                    ) : (
+                    )}
+                    {!isLoadingProjects &&
+                      projects.length > 0 &&
                       projects.map((project) => (
                         <SelectItem key={project.id} value={project.id}>
                           {project.name}
                         </SelectItem>
-                      ))
-                    )}
+                      ))}
                   </SelectContent>
                 </Select>
               )}
@@ -210,21 +212,23 @@ function ProjectMilestoneSection({
                     <SelectValue placeholder="Select milestone" />
                   </SelectTrigger>
                   <SelectContent>
-                    {isLoadingMilestones ? (
+                    {isLoadingMilestones && (
                       <SelectItem value="loading" disabled>
                         Loading milestones...
                       </SelectItem>
-                    ) : milestones.length === 0 ? (
+                    )}
+                    {!isLoadingMilestones && milestones.length === 0 && (
                       <SelectItem value="none" disabled>
                         No milestones found
                       </SelectItem>
-                    ) : (
+                    )}
+                    {!isLoadingMilestones &&
+                      milestones.length > 0 &&
                       milestones.map((milestone) => (
                         <SelectItem key={milestone.id} value={milestone.id}>
                           Stage {milestone.stageNumber}: {milestone.title}
                         </SelectItem>
-                      ))
-                    )}
+                      ))}
                   </SelectContent>
                 </Select>
               )}
@@ -337,16 +341,18 @@ function MilestoneDetailsSection({
 }
 
 interface CustomLineItemsSectionProps {
-  customLineItemsFields: any[];
+  customLineItemsFields: Record<string, string | number>[];
   appendCustomLineItem: (item: {
     description: string;
     rate: number;
     quantity: number;
   }) => void;
   removeCustomLineItem: (index: number) => void;
-  register: any;
-  errors: any;
-  watchCustomLineItems: any[] | undefined;
+  register: ReturnType<typeof useForm<InvoiceFormData>>["register"];
+  errors: ReturnType<typeof useForm<InvoiceFormData>>["formState"]["errors"];
+  watchCustomLineItems:
+    | { description: string; rate: number; quantity: number }[]
+    | undefined;
   customItemsTotal: number;
 }
 
@@ -481,9 +487,9 @@ function CustomLineItemsSection({
 }
 
 interface PaymentDetailsSectionProps {
-  control: any;
-  register: any;
-  errors: any;
+  control: ReturnType<typeof useForm<InvoiceFormData>>["control"];
+  register: ReturnType<typeof useForm<InvoiceFormData>>["register"];
+  errors: ReturnType<typeof useForm<InvoiceFormData>>["formState"]["errors"];
   watchAmount: number;
 }
 
@@ -682,7 +688,7 @@ export function InvoiceGenerationModal({
     });
 
   const projects = projectsResponse?.data || [];
-  const milestones = milestonesData || [];
+  const milestones = useMemo(() => milestonesData || [], [milestonesData]);
 
   const {
     register,
@@ -826,8 +832,9 @@ export function InvoiceGenerationModal({
         console.error("PDF generation error:", pdfError);
         toast.error("Invoice created but PDF generation failed");
       }
-    } catch (error: any) {
-      const message = error?.data?.message || "Failed to create invoice";
+    } catch (error: unknown) {
+      const err = error as { data?: { message?: string } };
+      const message = err?.data?.message || "Failed to create invoice";
       toast.error(message);
       console.error("Invoice creation error:", error);
     }

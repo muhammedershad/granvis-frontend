@@ -554,16 +554,21 @@ export function PaymentReports() {
                       borderRadius: "8px",
                       color: "white",
                     }}
-                    formatter={(value, name) => [
-                      name === "revenue"
-                        ? formatCurrency(Number(value))
-                        : value,
-                      name === "revenue"
-                        ? "Revenue"
-                        : name === "payments"
-                          ? "Payments"
-                          : "Avg Days",
-                    ]}
+                    formatter={(value, name) => {
+                      const formattedValue =
+                        name === "revenue"
+                          ? formatCurrency(Number(value))
+                          : value;
+                      let label: string;
+                      if (name === "revenue") {
+                        label = "Revenue";
+                      } else if (name === "payments") {
+                        label = "Payments";
+                      } else {
+                        label = "Avg Days";
+                      }
+                      return [formattedValue, label];
+                    }}
                   />
                   <Legend />
                   <Bar dataKey="revenue" fill="#8b5cf6" name="Revenue" />
@@ -609,15 +614,18 @@ export function PaymentReports() {
                     </div>
                     <div className="w-full bg-muted/20 rounded-full h-2">
                       <div
-                        className={`h-2 rounded-full ${
-                          index === 0
-                            ? "bg-green-500"
-                            : index === 1
-                              ? "bg-yellow-500"
-                              : index === 2
-                                ? "bg-orange-500"
-                                : "bg-red-500"
-                        }`}
+                        className={`h-2 rounded-full ${(() => {
+                          if (index === 0) {
+                            return "bg-green-500";
+                          }
+                          if (index === 1) {
+                            return "bg-yellow-500";
+                          }
+                          if (index === 2) {
+                            return "bg-orange-500";
+                          }
+                          return "bg-red-500";
+                        })()}`}
                         style={{ width: `${category.percentage}%` }}
                       ></div>
                     </div>

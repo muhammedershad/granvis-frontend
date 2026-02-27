@@ -29,6 +29,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "../ui/tooltip";
+import Image from "next/image";
 import { FirmSettings } from "@/types/firm-settings";
 import { getCloudFrontUrl } from "@/lib/utils/cloudfront";
 
@@ -65,10 +66,13 @@ export function FirmSettingsCard({
           <div className="flex items-center space-x-3.5 min-w-0 flex-1 overflow-hidden">
             {/* Logo or Initials */}
             {logoUrl ? (
-              <img
+              <Image
                 src={logoUrl}
                 alt={firm.name}
+                width={56}
+                height={56}
                 className="w-14 h-14 object-contain rounded-xl border border-gray-200 dark:border-gray-700 bg-white shadow-sm flex-shrink-0"
+                unoptimized
               />
             ) : (
               <div className="w-14 h-14 bg-gradient-to-br from-purple-500 to-blue-500 rounded-xl flex items-center justify-center shadow-lg shadow-purple-500/20 flex-shrink-0">

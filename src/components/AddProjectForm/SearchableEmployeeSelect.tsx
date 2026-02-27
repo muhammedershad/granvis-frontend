@@ -143,16 +143,18 @@ export function SearchableEmployeeSelect({
               onValueChange={setSearchTerm}
             />
             <CommandList>
-              {isFetching ? (
+              {isFetching && (
                 <div className="flex items-center justify-center py-6">
                   <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
                   <span className="ml-2 text-sm text-muted-foreground">
                     Searching...
                   </span>
                 </div>
-              ) : employees.length === 0 ? (
+              )}
+              {!isFetching && employees.length === 0 && (
                 <CommandEmpty>No employees found.</CommandEmpty>
-              ) : (
+              )}
+              {!isFetching && employees.length > 0 && (
                 <CommandGroup>
                   {employees.map((employee) => (
                     <CommandItem

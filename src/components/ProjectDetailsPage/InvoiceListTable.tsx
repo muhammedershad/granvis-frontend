@@ -48,6 +48,13 @@ const formatCurrency = (amount: number): string => {
   return `₹${amount.toLocaleString("en-IN")}`;
 };
 
+function confirmAction(message: string, action: () => void) {
+  // eslint-disable-next-line no-alert
+  if (window.confirm(message)) {
+    action();
+  }
+}
+
 const formatDate = (dateString: string): string => {
   return new Date(dateString).toLocaleDateString("en-IN", {
     day: "2-digit",
@@ -219,15 +226,12 @@ export function InvoiceListTable({
                               <DropdownMenuSeparator />
                               <DropdownMenuItem
                                 variant="destructive"
-                                onClick={() => {
-                                  if (
-                                    confirm(
-                                      `Cancel invoice ${invoice.invoiceNumber}?`
-                                    )
-                                  ) {
-                                    onCancel(invoice);
-                                  }
-                                }}
+                                onClick={() =>
+                                  confirmAction(
+                                    `Cancel invoice ${invoice.invoiceNumber}?`,
+                                    () => onCancel(invoice)
+                                  )
+                                }
                               >
                                 <XCircle className="h-4 w-4 mr-2" />
                                 Cancel Invoice
@@ -241,15 +245,12 @@ export function InvoiceListTable({
                             <DropdownMenuSeparator />
                             <DropdownMenuItem
                               variant="destructive"
-                              onClick={() => {
-                                if (
-                                  confirm(
-                                    `Delete invoice ${invoice.invoiceNumber}?`
-                                  )
-                                ) {
-                                  onDelete(invoice.id);
-                                }
-                              }}
+                              onClick={() =>
+                                confirmAction(
+                                  `Delete invoice ${invoice.invoiceNumber}?`,
+                                  () => onDelete(invoice.id)
+                                )
+                              }
                             >
                               <Trash2 className="h-4 w-4 mr-2" />
                               Delete Invoice

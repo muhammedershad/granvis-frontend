@@ -136,20 +136,22 @@ export function InvoicesTab({ project, basePath }: InvoicesTabProps) {
           </div>
         </CardHeader>
         <CardContent className="relative">
-          {isLoading ? (
+          {isLoading && (
             <div className="flex items-center justify-center py-12">
               <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
               <span className="ml-2 text-sm text-muted-foreground">
                 Loading invoices...
               </span>
             </div>
-          ) : isError ? (
+          )}
+          {!isLoading && isError && (
             <div className="text-center py-12">
               <p className="text-sm text-red-500">
                 Failed to load invoices. Please try again.
               </p>
             </div>
-          ) : (
+          )}
+          {!isLoading && !isError && (
             <InvoiceListTable
               invoices={invoices}
               onView={handleViewInvoice}

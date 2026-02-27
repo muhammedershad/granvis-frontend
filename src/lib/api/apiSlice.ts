@@ -77,6 +77,24 @@ export const apiSlice = createApi({
         "User",
       ],
     }),
+
+    // Forgot password - sends OTP to email
+    forgotPassword: builder.mutation({
+      query: (data) => ({
+        url: "/auth/forgot-password",
+        method: "POST",
+        body: data,
+      }),
+    }),
+
+    // Reset password - verifies OTP and sets new password in one call
+    resetPassword: builder.mutation({
+      query: (data) => ({
+        url: "/auth/reset-password",
+        method: "POST",
+        body: data,
+      }),
+    }),
   }),
 });
 
@@ -86,4 +104,6 @@ export const {
   useGetCurrentUserQuery,
   useGetUserProfileQuery,
   useUpdateUserProfileMutation,
+  useForgotPasswordMutation,
+  useResetPasswordMutation,
 } = apiSlice;

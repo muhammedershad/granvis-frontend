@@ -75,11 +75,9 @@ export function QuickStatsCards({ project }: QuickStatsCardsProps) {
             <div>
               <p className="text-sm text-muted-foreground">Days Left</p>
               <p className="text-xl text-foreground">
-                {daysLeft !== null
-                  ? daysLeft > 0
-                    ? daysLeft
-                    : "Overdue"
-                  : "N/A"}
+                {daysLeft === null && "N/A"}
+                {daysLeft !== null && daysLeft > 0 && daysLeft}
+                {daysLeft !== null && daysLeft <= 0 && "Overdue"}
               </p>
             </div>
           </div>

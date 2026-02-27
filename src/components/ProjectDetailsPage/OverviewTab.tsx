@@ -21,6 +21,7 @@ import { Badge } from "../ui/badge";
 import { Progress } from "../ui/progress";
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
 import { Button } from "../ui/button";
+import Image from "next/image";
 import type { Project } from "@/types/project";
 import { getTypeIcon } from "../ProjectsPage/projectHelpers";
 import { EditTeamModal } from "./EditTeamModal";
@@ -117,10 +118,12 @@ function HeroSection({ project, onViewFullImage }: HeroSectionProps) {
     return (
       <Card className="relative overflow-hidden bg-card/50 backdrop-blur-sm border-border/50">
         <div className="relative w-full h-44 sm:h-52 md:h-60">
-          <img
+          <Image
             src={project.coverImage}
             alt={`${project.name} cover`}
-            className="w-full h-full object-cover object-center"
+            fill
+            className="object-cover object-center"
+            unoptimized
           />
           <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
           <div className="absolute inset-0 bg-gradient-to-r from-black/40 via-transparent to-transparent" />
@@ -238,12 +241,18 @@ function FullImageModal({
       >
         <X className="h-6 w-6" />
       </Button>
-      <img
-        src={coverImage}
-        alt={`${projectName} cover`}
-        className="max-w-full max-h-full object-contain rounded-lg"
+      <div
+        className="relative max-w-full max-h-full w-full h-full"
         onClick={(e) => e.stopPropagation()}
-      />
+      >
+        <Image
+          src={coverImage}
+          alt={`${projectName} cover`}
+          fill
+          className="object-contain rounded-lg"
+          unoptimized
+        />
+      </div>
     </div>
   );
 }

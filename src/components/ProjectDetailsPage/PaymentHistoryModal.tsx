@@ -104,18 +104,20 @@ export function PaymentHistoryModal({
         </div>
 
         {/* Payments Table */}
-        {isLoading ? (
+        {isLoading && (
           <div className="flex items-center justify-center py-8">
             <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
           </div>
-        ) : payments.length === 0 ? (
+        )}
+        {!isLoading && payments.length === 0 && (
           <div className="text-center py-8">
             <Receipt className="mx-auto h-10 w-10 text-muted-foreground mb-3 opacity-50" />
             <p className="text-muted-foreground text-sm">
               No payments recorded for this invoice yet.
             </p>
           </div>
-        ) : (
+        )}
+        {!isLoading && payments.length > 0 && (
           <div className="overflow-x-auto max-h-80">
             <Table>
               <TableHeader>

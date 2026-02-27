@@ -137,11 +137,11 @@ export function ScheduleTab({ project }: ScheduleTabProps) {
                 </p>
                 {project.endDate && (
                   <p className="text-xs text-muted-foreground mt-1">
-                    {getDaysUntil(project.endDate) > 0
-                      ? `${getDaysUntil(project.endDate)} days remaining`
-                      : getDaysUntil(project.endDate) === 0
-                        ? "Due today"
-                        : `${Math.abs(getDaysUntil(project.endDate))} days overdue`}
+                    {getDaysUntil(project.endDate) > 0 &&
+                      `${getDaysUntil(project.endDate)} days remaining`}
+                    {getDaysUntil(project.endDate) === 0 && "Due today"}
+                    {getDaysUntil(project.endDate) < 0 &&
+                      `${Math.abs(getDaysUntil(project.endDate))} days overdue`}
                   </p>
                 )}
               </div>
@@ -240,12 +240,12 @@ export function ScheduleTab({ project }: ScheduleTabProps) {
                             >
                               <DollarSign className="h-3 w-3 mr-1" />
                               {milestone.paymentStatus ===
-                              MilestonePaymentStatus.PAID
-                                ? "Paid"
-                                : milestone.paymentStatus ===
-                                    MilestonePaymentStatus.PARTIALLY_PAID
-                                  ? "Partially Paid"
-                                  : "Unpaid"}
+                                MilestonePaymentStatus.PAID && "Paid"}
+                              {milestone.paymentStatus ===
+                                MilestonePaymentStatus.PARTIALLY_PAID &&
+                                "Partially Paid"}
+                              {milestone.paymentStatus ===
+                                MilestonePaymentStatus.UNPAID && "Unpaid"}
                             </Badge>
                           </div>
 
@@ -278,11 +278,16 @@ export function ScheduleTab({ project }: ScheduleTabProps) {
                                 <span>
                                   Due: {formatDate(milestone.dueDate)}
                                   {daysUntil !== null &&
-                                    (isOverdue
-                                      ? ` (${Math.abs(daysUntil)} days overdue)`
-                                      : daysUntil === 0
-                                        ? " (Due today)"
-                                        : ` (${daysUntil} days left)`)}
+                                    isOverdue &&
+                                    ` (${Math.abs(daysUntil)} days overdue)`}
+                                  {daysUntil !== null &&
+                                    !isOverdue &&
+                                    daysUntil === 0 &&
+                                    " (Due today)"}
+                                  {daysUntil !== null &&
+                                    !isOverdue &&
+                                    daysUntil !== 0 &&
+                                    ` (${daysUntil} days left)`}
                                 </span>
                               </div>
                             )}
@@ -343,12 +348,12 @@ export function ScheduleTab({ project }: ScheduleTabProps) {
                           >
                             <DollarSign className="h-3 w-3 mr-1" />
                             {milestone.paymentStatus ===
-                            MilestonePaymentStatus.PAID
-                              ? "Paid"
-                              : milestone.paymentStatus ===
-                                  MilestonePaymentStatus.PARTIALLY_PAID
-                                ? "Partially Paid"
-                                : "Unpaid"}
+                              MilestonePaymentStatus.PAID && "Paid"}
+                            {milestone.paymentStatus ===
+                              MilestonePaymentStatus.PARTIALLY_PAID &&
+                              "Partially Paid"}
+                            {milestone.paymentStatus ===
+                              MilestonePaymentStatus.UNPAID && "Unpaid"}
                           </Badge>
                         </div>
                         {milestone.description && (

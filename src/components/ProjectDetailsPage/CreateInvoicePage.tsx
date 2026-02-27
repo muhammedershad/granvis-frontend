@@ -47,6 +47,7 @@ import { useGetMilestonesByProjectQuery } from "@/lib/api/milestonesApi";
 import { useGetProjectByIdQuery } from "@/lib/api/projectsApi";
 import { useGetFirmSettingsQuery } from "@/lib/api/firmSettingsApi";
 import { getCloudFrontUrl } from "@/lib/utils/cloudfront";
+import Image from "next/image";
 import Link from "next/link";
 import { FirmSettings } from "@/types/firm-settings";
 import {
@@ -268,14 +269,17 @@ function FirmDetailsCard({
             {selectedFirm && (
               <div className="flex items-start gap-4 p-3 rounded-lg bg-muted/50 border border-border/50">
                 {selectedFirm.logo || selectedFirm.logoKey ? (
-                  <img
+                  <Image
                     src={
                       selectedFirm.logo ||
                       getCloudFrontUrl(selectedFirm.logoKey) ||
                       ""
                     }
                     alt={selectedFirm.name}
+                    width={48}
+                    height={48}
                     className="w-12 h-12 object-contain rounded-lg border border-gray-200 dark:border-gray-700 bg-white flex-shrink-0"
+                    unoptimized
                   />
                 ) : (
                   <div className="w-12 h-12 bg-gradient-to-br from-purple-500 to-blue-500 rounded-lg flex items-center justify-center flex-shrink-0">
@@ -988,7 +992,7 @@ function CreateInvoicePageContent({
 
     return {
       projectId,
-      clientId: project!.clientId,
+      clientId: project?.clientId ?? "",
       invoiceDate: state.invoiceDate,
       dueDate: state.dueDate || undefined,
       milestoneItems,

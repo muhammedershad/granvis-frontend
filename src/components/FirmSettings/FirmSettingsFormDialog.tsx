@@ -223,10 +223,12 @@ function LogoUploadSection({
                 className="object-contain"
               />
             ) : (
-              <img
+              <NextImage
                 src={existingLogoUrl || ""}
                 alt="Firm logo"
-                className="w-full h-full object-contain"
+                fill
+                className="object-contain"
+                unoptimized
               />
             )}
             <div className="absolute top-2 right-2 flex gap-2 z-10">
@@ -662,6 +664,8 @@ export function FirmSettingsFormDialog({
     if (open) {
       setExpandedSection("basic");
     }
+    // imageCrop.reset is intentionally excluded to avoid infinite re-renders
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open, editingFirm, reset]);
 
   const onSubmit = async (data: CreateFirmSettingsFormData) => {
@@ -850,16 +854,14 @@ export function FirmSettingsFormDialog({
                 Cancel
               </Button>
               <Button type="submit" disabled={isSaving}>
-                {isSaving ? (
+                {isSaving && (
                   <>
                     <Loader2 className="w-4 h-4 animate-spin" />
                     {isEditMode ? "Updating..." : "Creating..."}
                   </>
-                ) : isEditMode ? (
-                  "Update Firm"
-                ) : (
-                  "Create Firm"
                 )}
+                {!isSaving && isEditMode && "Update Firm"}
+                {!isSaving && !isEditMode && "Create Firm"}
               </Button>
             </div>
           </form>

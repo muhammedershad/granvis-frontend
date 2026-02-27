@@ -234,11 +234,9 @@ export function InvoiceFormDialog({
               <FileText className="h-5 w-5 text-blue-600 dark:text-blue-400" />
             </div>
             <DialogTitle className="text-xl">
-              {invoice
-                ? invoice.status === "draft"
-                  ? "Edit Invoice"
-                  : "View Invoice"
-                : "Create New Invoice"}
+              {!invoice && "Create New Invoice"}
+              {invoice && invoice.status === "draft" && "Edit Invoice"}
+              {invoice && invoice.status !== "draft" && "View Invoice"}
             </DialogTitle>
           </div>
         </DialogHeader>

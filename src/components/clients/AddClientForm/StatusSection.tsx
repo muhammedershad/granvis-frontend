@@ -37,10 +37,7 @@ export function StatusSection({
         <Label className="text-xs font-medium text-muted-foreground">
           Client Status
         </Label>
-        <Select
-          value={statusValue}
-          onValueChange={(v) => onStatusChange(v as any)}
-        >
+        <Select value={statusValue} onValueChange={(v) => onStatusChange(v)}>
           <SelectTrigger className="h-10">
             <SelectValue />
           </SelectTrigger>
@@ -57,7 +54,7 @@ export function StatusSection({
         </Label>
         <Select
           value={priorityValue}
-          onValueChange={(v) => onPriorityChange(v as any)}
+          onValueChange={(v) => onPriorityChange(v)}
         >
           <SelectTrigger className="h-10">
             <SelectValue />

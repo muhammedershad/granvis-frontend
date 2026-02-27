@@ -131,11 +131,11 @@ export function TimelineItemModal({ item, onClose }: TimelineItemModalProps) {
                 {item.status === "completed" ? "Completed Date" : "End Date"}
               </h4>
               <p className="text-foreground">
-                {item.completedDate
-                  ? formatDate(item.completedDate)
-                  : item.endDate
-                    ? formatDate(item.endDate)
-                    : "Not set"}
+                {item.completedDate && formatDate(item.completedDate)}
+                {!item.completedDate &&
+                  item.endDate &&
+                  formatDate(item.endDate)}
+                {!item.completedDate && !item.endDate && "Not set"}
               </p>
             </div>
           </div>

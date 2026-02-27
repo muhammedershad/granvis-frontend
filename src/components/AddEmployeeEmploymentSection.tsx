@@ -92,7 +92,12 @@ export function AddEmployeeEmploymentSection({
           </Label>
           <Select
             value={formData.employmentType}
-            onValueChange={(val) => setValue("employmentType", val as any)}
+            onValueChange={(val) =>
+              setValue(
+                "employmentType",
+                val as CreateEmployeeFormInput["employmentType"]
+              )
+            }
           >
             <SelectTrigger className="h-10">
               <SelectValue />
@@ -119,7 +124,12 @@ export function AddEmployeeEmploymentSection({
           </Label>
           <Select
             value={formData.department}
-            onValueChange={(val) => setValue("department", val as any)}
+            onValueChange={(val) =>
+              setValue(
+                "department",
+                val as CreateEmployeeFormInput["department"]
+              )
+            }
           >
             <SelectTrigger className="h-10">
               <SelectValue />
@@ -147,7 +157,9 @@ export function AddEmployeeEmploymentSection({
           </Label>
           <Select
             value={formData.role}
-            onValueChange={(val) => setValue("role", val as any)}
+            onValueChange={(val) =>
+              setValue("role", val as CreateEmployeeFormInput["role"])
+            }
           >
             <SelectTrigger className="h-10">
               <SelectValue />
@@ -301,7 +313,12 @@ export function AddEmployeeEmploymentSection({
           </Label>
           <Select
             value={formData.employmentStatus}
-            onValueChange={(val) => setValue("employmentStatus", val as any)}
+            onValueChange={(val) =>
+              setValue(
+                "employmentStatus",
+                val as CreateEmployeeFormInput["employmentStatus"]
+              )
+            }
           >
             <SelectTrigger className="h-10">
               <SelectValue />

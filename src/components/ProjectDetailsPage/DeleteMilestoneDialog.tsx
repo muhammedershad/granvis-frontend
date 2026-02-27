@@ -23,6 +23,30 @@ interface DeleteMilestoneDialogProps {
   projectId: string;
 }
 
+const getPaymentStatusClassName = (
+  paymentStatus: MilestonePaymentStatus
+): string => {
+  if (paymentStatus === MilestonePaymentStatus.PAID) {
+    return "bg-green-100 text-green-800 border-green-200 dark:bg-green-900/30";
+  }
+  if (paymentStatus === MilestonePaymentStatus.PARTIALLY_PAID) {
+    return "bg-yellow-100 text-yellow-800 border-yellow-200 dark:bg-yellow-900/30";
+  }
+  return "bg-red-100 text-red-800 border-red-200 dark:bg-red-900/30";
+};
+
+const getPaymentStatusLabel = (
+  paymentStatus: MilestonePaymentStatus
+): string => {
+  if (paymentStatus === MilestonePaymentStatus.PAID) {
+    return "Paid";
+  }
+  if (paymentStatus === MilestonePaymentStatus.PARTIALLY_PAID) {
+    return "Partially Paid";
+  }
+  return "Unpaid";
+};
+
 const formatCurrency = (amount: number): string => {
   if (amount >= 10000000) {
     return `₹${(amount / 10000000).toFixed(2)}Cr`;
@@ -49,8 +73,9 @@ export function DeleteMilestoneDialog({
       await deleteMilestone({ id: milestone.id, projectId }).unwrap();
       toast.success("Milestone deleted successfully");
       onOpenChange(false);
-    } catch (error: any) {
-      const message = error?.data?.message || "Failed to delete milestone";
+    } catch (error: unknown) {
+      const err = error as { data?: { message?: string } };
+      const message = err?.data?.message || "Failed to delete milestone";
       toast.error(message);
       console.error("Delete milestone error:", error);
     }
@@ -132,24 +157,12 @@ export function DeleteMilestoneDialog({
                         </span>
                         <Badge
                           variant="outline"
-                          className={
-                            milestone.paymentStatus ===
-                            MilestonePaymentStatus.PAID
-                              ? "bg-green-100 text-green-800 border-green-200 dark:bg-green-900/30"
-                              : milestone.paymentStatus ===
-                                  MilestonePaymentStatus.PARTIALLY_PAID
-                                ? "bg-yellow-100 text-yellow-800 border-yellow-200 dark:bg-yellow-900/30"
-                                : "bg-red-100 text-red-800 border-red-200 dark:bg-red-900/30"
-                          }
+                          className={getPaymentStatusClassName(
+                            milestone.paymentStatus
+                          )}
                         >
                           <DollarSign className="h-3 w-3 mr-1" />
-                          {milestone.paymentStatus ===
-                          MilestonePaymentStatus.PAID
-                            ? "Paid"
-                            : milestone.paymentStatus ===
-                                MilestonePaymentStatus.PARTIALLY_PAID
-                              ? "Partially Paid"
-                              : "Unpaid"}
+                          {getPaymentStatusLabel(milestone.paymentStatus)}
                         </Badge>
                       </div>
                     </>

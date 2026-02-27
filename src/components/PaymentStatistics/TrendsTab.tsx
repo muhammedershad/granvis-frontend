@@ -49,22 +49,29 @@ export function TrendsTab() {
                   borderRadius: "8px",
                   color: "white",
                 }}
-                formatter={(value, name) => [
-                  name === "revenue"
-                    ? formatCurrency(Number(value))
-                    : name === "collectionRate"
-                      ? formatPercentage(Number(value))
-                      : value,
-                  name === "revenue"
-                    ? "Revenue"
-                    : name === "collectionRate"
-                      ? "Collection Rate"
-                      : name === "cycleTime"
-                        ? "Cycle Time (Days)"
-                        : name === "invoices"
-                          ? "Invoices"
-                          : name,
-                ]}
+                formatter={(value, name) => {
+                  let formattedValue;
+                  if (name === "revenue") {
+                    formattedValue = formatCurrency(Number(value));
+                  } else if (name === "collectionRate") {
+                    formattedValue = formatPercentage(Number(value));
+                  } else {
+                    formattedValue = value;
+                  }
+                  let label: string;
+                  if (name === "revenue") {
+                    label = "Revenue";
+                  } else if (name === "collectionRate") {
+                    label = "Collection Rate";
+                  } else if (name === "cycleTime") {
+                    label = "Cycle Time (Days)";
+                  } else if (name === "invoices") {
+                    label = "Invoices";
+                  } else {
+                    label = String(name);
+                  }
+                  return [formattedValue, label];
+                }}
               />
               <Legend />
               <Line
@@ -119,18 +126,23 @@ export function TrendsTab() {
                   borderRadius: "8px",
                   color: "white",
                 }}
-                formatter={(value, name) => [
-                  name === "revenue" ? formatCurrency(Number(value)) : value,
-                  name === "revenue"
-                    ? "Revenue"
-                    : name === "invoices"
-                      ? "Invoices"
-                      : name === "disputes"
-                        ? "Disputes"
-                        : name === "satisfaction"
-                          ? "Satisfaction"
-                          : name,
-                ]}
+                formatter={(value, name) => {
+                  const formattedValue =
+                    name === "revenue" ? formatCurrency(Number(value)) : value;
+                  let label: string;
+                  if (name === "revenue") {
+                    label = "Revenue";
+                  } else if (name === "invoices") {
+                    label = "Invoices";
+                  } else if (name === "disputes") {
+                    label = "Disputes";
+                  } else if (name === "satisfaction") {
+                    label = "Satisfaction";
+                  } else {
+                    label = String(name);
+                  }
+                  return [formattedValue, label];
+                }}
               />
               <Legend />
               <Bar dataKey="revenue" fill="#8b5cf6" name="Revenue" />

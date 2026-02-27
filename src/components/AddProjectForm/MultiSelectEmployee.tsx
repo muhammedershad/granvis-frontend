@@ -106,20 +106,22 @@ export function MultiSelectEmployee({
               onValueChange={setSearchTerm}
             />
             <CommandList>
-              {isFetching ? (
+              {isFetching && (
                 <div className="flex items-center justify-center py-6">
                   <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
                   <span className="ml-2 text-sm text-muted-foreground">
                     Searching...
                   </span>
                 </div>
-              ) : availableEmployees.length === 0 ? (
+              )}
+              {!isFetching && availableEmployees.length === 0 && (
                 <CommandEmpty>
                   {employees.length === 0
                     ? "No employees found."
                     : "All matching employees already selected."}
                 </CommandEmpty>
-              ) : (
+              )}
+              {!isFetching && availableEmployees.length > 0 && (
                 <CommandGroup>
                   {availableEmployees.map((employee) => (
                     <CommandItem

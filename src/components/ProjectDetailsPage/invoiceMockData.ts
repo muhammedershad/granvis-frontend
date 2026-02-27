@@ -333,6 +333,16 @@ function handleUpdateMilestoneAmount(
   return { ...state, selectedMilestones: newSelectedMilestones, ...totals };
 }
 
+function getDueDateString(dueDate: string | undefined): string {
+  if (!dueDate) {
+    return "";
+  }
+  if (typeof dueDate === "string") {
+    return dueDate.split("T")[0];
+  }
+  return new Date(dueDate).toISOString().split("T")[0];
+}
+
 function handleLoadDraft(payload: Invoice | unknown): InvoiceFormState {
   const invoice = payload as Invoice;
   const selectedMilestones = new Map<string, MilestoneInvoiceItem>();
@@ -393,11 +403,7 @@ function handleLoadDraft(payload: Invoice | unknown): InvoiceFormState {
       typeof invoice.invoiceDate === "string"
         ? invoice.invoiceDate.split("T")[0]
         : new Date(invoice.invoiceDate).toISOString().split("T")[0],
-    dueDate: invoice.dueDate
-      ? typeof invoice.dueDate === "string"
-        ? invoice.dueDate.split("T")[0]
-        : new Date(invoice.dueDate).toISOString().split("T")[0]
-      : "",
+    dueDate: getDueDateString(invoice.dueDate),
     invoiceReference: invoice.invoiceNumber,
     notes: invoice.notes || "",
     selectedMilestones,

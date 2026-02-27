@@ -21,6 +21,7 @@ import {
   Sparkles,
   Zap,
 } from "lucide-react";
+import Link from "next/link";
 import { ThemeToggle } from "./ThemeToggle";
 import { useLoginMutation } from "@/lib/api/apiSlice";
 import { setCredentials } from "@/store/slices/authSlice";
@@ -249,6 +250,16 @@ export function LoginPage() {
                     {errors.password.message}
                   </p>
                 )}
+              </div>
+
+              {/* Forgot Password Link */}
+              <div className="flex justify-end">
+                <Link
+                  href="/reset-password"
+                  className="text-sm text-purple-400 hover:text-purple-300 transition-colors"
+                >
+                  Forgot Password?
+                </Link>
               </div>
 
               {/* Login Button */}

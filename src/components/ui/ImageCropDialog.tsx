@@ -243,6 +243,7 @@ export function ImageCropDialog({
                 aspect={aspectRatio}
                 circularCrop={circularCrop}
               >
+                {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
                   ref={imgRef}
                   alt="Crop preview"

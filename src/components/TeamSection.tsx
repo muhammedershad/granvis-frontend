@@ -55,6 +55,17 @@ const teamMembers = [
   },
 ];
 
+const getStatusDotColor = (status: string) => {
+  switch (status) {
+    case "online":
+      return "bg-green-500";
+    case "away":
+      return "bg-yellow-500";
+    default:
+      return "bg-red-500";
+  }
+};
+
 export function TeamSection() {
   return (
     <Card className="backdrop-blur-xl bg-white/70 dark:bg-black/20 border-white/20 dark:border-white/10 p-6 relative overflow-hidden shadow-xl dark:shadow-2xl shadow-gray-200/50 dark:shadow-black/50">
@@ -90,13 +101,7 @@ export function TeamSection() {
                     </AvatarFallback>
                   </Avatar>
                   <div
-                    className={`absolute -bottom-1 -right-1 w-4 h-4 rounded-full border-2 border-white dark:border-background shadow-lg ${
-                      member.status === "online"
-                        ? "bg-green-500"
-                        : member.status === "away"
-                          ? "bg-yellow-500"
-                          : "bg-red-500"
-                    }`}
+                    className={`absolute -bottom-1 -right-1 w-4 h-4 rounded-full border-2 border-white dark:border-background shadow-lg ${getStatusDotColor(member.status)}`}
                   ></div>
                 </div>
 

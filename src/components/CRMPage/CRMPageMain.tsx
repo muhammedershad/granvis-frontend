@@ -583,11 +583,13 @@ export function CRMPage() {
             {/* Location */}
             <div className="space-y-3">
               <div className="flex items-center space-x-2">
-                {isLocationLoading ? (
+                {isLocationLoading && (
                   <div className="w-4 h-4 border-2 border-blue-600/30 dark:border-blue-400/30 border-t-blue-600 dark:border-t-blue-400 rounded-full animate-spin" />
-                ) : currentLocation ? (
+                )}
+                {!isLocationLoading && currentLocation && (
                   <Navigation className="w-4 h-4 text-green-600 dark:text-green-400" />
-                ) : (
+                )}
+                {!isLocationLoading && !currentLocation && (
                   <MapPin className="w-4 h-4 text-yellow-600 dark:text-yellow-400" />
                 )}
                 <span className="text-gray-700 dark:text-white/70 text-sm font-medium">
@@ -595,11 +597,12 @@ export function CRMPage() {
                 </span>
               </div>
               <div className="text-xs text-gray-600 dark:text-white/60">
-                {isLocationLoading ? (
+                {isLocationLoading && (
                   <div className="flex items-center space-x-1">
                     <span>Getting location...</span>
                   </div>
-                ) : currentLocation ? (
+                )}
+                {!isLocationLoading && currentLocation && (
                   <div className="space-y-1">
                     <div className="flex items-center space-x-1">
                       <Wifi className="w-3 h-3 text-green-600 dark:text-green-400" />
@@ -609,7 +612,8 @@ export function CRMPage() {
                       {currentLocation.address}
                     </div>
                   </div>
-                ) : (
+                )}
+                {!isLocationLoading && !currentLocation && (
                   <div className="space-y-1">
                     <div className="flex items-center space-x-1">
                       <WifiOff className="w-3 h-3 text-yellow-600 dark:text-yellow-400" />

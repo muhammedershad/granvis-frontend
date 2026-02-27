@@ -300,8 +300,12 @@ export function AddClientFormMain({ onSuccess, onCancel }: AddClientFormProps) {
                 statusValue={statusValue || ""}
                 priorityValue={priorityValue || ""}
                 architecturalStyleValue={architecturalStyleValue || ""}
-                onStatusChange={(v) => setValue("status", v as any)}
-                onPriorityChange={(v) => setValue("priority", v as any)}
+                onStatusChange={(v) =>
+                  setValue("status", v as CreateClientFormData["status"])
+                }
+                onPriorityChange={(v) =>
+                  setValue("priority", v as CreateClientFormData["priority"])
+                }
                 onArchitecturalStyleChange={(v) =>
                   setValue("architecturalStyle", v)
                 }
@@ -346,19 +350,19 @@ export function AddClientFormMain({ onSuccess, onCancel }: AddClientFormProps) {
             Cancel
           </Button>
           <Button type="submit" disabled={isLoading || isUploadingImage}>
-            {isUploadingImage ? (
+            {isUploadingImage && (
               <>
                 <Loader2 className="w-4 h-4 animate-spin" />
                 Uploading Image...
               </>
-            ) : isLoading ? (
+            )}
+            {!isUploadingImage && isLoading && (
               <>
                 <Loader2 className="w-4 h-4 animate-spin" />
                 Creating...
               </>
-            ) : (
-              "Create Client"
             )}
+            {!isUploadingImage && !isLoading && "Create Client"}
           </Button>
         </div>
       </form>

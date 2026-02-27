@@ -80,15 +80,18 @@ export function CalendarWidget() {
             >
               <div className="flex-shrink-0">
                 <div
-                  className={`w-3 h-8 rounded-full ${
-                    meeting.type === "review"
-                      ? "bg-purple-500"
-                      : meeting.type === "presentation"
-                        ? "bg-blue-500"
-                        : meeting.type === "sync"
-                          ? "bg-cyan-500"
-                          : "bg-green-500"
-                  } shadow-lg`}
+                  className={`w-3 h-8 rounded-full ${(() => {
+                    if (meeting.type === "review") {
+                      return "bg-purple-500";
+                    }
+                    if (meeting.type === "presentation") {
+                      return "bg-blue-500";
+                    }
+                    if (meeting.type === "sync") {
+                      return "bg-cyan-500";
+                    }
+                    return "bg-green-500";
+                  })()} shadow-lg`}
                 ></div>
               </div>
 
@@ -130,13 +133,15 @@ export function CalendarWidget() {
                 </div>
                 <Badge
                   variant="outline"
-                  className={`${
-                    deadline.priority === "high"
-                      ? "bg-red-100/80 dark:bg-red-500/20 text-red-700 dark:text-red-300 border-red-200 dark:border-red-500/30"
-                      : deadline.priority === "medium"
-                        ? "bg-yellow-100/80 dark:bg-yellow-500/20 text-yellow-700 dark:text-yellow-300 border-yellow-200 dark:border-yellow-500/30"
-                        : "bg-green-100/80 dark:bg-green-500/20 text-green-700 dark:text-green-300 border-green-200 dark:border-green-500/30"
-                  } shadow-sm`}
+                  className={`${(() => {
+                    if (deadline.priority === "high") {
+                      return "bg-red-100/80 dark:bg-red-500/20 text-red-700 dark:text-red-300 border-red-200 dark:border-red-500/30";
+                    }
+                    if (deadline.priority === "medium") {
+                      return "bg-yellow-100/80 dark:bg-yellow-500/20 text-yellow-700 dark:text-yellow-300 border-yellow-200 dark:border-yellow-500/30";
+                    }
+                    return "bg-green-100/80 dark:bg-green-500/20 text-green-700 dark:text-green-300 border-green-200 dark:border-green-500/30";
+                  })()} shadow-sm`}
                 >
                   {deadline.priority}
                 </Badge>

@@ -8,7 +8,7 @@ import { cn } from "@/components/ui/utils";
 
 interface SectionHeaderProps {
   id: string;
-  icon: any;
+  icon: React.ElementType;
   title: string;
   subtitle: string;
   status: string;

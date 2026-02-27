@@ -48,20 +48,27 @@ export function PerformanceTab() {
                   borderRadius: "8px",
                   color: "white",
                 }}
-                formatter={(value, name) => [
-                  name === "revenue"
-                    ? formatCurrency(Number(value))
-                    : name === "collectionRate"
-                      ? formatPercentage(Number(value))
-                      : value,
-                  name === "revenue"
-                    ? "Revenue"
-                    : name === "collectionRate"
-                      ? "Collection Rate"
-                      : name === "avgCycle"
-                        ? "Avg Cycle (Days)"
-                        : name,
-                ]}
+                formatter={(value, name) => {
+                  let formattedValue;
+                  if (name === "revenue") {
+                    formattedValue = formatCurrency(Number(value));
+                  } else if (name === "collectionRate") {
+                    formattedValue = formatPercentage(Number(value));
+                  } else {
+                    formattedValue = value;
+                  }
+                  let label: string;
+                  if (name === "revenue") {
+                    label = "Revenue";
+                  } else if (name === "collectionRate") {
+                    label = "Collection Rate";
+                  } else if (name === "avgCycle") {
+                    label = "Avg Cycle (Days)";
+                  } else {
+                    label = String(name);
+                  }
+                  return [formattedValue, label];
+                }}
               />
               <Legend />
               <Bar

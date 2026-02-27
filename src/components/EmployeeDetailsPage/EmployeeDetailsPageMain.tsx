@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import Image from "next/image";
 import {
   Activity,
   Award,
@@ -850,11 +851,12 @@ function ProjectsTabContent({
           </CardTitle>
         </CardHeader>
         <CardContent>
-          {isLoadingProjects ? (
+          {isLoadingProjects && (
             <div className="flex items-center justify-center py-12">
               <Loader2 className="w-8 h-8 animate-spin text-purple-500" />
             </div>
-          ) : employeeProjects.length > 0 ? (
+          )}
+          {!isLoadingProjects && employeeProjects.length > 0 && (
             <div className="space-y-4">
               {employeeProjects.map((project) => {
                 const isManager = project.managerId === employeeId;
@@ -867,10 +869,12 @@ function ProjectsTabContent({
                     <div className="flex flex-col sm:flex-row">
                       <div className="w-full h-40 sm:w-32 sm:h-32 shrink-0 bg-gradient-to-br from-purple-500/20 to-blue-500/20 relative">
                         {project.coverImage ? (
-                          <img
+                          <Image
                             src={project.coverImage}
                             alt={project.name}
-                            className="w-full h-full object-cover"
+                            fill
+                            className="object-cover"
+                            unoptimized
                           />
                         ) : (
                           <div className="w-full h-full flex items-center justify-center">
@@ -973,7 +977,8 @@ function ProjectsTabContent({
                 );
               })}
             </div>
-          ) : (
+          )}
+          {!isLoadingProjects && employeeProjects.length === 0 && (
             <div className="flex flex-col items-center justify-center py-12 text-center">
               <Briefcase className="w-12 h-12 text-white/30 mb-4" />
               <h4 className="text-white/70 font-medium mb-2">

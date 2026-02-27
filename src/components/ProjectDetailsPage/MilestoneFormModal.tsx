@@ -189,9 +189,10 @@ export function MilestoneFormModal({
       }
 
       onOpenChange(false);
-    } catch (error: any) {
+    } catch (error: unknown) {
+      const err = error as { data?: { message?: string } };
       const message =
-        error?.data?.message ||
+        err?.data?.message ||
         `Failed to ${isEditMode ? "update" : "create"} milestone`;
       toast.error(message);
       console.error("Milestone form error:", error);

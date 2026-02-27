@@ -1,9 +1,9 @@
 "use client";
 
-import { useEffect, useRef, useCallback } from "react";
-import { io, Socket } from "socket.io-client";
+import { useCallback, useEffect, useRef } from "react";
+import { Socket, io } from "socket.io-client";
 import { getCookie } from "@/lib/cookies";
-import { useAppSelector, useAppDispatch } from "@/store/hooks";
+import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import { getAuthDetails } from "@/store/slices/authSlice";
 import { toast } from "sonner";
 import { apiSlice } from "@/lib/api/apiSlice";
@@ -22,14 +22,12 @@ export function useNotificationSocket() {
   const handleNewNotification = useCallback(
     (notification: Notification) => {
       // Show Sonner toast based on notification type
-      const toastFn =
-        notification.type === "error"
-          ? toast.error
-          : notification.type === "warning"
-            ? toast.warning
-            : notification.type === "success"
-              ? toast.success
-              : toast.info;
+      const toastFnMap: Record<string, typeof toast.info> = {
+        error: toast.error,
+        warning: toast.warning,
+        success: toast.success,
+      };
+      const toastFn = toastFnMap[notification.type] ?? toast.info;
 
       toastFn(notification.title, {
         description: notification.message,
@@ -72,7 +70,9 @@ export function useNotificationSocket() {
     }
 
     const token = getCookie("accessToken");
-    if (!token) return;
+    if (!token) {
+      return;
+    }
 
     const socket = io(`${SOCKET_URL}/notifications`, {
       auth: { token },
@@ -83,18 +83,18 @@ export function useNotificationSocket() {
     });
 
     socket.on("connect", () => {
-      console.log("Notification socket connected");
+      // Socket connected
     });
 
     socket.on("notification:new", handleNewNotification);
     socket.on("notification:count", handleCountUpdate);
 
-    socket.on("disconnect", (reason) => {
-      console.log("Notification socket disconnected:", reason);
+    socket.on("disconnect", () => {
+      // Socket disconnected
     });
 
-    socket.on("connect_error", (error) => {
-      console.error("Notification socket connection error:", error.message);
+    socket.on("connect_error", () => {
+      // Socket connection error
     });
 
     socketRef.current = socket;

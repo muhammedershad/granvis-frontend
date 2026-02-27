@@ -43,6 +43,132 @@ interface EditTeamModalProps {
   onSuccess?: () => void;
 }
 
+function ManagerCommandList({
+  isFetching,
+  managers,
+  selectedManagerId,
+  onSelect,
+}: {
+  isFetching: boolean;
+  managers: Employee[];
+  selectedManagerId: string | undefined;
+  onSelect: (employee: Employee) => void;
+}) {
+  if (isFetching) {
+    return (
+      <div className="flex items-center justify-center py-6">
+        <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+        <span className="ml-2 text-sm text-muted-foreground">Loading...</span>
+      </div>
+    );
+  }
+  if (managers.length === 0) {
+    return <CommandEmpty>No managers found.</CommandEmpty>;
+  }
+  return (
+    <CommandGroup>
+      {managers.map((employee) => (
+        <CommandItem
+          key={employee.id}
+          value={employee.id}
+          onSelect={() => onSelect(employee)}
+          className="cursor-pointer"
+        >
+          <div className="flex items-center gap-3 w-full">
+            <Avatar className="h-8 w-8 shrink-0">
+              <AvatarImage
+                src={getCloudFrontUrl(employee.avatarKey) || undefined}
+                alt={getDisplayName(employee)}
+              />
+              <AvatarFallback className="bg-gradient-to-br from-purple-500 to-indigo-500 text-white text-xs font-medium">
+                {employee.firstName?.[0]}
+                {employee.lastName?.[0]}
+              </AvatarFallback>
+            </Avatar>
+            <div className="flex flex-col min-w-0 flex-1">
+              <span className="font-medium truncate">
+                {getDisplayName(employee)}
+              </span>
+              <span className="text-xs text-muted-foreground truncate">
+                {employee.position} • {employee.department}
+              </span>
+            </div>
+            <Check
+              className={cn(
+                "h-4 w-4 shrink-0",
+                selectedManagerId === employee.id ? "opacity-100" : "opacity-0"
+              )}
+            />
+          </div>
+        </CommandItem>
+      ))}
+    </CommandGroup>
+  );
+}
+
+function MembersCommandList({
+  isFetching,
+  employees,
+  allEmployeesCount,
+  onSelect,
+}: {
+  isFetching: boolean;
+  employees: Employee[];
+  allEmployeesCount: number;
+  onSelect: (employee: Employee) => void;
+}) {
+  if (isFetching) {
+    return (
+      <div className="flex items-center justify-center py-6">
+        <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+        <span className="ml-2 text-sm text-muted-foreground">Searching...</span>
+      </div>
+    );
+  }
+  if (employees.length === 0) {
+    return (
+      <CommandEmpty>
+        {allEmployeesCount === 0
+          ? "No employees found."
+          : "All matching employees already selected."}
+      </CommandEmpty>
+    );
+  }
+  return (
+    <CommandGroup>
+      {employees.map((employee) => (
+        <CommandItem
+          key={employee.id}
+          value={employee.id}
+          onSelect={() => onSelect(employee)}
+          className="cursor-pointer"
+        >
+          <div className="flex items-center gap-3 w-full">
+            <Avatar className="h-8 w-8 shrink-0">
+              <AvatarImage
+                src={getCloudFrontUrl(employee.avatarKey) || undefined}
+                alt={getDisplayName(employee)}
+              />
+              <AvatarFallback className="bg-gradient-to-br from-green-500 to-teal-500 text-white text-xs font-medium">
+                {employee.firstName?.[0]}
+                {employee.lastName?.[0]}
+              </AvatarFallback>
+            </Avatar>
+            <div className="flex flex-col min-w-0 flex-1">
+              <span className="font-medium truncate">
+                {getDisplayName(employee)}
+              </span>
+              <span className="text-xs text-muted-foreground truncate">
+                {employee.position} • {employee.department}
+              </span>
+            </div>
+          </div>
+        </CommandItem>
+      ))}
+    </CommandGroup>
+  );
+}
+
 const getDisplayName = (employee: Employee) => {
   return employee.name || `${employee.firstName} ${employee.lastName}`;
 };
@@ -252,59 +378,12 @@ export function EditTeamModal({
                     onValueChange={setManagerSearchTerm}
                   />
                   <CommandList>
-                    {isFetchingManagers ? (
-                      <div className="flex items-center justify-center py-6">
-                        <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
-                        <span className="ml-2 text-sm text-muted-foreground">
-                          Loading...
-                        </span>
-                      </div>
-                    ) : filteredManagers.length === 0 ? (
-                      <CommandEmpty>No managers found.</CommandEmpty>
-                    ) : (
-                      <CommandGroup>
-                        {filteredManagers.map((employee) => (
-                          <CommandItem
-                            key={employee.id}
-                            value={employee.id}
-                            onSelect={() => handleSelectManager(employee)}
-                            className="cursor-pointer"
-                          >
-                            <div className="flex items-center gap-3 w-full">
-                              <Avatar className="h-8 w-8 shrink-0">
-                                <AvatarImage
-                                  src={
-                                    getCloudFrontUrl(employee.avatarKey) ||
-                                    undefined
-                                  }
-                                  alt={getDisplayName(employee)}
-                                />
-                                <AvatarFallback className="bg-gradient-to-br from-purple-500 to-indigo-500 text-white text-xs font-medium">
-                                  {employee.firstName?.[0]}
-                                  {employee.lastName?.[0]}
-                                </AvatarFallback>
-                              </Avatar>
-                              <div className="flex flex-col min-w-0 flex-1">
-                                <span className="font-medium truncate">
-                                  {getDisplayName(employee)}
-                                </span>
-                                <span className="text-xs text-muted-foreground truncate">
-                                  {employee.position} • {employee.department}
-                                </span>
-                              </div>
-                              <Check
-                                className={cn(
-                                  "h-4 w-4 shrink-0",
-                                  selectedManager?.id === employee.id
-                                    ? "opacity-100"
-                                    : "opacity-0"
-                                )}
-                              />
-                            </div>
-                          </CommandItem>
-                        ))}
-                      </CommandGroup>
-                    )}
+                    <ManagerCommandList
+                      isFetching={isFetchingManagers}
+                      managers={filteredManagers}
+                      selectedManagerId={selectedManager?.id}
+                      onSelect={handleSelectManager}
+                    />
                   </CommandList>
                 </Command>
               </PopoverContent>
@@ -347,55 +426,12 @@ export function EditTeamModal({
                     onValueChange={setMembersSearchTerm}
                   />
                   <CommandList>
-                    {isFetchingEmployees ? (
-                      <div className="flex items-center justify-center py-6">
-                        <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
-                        <span className="ml-2 text-sm text-muted-foreground">
-                          Searching...
-                        </span>
-                      </div>
-                    ) : availableEmployees.length === 0 ? (
-                      <CommandEmpty>
-                        {(employeesData?.data || []).length === 0
-                          ? "No employees found."
-                          : "All matching employees already selected."}
-                      </CommandEmpty>
-                    ) : (
-                      <CommandGroup>
-                        {availableEmployees.map((employee) => (
-                          <CommandItem
-                            key={employee.id}
-                            value={employee.id}
-                            onSelect={() => handleSelectMember(employee)}
-                            className="cursor-pointer"
-                          >
-                            <div className="flex items-center gap-3 w-full">
-                              <Avatar className="h-8 w-8 shrink-0">
-                                <AvatarImage
-                                  src={
-                                    getCloudFrontUrl(employee.avatarKey) ||
-                                    undefined
-                                  }
-                                  alt={getDisplayName(employee)}
-                                />
-                                <AvatarFallback className="bg-gradient-to-br from-green-500 to-teal-500 text-white text-xs font-medium">
-                                  {employee.firstName?.[0]}
-                                  {employee.lastName?.[0]}
-                                </AvatarFallback>
-                              </Avatar>
-                              <div className="flex flex-col min-w-0 flex-1">
-                                <span className="font-medium truncate">
-                                  {getDisplayName(employee)}
-                                </span>
-                                <span className="text-xs text-muted-foreground truncate">
-                                  {employee.position} • {employee.department}
-                                </span>
-                              </div>
-                            </div>
-                          </CommandItem>
-                        ))}
-                      </CommandGroup>
-                    )}
+                    <MembersCommandList
+                      isFetching={isFetchingEmployees}
+                      employees={availableEmployees}
+                      allEmployeesCount={(employeesData?.data || []).length}
+                      onSelect={handleSelectMember}
+                    />
                   </CommandList>
                 </Command>
               </PopoverContent>

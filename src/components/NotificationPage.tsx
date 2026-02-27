@@ -44,14 +44,368 @@ import {
   DropdownMenuTrigger,
 } from "./ui/dropdown-menu";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "./ui/tabs";
-import { NotificationFilters } from "../types/notification";
 import {
-  useGetNotificationsQuery,
-  useGetNotificationStatsQuery,
-  useMarkNotificationReadMutation,
-  useMarkAllNotificationsReadMutation,
+  Notification,
+  NotificationFilters,
+  NotificationStats,
+} from "../types/notification";
+import {
   useDeleteNotificationMutation,
+  useGetNotificationStatsQuery,
+  useGetNotificationsQuery,
+  useMarkAllNotificationsReadMutation,
+  useMarkNotificationReadMutation,
 } from "@/lib/api/notificationsApi";
+
+function getTypeIcon(type: string) {
+  switch (type) {
+    case "success":
+      return <CheckCircle className="w-4 h-4 text-emerald-500" />;
+    case "error":
+      return <XCircle className="w-4 h-4 text-red-500" />;
+    case "warning":
+      return <AlertTriangle className="w-4 h-4 text-amber-500" />;
+    case "info":
+      return <Info className="w-4 h-4 text-blue-500" />;
+    case "project":
+      return <Building2 className="w-4 h-4 text-purple-500" />;
+    case "payment":
+      return <DollarSign className="w-4 h-4 text-green-500" />;
+    case "team":
+      return <Users className="w-4 h-4 text-indigo-500" />;
+    case "system":
+      return <Settings className="w-4 h-4 text-gray-500" />;
+    default:
+      return <Bell className="w-4 h-4 text-gray-500" />;
+  }
+}
+
+function getCategoryIcon(category: string) {
+  switch (category) {
+    case "project":
+      return <Building2 className="w-4 h-4" />;
+    case "payment":
+      return <DollarSign className="w-4 h-4" />;
+    case "team":
+      return <Users className="w-4 h-4" />;
+    case "client":
+      return <UserPlus className="w-4 h-4" />;
+    case "system":
+      return <Settings className="w-4 h-4" />;
+    case "reminder":
+      return <Clock className="w-4 h-4" />;
+    case "alert":
+      return <AlertCircle className="w-4 h-4" />;
+    default:
+      return <Bell className="w-4 h-4" />;
+  }
+}
+
+function getPriorityColor(priority: string) {
+  switch (priority) {
+    case "urgent":
+      return "bg-red-100 text-red-800 border-red-200 dark:bg-red-900/30 dark:text-red-300 dark:border-red-800";
+    case "high":
+      return "bg-orange-100 text-orange-800 border-orange-200 dark:bg-orange-900/30 dark:text-orange-300 dark:border-orange-800";
+    case "medium":
+      return "bg-blue-100 text-blue-800 border-blue-200 dark:bg-blue-900/30 dark:text-blue-300 dark:border-blue-800";
+    case "low":
+      return "bg-gray-100 text-gray-800 border-gray-200 dark:bg-gray-900/30 dark:text-gray-300 dark:border-gray-800";
+    default:
+      return "bg-gray-100 text-gray-800 border-gray-200 dark:bg-gray-900/30 dark:text-gray-300 dark:border-gray-800";
+  }
+}
+
+function formatTimeAgo(timestamp: string) {
+  const now = new Date();
+  const notifTime = new Date(timestamp);
+  const diffMs = now.getTime() - notifTime.getTime();
+  const diffMins = Math.floor(diffMs / (1000 * 60));
+  const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
+  const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+
+  if (diffMins < 1) {
+    return "Just now";
+  }
+  if (diffMins < 60) {
+    return `${diffMins}m ago`;
+  }
+  if (diffHours < 24) {
+    return `${diffHours}h ago`;
+  }
+  if (diffDays < 7) {
+    return `${diffDays}d ago`;
+  }
+  return notifTime.toLocaleDateString();
+}
+
+function buildCategoryParam(activeTab: string, filterCategory: string) {
+  if (activeTab !== "all") {
+    return activeTab;
+  }
+  if (filterCategory !== "all") {
+    return filterCategory;
+  }
+  return undefined;
+}
+
+function buildReadParam(read: string) {
+  if (read === "read") {
+    return "true";
+  }
+  if (read === "unread") {
+    return "false";
+  }
+  return undefined;
+}
+
+function filterValue(value: string) {
+  return value !== "all" ? value : undefined;
+}
+
+function buildQueryParams(
+  page: number,
+  filters: NotificationFilters,
+  activeTab: string
+) {
+  return {
+    page,
+    limit: 20,
+    type: filterValue(filters.type),
+    category: buildCategoryParam(activeTab, filters.category),
+    priority: filterValue(filters.priority),
+    read: buildReadParam(filters.read),
+    search: filters.search || undefined,
+  };
+}
+
+function NotificationStatsCards({
+  stats,
+}: {
+  stats: NotificationStats | undefined;
+}) {
+  const total = stats?.total ?? 0;
+  const unread = stats?.unread ?? 0;
+  const urgent = stats?.urgent ?? 0;
+  const today = stats?.today ?? 0;
+  const thisWeek = stats?.thisWeek ?? 0;
+
+  return (
+    <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+      <Card className="relative overflow-hidden bg-card/50 backdrop-blur-sm border-border/50">
+        <div className="absolute inset-0 bg-gradient-to-br from-blue-500/[0.02] to-purple-500/[0.02] dark:from-blue-400/[0.05] dark:to-purple-400/[0.05]"></div>
+        <CardContent className="relative p-4">
+          <div className="flex items-center gap-3">
+            <div className="p-2 bg-blue-500/10 rounded-lg border border-blue-500/20">
+              <Bell className="h-5 w-5 text-blue-600 dark:text-blue-400" />
+            </div>
+            <div>
+              <p className="text-sm text-muted-foreground">Total</p>
+              <p className="text-xl text-foreground">{total}</p>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      <Card className="relative overflow-hidden bg-card/50 backdrop-blur-sm border-border/50">
+        <div className="absolute inset-0 bg-gradient-to-br from-orange-500/[0.02] to-red-500/[0.02] dark:from-orange-400/[0.05] dark:to-red-400/[0.05]"></div>
+        <CardContent className="relative p-4">
+          <div className="flex items-center gap-3">
+            <div className="p-2 bg-orange-500/10 rounded-lg border border-orange-500/20">
+              <Eye className="h-5 w-5 text-orange-600 dark:text-orange-400" />
+            </div>
+            <div>
+              <p className="text-sm text-muted-foreground">Unread</p>
+              <p className="text-xl text-foreground">{unread}</p>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      <Card className="relative overflow-hidden bg-card/50 backdrop-blur-sm border-border/50">
+        <div className="absolute inset-0 bg-gradient-to-br from-red-500/[0.02] to-pink-500/[0.02] dark:from-red-400/[0.05] dark:to-pink-400/[0.05]"></div>
+        <CardContent className="relative p-4">
+          <div className="flex items-center gap-3">
+            <div className="p-2 bg-red-500/10 rounded-lg border border-red-500/20">
+              <AlertTriangle className="h-5 w-5 text-red-600 dark:text-red-400" />
+            </div>
+            <div>
+              <p className="text-sm text-muted-foreground">Urgent</p>
+              <p className="text-xl text-foreground">{urgent}</p>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      <Card className="relative overflow-hidden bg-card/50 backdrop-blur-sm border-border/50">
+        <div className="absolute inset-0 bg-gradient-to-br from-emerald-500/[0.02] to-green-500/[0.02] dark:from-emerald-400/[0.05] dark:to-green-400/[0.05]"></div>
+        <CardContent className="relative p-4">
+          <div className="flex items-center gap-3">
+            <div className="p-2 bg-emerald-500/10 rounded-lg border border-emerald-500/20">
+              <Calendar className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />
+            </div>
+            <div>
+              <p className="text-sm text-muted-foreground">Today</p>
+              <p className="text-xl text-foreground">{today}</p>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      <Card className="relative overflow-hidden bg-card/50 backdrop-blur-sm border-border/50">
+        <div className="absolute inset-0 bg-gradient-to-br from-purple-500/[0.02] to-indigo-500/[0.02] dark:from-purple-400/[0.05] dark:to-indigo-400/[0.05]"></div>
+        <CardContent className="relative p-4">
+          <div className="flex items-center gap-3">
+            <div className="p-2 bg-purple-500/10 rounded-lg border border-purple-500/20">
+              <TrendingUp className="h-5 w-5 text-purple-600 dark:text-purple-400" />
+            </div>
+            <div>
+              <p className="text-sm text-muted-foreground">This Week</p>
+              <p className="text-xl text-foreground">{thisWeek}</p>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+    </div>
+  );
+}
+
+function NotificationListContent({
+  isLoading,
+  notifications,
+  onMarkAsRead,
+  onDelete,
+}: {
+  isLoading: boolean;
+  notifications: Notification[];
+  onMarkAsRead: (id: string) => void;
+  onDelete: (id: string) => void;
+}) {
+  if (isLoading) {
+    return (
+      <Card className="relative overflow-hidden bg-card/50 backdrop-blur-sm border-border/50">
+        <CardContent className="p-12 text-center">
+          <Loader2 className="mx-auto h-12 w-12 text-muted-foreground mb-4 animate-spin" />
+          <p className="text-muted-foreground">Loading notifications...</p>
+        </CardContent>
+      </Card>
+    );
+  }
+  if (notifications.length === 0) {
+    return (
+      <Card className="relative overflow-hidden bg-card/50 backdrop-blur-sm border-border/50">
+        <CardContent className="p-12 text-center">
+          <Bell className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
+          <h3 className="text-foreground mb-2">No Notifications Found</h3>
+          <p className="text-muted-foreground">
+            No notifications match your current filters.
+          </p>
+        </CardContent>
+      </Card>
+    );
+  }
+  return (
+    <>
+      {notifications.map((notification) => (
+        <NotificationCard
+          key={notification.id}
+          notification={notification}
+          onMarkAsRead={onMarkAsRead}
+          onDelete={onDelete}
+        />
+      ))}
+    </>
+  );
+}
+
+function NotificationCard({
+  notification,
+  onMarkAsRead,
+  onDelete,
+}: {
+  notification: Notification;
+  onMarkAsRead: (id: string) => void;
+  onDelete: (id: string) => void;
+}) {
+  return (
+    <Card
+      className={`relative overflow-hidden bg-card/50 backdrop-blur-sm border-border/50 transition-all hover:shadow-md ${
+        !notification.read ? "border-l-4 border-l-blue-500" : ""
+      }`}
+    >
+      <div className="absolute inset-0 bg-gradient-to-br from-blue-500/[0.01] to-purple-500/[0.01] dark:from-blue-400/[0.02] dark:to-purple-400/[0.02]"></div>
+      <CardContent className="relative p-4">
+        <div className="flex items-start gap-4">
+          <div className="flex-shrink-0 mt-1">
+            {getTypeIcon(notification.type)}
+          </div>
+          <div className="flex-1 min-w-0">
+            <div className="flex items-start justify-between gap-2">
+              <div className="flex-1">
+                <div className="flex items-center gap-2 mb-1">
+                  <h4
+                    className={`text-foreground ${!notification.read ? "font-medium" : "font-normal"}`}
+                  >
+                    {notification.title}
+                  </h4>
+                  <Badge className={getPriorityColor(notification.priority)}>
+                    {notification.priority}
+                  </Badge>
+                  {getCategoryIcon(notification.category)}
+                </div>
+                <p className="text-muted-foreground text-sm mb-2 line-clamp-2">
+                  {notification.message}
+                </p>
+                <div className="flex items-center gap-4 text-xs text-muted-foreground">
+                  <span>{formatTimeAgo(notification.createdAt)}</span>
+                  <span className="capitalize">{notification.category}</span>
+                  {notification.metadata?.amount && (
+                    <span>
+                      ${notification.metadata.amount.toLocaleString()}
+                    </span>
+                  )}
+                </div>
+              </div>
+              <div className="flex items-center gap-2">
+                {notification.actionUrl && (
+                  <Button variant="ghost" size="sm" className="text-xs">
+                    <ExternalLink className="h-3 w-3 mr-1" />
+                    {notification.actionLabel}
+                  </Button>
+                )}
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="ghost" size="icon" className="h-8 w-8">
+                      <MoreHorizontal className="h-4 w-4" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end">
+                    {!notification.read && (
+                      <DropdownMenuItem
+                        onClick={() => onMarkAsRead(notification.id)}
+                      >
+                        <CheckCircle className="h-4 w-4 mr-2" />
+                        Mark as Read
+                      </DropdownMenuItem>
+                    )}
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem
+                      onClick={() => onDelete(notification.id)}
+                      className="text-destructive"
+                    >
+                      <Trash2 className="h-4 w-4 mr-2" />
+                      Delete
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </div>
+            </div>
+          </div>
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
 
 export function NotificationPage() {
   const [filters, setFilters] = useState<NotificationFilters>({
@@ -65,25 +419,7 @@ export function NotificationPage() {
   const [page, setPage] = useState(1);
 
   // Build query params from filters + tab
-  const queryParams = {
-    page,
-    limit: 20,
-    type: filters.type !== "all" ? filters.type : undefined,
-    category:
-      activeTab !== "all"
-        ? activeTab
-        : filters.category !== "all"
-          ? filters.category
-          : undefined,
-    priority: filters.priority !== "all" ? filters.priority : undefined,
-    read:
-      filters.read !== "all"
-        ? filters.read === "read"
-          ? "true"
-          : "false"
-        : undefined,
-    search: filters.search || undefined,
-  };
+  const queryParams = buildQueryParams(page, filters, activeTab);
 
   const { data: notificationsData, isLoading } =
     useGetNotificationsQuery(queryParams);
@@ -94,88 +430,6 @@ export function NotificationPage() {
 
   const notifications = notificationsData?.data || [];
   const pagination = notificationsData?.pagination;
-
-  const getTypeIcon = (type: string) => {
-    switch (type) {
-      case "success":
-        return <CheckCircle className="w-4 h-4 text-emerald-500" />;
-      case "error":
-        return <XCircle className="w-4 h-4 text-red-500" />;
-      case "warning":
-        return <AlertTriangle className="w-4 h-4 text-amber-500" />;
-      case "info":
-        return <Info className="w-4 h-4 text-blue-500" />;
-      case "project":
-        return <Building2 className="w-4 h-4 text-purple-500" />;
-      case "payment":
-        return <DollarSign className="w-4 h-4 text-green-500" />;
-      case "team":
-        return <Users className="w-4 h-4 text-indigo-500" />;
-      case "system":
-        return <Settings className="w-4 h-4 text-gray-500" />;
-      default:
-        return <Bell className="w-4 h-4 text-gray-500" />;
-    }
-  };
-
-  const getCategoryIcon = (category: string) => {
-    switch (category) {
-      case "project":
-        return <Building2 className="w-4 h-4" />;
-      case "payment":
-        return <DollarSign className="w-4 h-4" />;
-      case "team":
-        return <Users className="w-4 h-4" />;
-      case "client":
-        return <UserPlus className="w-4 h-4" />;
-      case "system":
-        return <Settings className="w-4 h-4" />;
-      case "reminder":
-        return <Clock className="w-4 h-4" />;
-      case "alert":
-        return <AlertCircle className="w-4 h-4" />;
-      default:
-        return <Bell className="w-4 h-4" />;
-    }
-  };
-
-  const getPriorityColor = (priority: string) => {
-    switch (priority) {
-      case "urgent":
-        return "bg-red-100 text-red-800 border-red-200 dark:bg-red-900/30 dark:text-red-300 dark:border-red-800";
-      case "high":
-        return "bg-orange-100 text-orange-800 border-orange-200 dark:bg-orange-900/30 dark:text-orange-300 dark:border-orange-800";
-      case "medium":
-        return "bg-blue-100 text-blue-800 border-blue-200 dark:bg-blue-900/30 dark:text-blue-300 dark:border-blue-800";
-      case "low":
-        return "bg-gray-100 text-gray-800 border-gray-200 dark:bg-gray-900/30 dark:text-gray-300 dark:border-gray-800";
-      default:
-        return "bg-gray-100 text-gray-800 border-gray-200 dark:bg-gray-900/30 dark:text-gray-300 dark:border-gray-800";
-    }
-  };
-
-  const formatTimeAgo = (timestamp: string) => {
-    const now = new Date();
-    const notifTime = new Date(timestamp);
-    const diffMs = now.getTime() - notifTime.getTime();
-    const diffMins = Math.floor(diffMs / (1000 * 60));
-    const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
-    const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
-
-    if (diffMins < 1) {
-      return "Just now";
-    }
-    if (diffMins < 60) {
-      return `${diffMins}m ago`;
-    }
-    if (diffHours < 24) {
-      return `${diffHours}h ago`;
-    }
-    if (diffDays < 7) {
-      return `${diffDays}d ago`;
-    }
-    return notifTime.toLocaleDateString();
-  };
 
   const handleMarkAsRead = (id: string) => {
     markRead(id);
@@ -229,92 +483,7 @@ export function NotificationPage() {
       </div>
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
-        <Card className="relative overflow-hidden bg-card/50 backdrop-blur-sm border-border/50">
-          <div className="absolute inset-0 bg-gradient-to-br from-blue-500/[0.02] to-purple-500/[0.02] dark:from-blue-400/[0.05] dark:to-purple-400/[0.05]"></div>
-          <CardContent className="relative p-4">
-            <div className="flex items-center gap-3">
-              <div className="p-2 bg-blue-500/10 rounded-lg border border-blue-500/20">
-                <Bell className="h-5 w-5 text-blue-600 dark:text-blue-400" />
-              </div>
-              <div>
-                <p className="text-sm text-muted-foreground">Total</p>
-                <p className="text-xl text-foreground">
-                  {stats?.total ?? 0}
-                </p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="relative overflow-hidden bg-card/50 backdrop-blur-sm border-border/50">
-          <div className="absolute inset-0 bg-gradient-to-br from-orange-500/[0.02] to-red-500/[0.02] dark:from-orange-400/[0.05] dark:to-red-400/[0.05]"></div>
-          <CardContent className="relative p-4">
-            <div className="flex items-center gap-3">
-              <div className="p-2 bg-orange-500/10 rounded-lg border border-orange-500/20">
-                <Eye className="h-5 w-5 text-orange-600 dark:text-orange-400" />
-              </div>
-              <div>
-                <p className="text-sm text-muted-foreground">Unread</p>
-                <p className="text-xl text-foreground">
-                  {stats?.unread ?? 0}
-                </p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="relative overflow-hidden bg-card/50 backdrop-blur-sm border-border/50">
-          <div className="absolute inset-0 bg-gradient-to-br from-red-500/[0.02] to-pink-500/[0.02] dark:from-red-400/[0.05] dark:to-pink-400/[0.05]"></div>
-          <CardContent className="relative p-4">
-            <div className="flex items-center gap-3">
-              <div className="p-2 bg-red-500/10 rounded-lg border border-red-500/20">
-                <AlertTriangle className="h-5 w-5 text-red-600 dark:text-red-400" />
-              </div>
-              <div>
-                <p className="text-sm text-muted-foreground">Urgent</p>
-                <p className="text-xl text-foreground">
-                  {stats?.urgent ?? 0}
-                </p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="relative overflow-hidden bg-card/50 backdrop-blur-sm border-border/50">
-          <div className="absolute inset-0 bg-gradient-to-br from-emerald-500/[0.02] to-green-500/[0.02] dark:from-emerald-400/[0.05] dark:to-green-400/[0.05]"></div>
-          <CardContent className="relative p-4">
-            <div className="flex items-center gap-3">
-              <div className="p-2 bg-emerald-500/10 rounded-lg border border-emerald-500/20">
-                <Calendar className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />
-              </div>
-              <div>
-                <p className="text-sm text-muted-foreground">Today</p>
-                <p className="text-xl text-foreground">
-                  {stats?.today ?? 0}
-                </p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="relative overflow-hidden bg-card/50 backdrop-blur-sm border-border/50">
-          <div className="absolute inset-0 bg-gradient-to-br from-purple-500/[0.02] to-indigo-500/[0.02] dark:from-purple-400/[0.05] dark:to-indigo-400/[0.05]"></div>
-          <CardContent className="relative p-4">
-            <div className="flex items-center gap-3">
-              <div className="p-2 bg-purple-500/10 rounded-lg border border-purple-500/20">
-                <TrendingUp className="h-5 w-5 text-purple-600 dark:text-purple-400" />
-              </div>
-              <div>
-                <p className="text-sm text-muted-foreground">This Week</p>
-                <p className="text-xl text-foreground">
-                  {stats?.thisWeek ?? 0}
-                </p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
+      <NotificationStatsCards stats={stats} />
 
       {/* Filters */}
       <Card className="relative overflow-hidden bg-card/50 backdrop-blur-sm border-border/50">
@@ -463,137 +632,12 @@ export function NotificationPage() {
 
         <TabsContent value={activeTab} className="mt-6">
           <div className="space-y-4">
-            {isLoading ? (
-              <Card className="relative overflow-hidden bg-card/50 backdrop-blur-sm border-border/50">
-                <CardContent className="p-12 text-center">
-                  <Loader2 className="mx-auto h-12 w-12 text-muted-foreground mb-4 animate-spin" />
-                  <p className="text-muted-foreground">
-                    Loading notifications...
-                  </p>
-                </CardContent>
-              </Card>
-            ) : notifications.length === 0 ? (
-              <Card className="relative overflow-hidden bg-card/50 backdrop-blur-sm border-border/50">
-                <CardContent className="p-12 text-center">
-                  <Bell className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
-                  <h3 className="text-foreground mb-2">
-                    No Notifications Found
-                  </h3>
-                  <p className="text-muted-foreground">
-                    No notifications match your current filters.
-                  </p>
-                </CardContent>
-              </Card>
-            ) : (
-              notifications.map((notification) => (
-                <Card
-                  key={notification.id}
-                  className={`relative overflow-hidden bg-card/50 backdrop-blur-sm border-border/50 transition-all hover:shadow-md ${
-                    !notification.read ? "border-l-4 border-l-blue-500" : ""
-                  }`}
-                >
-                  <div className="absolute inset-0 bg-gradient-to-br from-blue-500/[0.01] to-purple-500/[0.01] dark:from-blue-400/[0.02] dark:to-purple-400/[0.02]"></div>
-                  <CardContent className="relative p-4">
-                    <div className="flex items-start gap-4">
-                      {/* Icon */}
-                      <div className="flex-shrink-0 mt-1">
-                        {getTypeIcon(notification.type)}
-                      </div>
-
-                      {/* Content */}
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-start justify-between gap-2">
-                          <div className="flex-1">
-                            <div className="flex items-center gap-2 mb-1">
-                              <h4
-                                className={`text-foreground ${!notification.read ? "font-medium" : "font-normal"}`}
-                              >
-                                {notification.title}
-                              </h4>
-                              <Badge
-                                className={getPriorityColor(
-                                  notification.priority
-                                )}
-                              >
-                                {notification.priority}
-                              </Badge>
-                              {getCategoryIcon(notification.category)}
-                            </div>
-
-                            <p className="text-muted-foreground text-sm mb-2 line-clamp-2">
-                              {notification.message}
-                            </p>
-
-                            <div className="flex items-center gap-4 text-xs text-muted-foreground">
-                              <span>
-                                {formatTimeAgo(notification.createdAt)}
-                              </span>
-                              <span className="capitalize">
-                                {notification.category}
-                              </span>
-                              {notification.metadata?.amount && (
-                                <span>
-                                  $
-                                  {notification.metadata.amount.toLocaleString()}
-                                </span>
-                              )}
-                            </div>
-                          </div>
-
-                          {/* Actions */}
-                          <div className="flex items-center gap-2">
-                            {notification.actionUrl && (
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                className="text-xs"
-                              >
-                                <ExternalLink className="h-3 w-3 mr-1" />
-                                {notification.actionLabel}
-                              </Button>
-                            )}
-
-                            <DropdownMenu>
-                              <DropdownMenuTrigger asChild>
-                                <Button
-                                  variant="ghost"
-                                  size="icon"
-                                  className="h-8 w-8"
-                                >
-                                  <MoreHorizontal className="h-4 w-4" />
-                                </Button>
-                              </DropdownMenuTrigger>
-                              <DropdownMenuContent align="end">
-                                {!notification.read && (
-                                  <DropdownMenuItem
-                                    onClick={() =>
-                                      handleMarkAsRead(notification.id)
-                                    }
-                                  >
-                                    <CheckCircle className="h-4 w-4 mr-2" />
-                                    Mark as Read
-                                  </DropdownMenuItem>
-                                )}
-                                <DropdownMenuSeparator />
-                                <DropdownMenuItem
-                                  onClick={() =>
-                                    handleDeleteNotification(notification.id)
-                                  }
-                                  className="text-destructive"
-                                >
-                                  <Trash2 className="h-4 w-4 mr-2" />
-                                  Delete
-                                </DropdownMenuItem>
-                              </DropdownMenuContent>
-                            </DropdownMenu>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))
-            )}
+            <NotificationListContent
+              isLoading={isLoading}
+              notifications={notifications}
+              onMarkAsRead={handleMarkAsRead}
+              onDelete={handleDeleteNotification}
+            />
 
             {/* Pagination */}
             {pagination && pagination.totalPages > 1 && (

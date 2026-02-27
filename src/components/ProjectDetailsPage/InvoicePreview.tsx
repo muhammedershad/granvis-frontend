@@ -5,6 +5,7 @@ import { FirmSettings } from "@/types/firm-settings";
 import { Project } from "@/types/project";
 import { Client } from "@/types/client";
 import { InvoiceLineItem, InvoiceMilestoneItem } from "@/lib/api/invoicesApi";
+import Image from "next/image";
 import { getCloudFrontUrl } from "@/lib/utils/cloudfront";
 
 export interface InvoicePreviewData {
@@ -149,14 +150,17 @@ export function InvoicePreview({ data }: { data: InvoicePreviewData }) {
           {/* Logo Section */}
           <div className="flex items-center gap-4">
             {firmSettings.logo || firmSettings.logoKey ? (
-              <img
+              <Image
                 src={
                   firmSettings.logo ||
                   getCloudFrontUrl(firmSettings.logoKey) ||
                   ""
                 }
                 alt={firmSettings.name}
+                width={96}
+                height={96}
                 className="w-24 h-24 object-contain"
+                unoptimized
               />
             ) : (
               <div className="w-24 h-24 bg-gray-100 flex items-center justify-center rounded">

@@ -57,6 +57,19 @@ const projects = [
   },
 ];
 
+const getIconGradient = (color: string) => {
+  switch (color) {
+    case "purple":
+      return "from-purple-500 to-purple-600";
+    case "blue":
+      return "from-blue-500 to-blue-600";
+    case "cyan":
+      return "from-cyan-500 to-cyan-600";
+    default:
+      return "from-green-500 to-green-600";
+  }
+};
+
 export function ProjectProgress() {
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -118,15 +131,7 @@ export function ProjectProgress() {
                 <div className="flex items-center justify-between mb-4">
                   <div className="flex items-center space-x-3">
                     <div
-                      className={`w-10 h-10 rounded-lg bg-gradient-to-br ${
-                        project.color === "purple"
-                          ? "from-purple-500 to-purple-600"
-                          : project.color === "blue"
-                            ? "from-blue-500 to-blue-600"
-                            : project.color === "cyan"
-                              ? "from-cyan-500 to-cyan-600"
-                              : "from-green-500 to-green-600"
-                      } flex items-center justify-center shadow-lg`}
+                      className={`w-10 h-10 rounded-lg bg-gradient-to-br ${getIconGradient(project.color)} flex items-center justify-center shadow-lg`}
                     >
                       <Icon className="w-5 h-5 text-white" />
                     </div>

@@ -24,10 +24,10 @@ import {
 import { ScrollArea } from "./ui/scroll-area";
 import { Separator } from "./ui/separator";
 import {
-  useGetNotificationsQuery,
   useGetNotificationStatsQuery,
-  useMarkNotificationReadMutation,
+  useGetNotificationsQuery,
   useMarkAllNotificationsReadMutation,
+  useMarkNotificationReadMutation,
 } from "@/lib/api/notificationsApi";
 
 interface NotificationDropdownProps {
@@ -154,19 +154,22 @@ export function NotificationDropdown({
         {/* Notifications List */}
         <ScrollArea className="h-80">
           <div className="p-2">
-            {isLoading ? (
+            {isLoading && (
               <div className="p-6 text-center">
                 <Loader2 className="mx-auto h-8 w-8 text-muted-foreground mb-2 animate-spin" />
                 <p className="text-muted-foreground text-sm">Loading...</p>
               </div>
-            ) : notifications.length === 0 ? (
+            )}
+            {!isLoading && notifications.length === 0 && (
               <div className="p-6 text-center">
                 <Bell className="mx-auto h-8 w-8 text-muted-foreground mb-2" />
                 <p className="text-muted-foreground text-sm">
                   No notifications
                 </p>
               </div>
-            ) : (
+            )}
+            {!isLoading &&
+              notifications.length > 0 &&
               notifications.map((notification, index) => (
                 <div key={notification.id}>
                   <div
@@ -232,8 +235,7 @@ export function NotificationDropdown({
                     <Separator className="my-1" />
                   )}
                 </div>
-              ))
-            )}
+              ))}
           </div>
         </ScrollArea>
 

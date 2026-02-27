@@ -51,8 +51,9 @@ export function UpdateProgressModal({
 
       toast.success("Progress updated successfully");
       onOpenChange(false);
-    } catch (error: any) {
-      const message = error?.data?.message || "Failed to update progress";
+    } catch (error: unknown) {
+      const err = error as { data?: { message?: string } };
+      const message = err?.data?.message || "Failed to update progress";
       toast.error(message);
       console.error("Update progress error:", error);
     }

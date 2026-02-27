@@ -224,7 +224,13 @@ export function PaymentPage() {
     if (target.category === "receivables") {
       return progress > 100 ? "warning" : "good";
     }
-    return progress >= 90 ? "good" : progress >= 70 ? "warning" : "poor";
+    if (progress >= 90) {
+      return "good";
+    }
+    if (progress >= 70) {
+      return "warning";
+    }
+    return "poor";
   };
 
   return (
@@ -590,13 +596,15 @@ export function PaymentPage() {
                     <div className="flex items-center justify-between mb-4">
                       <h3 className="text-foreground">{target.title}</h3>
                       <Badge
-                        className={
-                          status === "good"
-                            ? "bg-green-500/20 text-green-400 border-green-500/30"
-                            : status === "warning"
-                              ? "bg-yellow-500/20 text-yellow-400 border-yellow-500/30"
-                              : "bg-red-500/20 text-red-400 border-red-500/30"
-                        }
+                        className={(() => {
+                          if (status === "good") {
+                            return "bg-green-500/20 text-green-400 border-green-500/30";
+                          }
+                          if (status === "warning") {
+                            return "bg-yellow-500/20 text-yellow-400 border-yellow-500/30";
+                          }
+                          return "bg-red-500/20 text-red-400 border-red-500/30";
+                        })()}
                       >
                         {status}
                       </Badge>

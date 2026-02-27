@@ -360,13 +360,15 @@ export function PaymentsTab({
             </div>
           </div>
 
-          {isLoading ? (
+          {isLoading && (
             <div className="flex items-center justify-center py-12">
               <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
             </div>
-          ) : filteredInvoices.length === 0 ? (
+          )}
+          {!isLoading && filteredInvoices.length === 0 && (
             <EmptyState filter={statusFilter} />
-          ) : (
+          )}
+          {!isLoading && filteredInvoices.length > 0 && (
             <div className="overflow-x-auto">
               <Table>
                 <TableHeader>

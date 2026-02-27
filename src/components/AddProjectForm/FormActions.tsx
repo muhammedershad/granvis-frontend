@@ -8,6 +8,26 @@ interface FormActionsProps {
   mode?: "create" | "edit";
 }
 
+function getLoadingLabel(
+  uploadProgress: number | undefined,
+  isEditMode: boolean
+) {
+  if (uploadProgress !== undefined && uploadProgress > 0) {
+    return `Uploading... ${uploadProgress}%`;
+  }
+  if (isEditMode) {
+    return "Updating...";
+  }
+  return "Creating...";
+}
+
+function getSubmitLabel(isEditMode: boolean) {
+  if (isEditMode) {
+    return "Update Project";
+  }
+  return "Create Project";
+}
+
 export function FormActions({
   isLoading,
   uploadProgress,
@@ -30,16 +50,10 @@ export function FormActions({
         {isLoading ? (
           <>
             <Loader2 className="w-4 h-4 animate-spin" />
-            {uploadProgress !== undefined && uploadProgress > 0
-              ? `Uploading... ${uploadProgress}%`
-              : isEditMode
-                ? "Updating..."
-                : "Creating..."}
+            {getLoadingLabel(uploadProgress, isEditMode)}
           </>
-        ) : isEditMode ? (
-          "Update Project"
         ) : (
-          "Create Project"
+          getSubmitLabel(isEditMode)
         )}
       </Button>
     </div>

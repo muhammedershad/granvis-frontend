@@ -273,7 +273,9 @@ export function AddEmployeePersonalSection({
           </Label>
           <Select
             value={formData.gender}
-            onValueChange={(value) => setValue("gender", value as any)}
+            onValueChange={(value) =>
+              setValue("gender", value as CreateEmployeeFormInput["gender"])
+            }
           >
             <SelectTrigger className="h-10">
               <SelectValue />

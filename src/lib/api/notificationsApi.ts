@@ -71,19 +71,18 @@ export const notificationsApi = apiSlice.injectEndpoints({
       ],
     }),
 
-    markAllNotificationsRead: builder.mutation<
-      { modifiedCount: number },
-      void
-    >({
-      query: () => ({
-        url: "/notifications/read-all",
-        method: "PATCH",
-      }),
-      invalidatesTags: [
-        { type: "Notification" as const, id: "LIST" },
-        { type: "Notification" as const, id: "STATS" },
-      ],
-    }),
+    markAllNotificationsRead: builder.mutation<{ modifiedCount: number }, void>(
+      {
+        query: () => ({
+          url: "/notifications/read-all",
+          method: "PATCH",
+        }),
+        invalidatesTags: [
+          { type: "Notification" as const, id: "LIST" },
+          { type: "Notification" as const, id: "STATS" },
+        ],
+      }
+    ),
 
     deleteNotification: builder.mutation<{ message: string }, string>({
       query: (id) => ({
