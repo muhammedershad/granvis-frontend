@@ -14,6 +14,7 @@ export const apiSlice = createApi({
     "Employee",
     "Milestone",
     "Payment",
+    "PaymentTarget",
     "FirmSettings",
     "Invoice",
   ],
