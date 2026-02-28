@@ -183,6 +183,22 @@ export interface InvoiceSummary {
   percentageCompleted: number;
 }
 
+// Global Invoice Summary (all projects, excludes drafts)
+export interface GlobalInvoiceSummary {
+  totalInvoices: number;
+  sentCount: number;
+  paidCount: number;
+  partiallyPaidCount: number;
+  overdueCount: number;
+  totalAmount: number;
+  paidAmount: number;
+  pendingAmount: number;
+  overdueAmount: number;
+  percentageCompleted: number;
+  uniqueClientCount: number;
+  paidThisMonth: number;
+}
+
 // Paginated Response Interface
 export interface PaginatedInvoicesResponse {
   data: Invoice[];
@@ -244,6 +260,15 @@ export const invoicesApi = apiSlice.injectEndpoints({
       providesTags: (_result, _error, id) => [{ type: "Invoice" as const, id }],
     }),
 
+    // Get global invoice summary (all projects, excludes drafts)
+    getGlobalInvoiceSummary: builder.query<GlobalInvoiceSummary, void>({
+      query: () => ({
+        url: "/invoices/summary",
+        method: "GET",
+      }),
+      providesTags: [{ type: "Invoice" as const, id: "GLOBAL_SUMMARY" }],
+    }),
+
     // Get project invoice summary
     getInvoiceSummary: builder.query<InvoiceSummary, string>({
       query: (projectId) => ({
@@ -275,6 +300,7 @@ export const invoicesApi = apiSlice.injectEndpoints({
       }),
       invalidatesTags: (result, _error, { projectId }) => [
         { type: "Invoice" as const, id: "LIST" },
+        { type: "Invoice" as const, id: "GLOBAL_SUMMARY" },
         { type: "Invoice" as const, id: `PROJECT_${projectId}` },
         { type: "Invoice" as const, id: `SUMMARY_${projectId}` },
         { type: "Payment" as const, id: "LIST" },
@@ -301,6 +327,7 @@ export const invoicesApi = apiSlice.injectEndpoints({
       invalidatesTags: (result, _error, { id }) => [
         { type: "Invoice" as const, id },
         { type: "Invoice" as const, id: "LIST" },
+        { type: "Invoice" as const, id: "GLOBAL_SUMMARY" },
         result
           ? { type: "Invoice" as const, id: `PROJECT_${result.projectId}` }
           : { type: "Invoice" as const, id: "LIST" },
@@ -319,6 +346,7 @@ export const invoicesApi = apiSlice.injectEndpoints({
       invalidatesTags: (result, _error, id) => [
         { type: "Invoice" as const, id },
         { type: "Invoice" as const, id: "LIST" },
+        { type: "Invoice" as const, id: "GLOBAL_SUMMARY" },
         result
           ? { type: "Invoice" as const, id: `PROJECT_${result.projectId}` }
           : { type: "Invoice" as const, id: "LIST" },
@@ -341,6 +369,7 @@ export const invoicesApi = apiSlice.injectEndpoints({
       invalidatesTags: (result, _error, { id }) => [
         { type: "Invoice" as const, id },
         { type: "Invoice" as const, id: "LIST" },
+        { type: "Invoice" as const, id: "GLOBAL_SUMMARY" },
         result
           ? { type: "Invoice" as const, id: `PROJECT_${result.projectId}` }
           : { type: "Invoice" as const, id: "LIST" },
@@ -372,6 +401,7 @@ export const invoicesApi = apiSlice.injectEndpoints({
       invalidatesTags: (result, _error, id) => [
         { type: "Invoice" as const, id },
         { type: "Invoice" as const, id: "LIST" },
+        { type: "Invoice" as const, id: "GLOBAL_SUMMARY" },
         result
           ? { type: "Invoice" as const, id: `PROJECT_${result.projectId}` }
           : { type: "Invoice" as const, id: "LIST" },
@@ -393,6 +423,7 @@ export const invoicesApi = apiSlice.injectEndpoints({
       invalidatesTags: (_result, _error, { id, projectId }) => [
         { type: "Invoice" as const, id },
         { type: "Invoice" as const, id: "LIST" },
+        { type: "Invoice" as const, id: "GLOBAL_SUMMARY" },
         { type: "Invoice" as const, id: `PROJECT_${projectId}` },
         { type: "Invoice" as const, id: `SUMMARY_${projectId}` },
       ],
@@ -416,6 +447,7 @@ export const {
   useGetInvoicesQuery,
   useGetInvoicesByProjectQuery,
   useGetInvoiceByIdQuery,
+  useGetGlobalInvoiceSummaryQuery,
   useGetInvoiceSummaryQuery,
   useGenerateInvoiceNumberQuery,
   useLazyGenerateInvoiceNumberQuery,
