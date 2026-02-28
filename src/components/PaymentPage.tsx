@@ -3,7 +3,6 @@
 import { useState } from "react";
 import { useSelector } from "react-redux";
 import {
-  Calendar,
   CreditCard,
   Download,
   FileText,
@@ -34,7 +33,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "./ui/dialog";
-import { PaymentScheduleManager } from "./PaymentScheduleManager";
+import { InvoicesSection } from "./invoices/InvoicesSection";
 import { PaymentReports } from "./PaymentReports";
 import { PaymentStatistics } from "./PaymentStatistics";
 import { InvoiceGenerationModal } from "./InvoiceGenerationModal";
@@ -275,8 +274,8 @@ export function PaymentPage() {
           <TabsTrigger value="overview" className="text-xs sm:text-sm">
             Overview
           </TabsTrigger>
-          <TabsTrigger value="schedules" className="text-xs sm:text-sm">
-            Schedules
+          <TabsTrigger value="invoices" className="text-xs sm:text-sm">
+            Invoices
           </TabsTrigger>
           <TabsTrigger value="reports" className="text-xs sm:text-sm">
             Reports
@@ -301,7 +300,7 @@ export function PaymentPage() {
                 payments={recentPayments}
                 isLoading={paymentsLoading}
                 isError={!!paymentsError}
-                onViewAll={() => setActiveTab("schedules")}
+                onViewAll={() => setActiveTab("invoices")}
               />
             </div>
 
@@ -332,10 +331,10 @@ export function PaymentPage() {
                 <Button
                   variant="outline"
                   className="w-full justify-start bg-white/50 dark:bg-white/5 border-white/30 dark:border-white/10 hover:bg-white/70 dark:hover:bg-white/10 transition-all duration-300"
-                  onClick={() => setActiveTab("schedules")}
+                  onClick={() => setActiveTab("invoices")}
                 >
-                  <Calendar className="w-4 h-4 mr-2 text-blue-600 dark:text-blue-400" />
-                  Payment Schedules
+                  <FileText className="w-4 h-4 mr-2 text-blue-600 dark:text-blue-400" />
+                  View Invoices
                 </Button>
                 <Button
                   variant="outline"
@@ -358,9 +357,9 @@ export function PaymentPage() {
           </div>
         </TabsContent>
 
-        {/* Schedules Tab */}
-        <TabsContent value="schedules" className="mt-8 space-y-6">
-          <PaymentScheduleManager />
+        {/* Invoices Tab */}
+        <TabsContent value="invoices" className="mt-8 space-y-6">
+          <InvoicesSection />
         </TabsContent>
 
         {/* Reports Tab */}
