@@ -54,17 +54,19 @@ export function AgingAnalysis({ data, isLoading }: AgingAnalysisProps) {
           </div>
         </CardHeader>
         <CardContent className="relative">
-          {isLoading ? (
+          {isLoading && (
             <div className="space-y-6">
               {[1, 2, 3, 4].map((i) => (
                 <Skeleton key={i} className="h-16 w-full" />
               ))}
             </div>
-          ) : !data || data.length === 0 ? (
+          )}
+          {!isLoading && (!data || data.length === 0) && (
             <div className="flex items-center justify-center h-40 text-muted-foreground">
               No outstanding payments
             </div>
-          ) : totalOutstanding === 0 ? (
+          )}
+          {!isLoading && data && data.length > 0 && totalOutstanding === 0 && (
             <div className="flex flex-col items-center justify-center h-40 text-muted-foreground">
               <p className="text-lg font-medium text-green-600 dark:text-green-400">
                 All clear!
@@ -73,7 +75,8 @@ export function AgingAnalysis({ data, isLoading }: AgingAnalysisProps) {
                 No outstanding receivables in this period
               </p>
             </div>
-          ) : (
+          )}
+          {!isLoading && data && data.length > 0 && totalOutstanding > 0 && (
             <div className="space-y-5">
               {data.map((bucket) => (
                 <div key={bucket.label} className="space-y-2">

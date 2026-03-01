@@ -2,14 +2,15 @@ import RoleGuard from "@/components/auth/RoleGuard";
 import { IAuthRoles } from "@/store/slices/authSlice";
 import { ClientDetailsPage } from "@/components/clients";
 
-export default function ManagerClientDetailsPage({
+export default async function ManagerClientDetailsPage({
   params,
 }: {
-  params: { id: string };
+  params: Promise<{ id: string }>;
 }) {
+  const { id } = await params;
   return (
     <RoleGuard allowedRoles={[IAuthRoles.MANAGER, IAuthRoles.SUPER_ADMIN]}>
-      <ClientDetailsPage clientId={params.id} />
+      <ClientDetailsPage clientId={id} />
     </RoleGuard>
   );
 }

@@ -50,13 +50,13 @@ export function PaymentMethodsBreakdown({
             <CardDescription>Payment method usage breakdown</CardDescription>
           </CardHeader>
           <CardContent className="relative">
-            {isLoading ? (
-              <Skeleton className="w-full h-[300px]" />
-            ) : !pieData || pieData.length === 0 ? (
+            {isLoading && <Skeleton className="w-full h-[300px]" />}
+            {!isLoading && (!pieData || pieData.length === 0) && (
               <div className="flex items-center justify-center h-[300px] text-muted-foreground">
                 No payment method data
               </div>
-            ) : (
+            )}
+            {!isLoading && pieData && pieData.length > 0 && (
               <ResponsiveContainer width="100%" height={300}>
                 <PieChart>
                   <Pie
@@ -105,17 +105,19 @@ export function PaymentMethodsBreakdown({
             </CardDescription>
           </CardHeader>
           <CardContent className="relative">
-            {isLoading ? (
+            {isLoading && (
               <div className="space-y-4">
                 {[1, 2, 3].map((i) => (
                   <Skeleton key={i} className="h-12 w-full" />
                 ))}
               </div>
-            ) : !data || data.length === 0 ? (
+            )}
+            {!isLoading && (!data || data.length === 0) && (
               <div className="flex items-center justify-center h-[300px] text-muted-foreground">
                 No data available
               </div>
-            ) : (
+            )}
+            {!isLoading && data && data.length > 0 && (
               <div className="space-y-4">
                 {data.map((method) => {
                   const color = METHOD_COLORS[method.method] || "#6b7280";

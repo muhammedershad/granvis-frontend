@@ -19,6 +19,16 @@ import { Skeleton } from "../ui/skeleton";
 import { formatIndianCurrency } from "@/lib/utils/currency";
 import type { CategoryAnalysisData } from "./types";
 
+function getCollectionRateColor(rate: number): string {
+  if (rate >= 90) {
+    return "text-green-600 dark:text-green-400";
+  }
+  if (rate >= 70) {
+    return "text-yellow-600 dark:text-yellow-400";
+  }
+  return "text-red-600 dark:text-red-400";
+}
+
 interface PerformanceComparisonProps {
   data: CategoryAnalysisData[] | undefined;
   isLoading: boolean;
@@ -55,13 +65,13 @@ export function PerformanceComparison({
           <CardDescription>Revenue comparison by project type</CardDescription>
         </CardHeader>
         <CardContent className="relative">
-          {isLoading ? (
-            <Skeleton className="w-full h-[350px]" />
-          ) : !chartData || chartData.length === 0 ? (
+          {isLoading && <Skeleton className="w-full h-[350px]" />}
+          {!isLoading && (!chartData || chartData.length === 0) && (
             <div className="flex items-center justify-center h-[350px] text-muted-foreground">
               No project type data available
             </div>
-          ) : (
+          )}
+          {!isLoading && chartData && chartData.length > 0 && (
             <ResponsiveContainer width="100%" height={350}>
               <BarChart data={chartData}>
                 <CartesianGrid
@@ -82,16 +92,19 @@ export function PerformanceComparison({
                     color: "white",
                     fontSize: "13px",
                   }}
-                  formatter={(value: number, name: string) => [
-                    name === "collectionRate"
-                      ? `${value}%`
-                      : formatIndianCurrency(value),
-                    name === "revenue"
-                      ? "Revenue"
-                      : name === "collected"
-                        ? "Collected"
-                        : "Pending",
-                  ]}
+                  formatter={(value: number, name: string) => {
+                    const labels: Record<string, string> = {
+                      revenue: "Revenue",
+                      collected: "Collected",
+                      pending: "Pending",
+                    };
+                    return [
+                      name === "collectionRate"
+                        ? `${value}%`
+                        : formatIndianCurrency(value),
+                      labels[name] || name,
+                    ];
+                  }}
                 />
                 <Legend />
                 <Bar
@@ -142,15 +155,7 @@ export function PerformanceComparison({
                 </div>
                 <div className="flex justify-between text-sm">
                   <span className="text-muted-foreground">Collection</span>
-                  <span
-                    className={
-                      item.collectionRate >= 90
-                        ? "text-green-600 dark:text-green-400"
-                        : item.collectionRate >= 70
-                          ? "text-yellow-600 dark:text-yellow-400"
-                          : "text-red-600 dark:text-red-400"
-                    }
-                  >
+                  <span className={getCollectionRateColor(item.collectionRate)}>
                     {item.collectionRate}%
                   </span>
                 </div>

@@ -45,13 +45,13 @@ export function RevenueTrendsChart({
           </CardDescription>
         </CardHeader>
         <CardContent className="relative">
-          {isLoading ? (
-            <Skeleton className="w-full h-[400px]" />
-          ) : !data || data.length === 0 ? (
+          {isLoading && <Skeleton className="w-full h-[400px]" />}
+          {!isLoading && (!data || data.length === 0) && (
             <div className="flex items-center justify-center h-[400px] text-muted-foreground">
               No data available for the selected period
             </div>
-          ) : (
+          )}
+          {!isLoading && data && data.length > 0 && (
             <ResponsiveContainer width="100%" height={400}>
               <AreaChart data={data}>
                 <CartesianGrid
@@ -78,14 +78,14 @@ export function RevenueTrendsChart({
                     color: "white",
                     fontSize: "13px",
                   }}
-                  formatter={(value: number, name: string) => [
-                    formatIndianCurrency(value),
-                    name === "revenue"
-                      ? "Revenue"
-                      : name === "collected"
-                        ? "Collected"
-                        : "Pending",
-                  ]}
+                  formatter={(value: number, name: string) => {
+                    const labels: Record<string, string> = {
+                      revenue: "Revenue",
+                      collected: "Collected",
+                      pending: "Pending",
+                    };
+                    return [formatIndianCurrency(value), labels[name] || name];
+                  }}
                 />
                 <Legend />
                 <Area

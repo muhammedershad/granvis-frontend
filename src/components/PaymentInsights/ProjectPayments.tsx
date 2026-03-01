@@ -13,6 +13,16 @@ import { Skeleton } from "../ui/skeleton";
 import { formatIndianCurrency } from "@/lib/utils/currency";
 import type { ProjectAnalysis } from "./types";
 
+function getCollectionRateColor(rate: number): string {
+  if (rate >= 90) {
+    return "text-green-600 dark:text-green-400";
+  }
+  if (rate >= 70) {
+    return "text-yellow-600 dark:text-yellow-400";
+  }
+  return "text-red-600 dark:text-red-400";
+}
+
 type SortKey =
   | "projectName"
   | "totalAmount"
@@ -81,17 +91,19 @@ export function ProjectPayments({ data, isLoading }: ProjectPaymentsProps) {
           </CardDescription>
         </CardHeader>
         <CardContent className="relative">
-          {isLoading ? (
+          {isLoading && (
             <div className="space-y-3">
               {[1, 2, 3, 4].map((i) => (
                 <Skeleton key={i} className="h-14 w-full" />
               ))}
             </div>
-          ) : sorted.length === 0 ? (
+          )}
+          {!isLoading && sorted.length === 0 && (
             <div className="flex items-center justify-center h-40 text-muted-foreground">
               No project data available
             </div>
-          ) : (
+          )}
+          {!isLoading && sorted.length > 0 && (
             <>
               {/* Header */}
               <div className="hidden md:grid grid-cols-12 gap-2 px-3 pb-2 border-b border-white/10">
@@ -177,13 +189,7 @@ export function ProjectPayments({ data, isLoading }: ProjectPaymentsProps) {
                                 Collection Rate
                               </p>
                               <p
-                                className={`text-sm font-medium ${
-                                  parseFloat(collectionRate) >= 90
-                                    ? "text-green-600 dark:text-green-400"
-                                    : parseFloat(collectionRate) >= 70
-                                      ? "text-yellow-600 dark:text-yellow-400"
-                                      : "text-red-600 dark:text-red-400"
-                                }`}
+                                className={`text-sm font-medium ${getCollectionRateColor(parseFloat(collectionRate))}`}
                               >
                                 {collectionRate}%
                               </p>

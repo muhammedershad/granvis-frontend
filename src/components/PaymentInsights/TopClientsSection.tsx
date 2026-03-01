@@ -53,17 +53,19 @@ export function TopClientsSection({ data, isLoading }: TopClientsSectionProps) {
             </CardDescription>
           </CardHeader>
           <CardContent className="relative">
-            {isLoading ? (
+            {isLoading && (
               <div className="space-y-3">
                 {[1, 2, 3, 4, 5].map((i) => (
                   <Skeleton key={i} className="h-16 w-full" />
                 ))}
               </div>
-            ) : !topClients || topClients.length === 0 ? (
+            )}
+            {!isLoading && (!topClients || topClients.length === 0) && (
               <div className="flex items-center justify-center h-[300px] text-muted-foreground">
                 No client data available
               </div>
-            ) : (
+            )}
+            {!isLoading && topClients && topClients.length > 0 && (
               <div className="space-y-2">
                 {topClients.map((client, index) => (
                   <div
@@ -123,13 +125,13 @@ export function TopClientsSection({ data, isLoading }: TopClientsSectionProps) {
             </CardDescription>
           </CardHeader>
           <CardContent className="relative">
-            {isLoading ? (
-              <Skeleton className="w-full h-[400px]" />
-            ) : !chartData || chartData.length === 0 ? (
+            {isLoading && <Skeleton className="w-full h-[400px]" />}
+            {!isLoading && (!chartData || chartData.length === 0) && (
               <div className="flex items-center justify-center h-[400px] text-muted-foreground">
                 No data available
               </div>
-            ) : (
+            )}
+            {!isLoading && chartData && chartData.length > 0 && (
               <ResponsiveContainer width="100%" height={400}>
                 <BarChart data={chartData} layout="vertical">
                   <CartesianGrid

@@ -65,13 +65,13 @@ export function CategoryAnalysis({ data, isLoading }: CategoryAnalysisProps) {
             </CardDescription>
           </CardHeader>
           <CardContent className="relative">
-            {isLoading ? (
-              <Skeleton className="w-full h-[350px]" />
-            ) : !chartData || chartData.length === 0 ? (
+            {isLoading && <Skeleton className="w-full h-[350px]" />}
+            {!isLoading && (!chartData || chartData.length === 0) && (
               <div className="flex items-center justify-center h-[350px] text-muted-foreground">
                 No category data available
               </div>
-            ) : (
+            )}
+            {!isLoading && chartData && chartData.length > 0 && (
               <ResponsiveContainer width="100%" height={350}>
                 <BarChart data={chartData}>
                   <CartesianGrid
@@ -129,17 +129,19 @@ export function CategoryAnalysis({ data, isLoading }: CategoryAnalysisProps) {
             </CardDescription>
           </CardHeader>
           <CardContent className="relative">
-            {isLoading ? (
+            {isLoading && (
               <div className="space-y-3">
                 {[1, 2, 3, 4].map((i) => (
                   <Skeleton key={i} className="h-16 w-full" />
                 ))}
               </div>
-            ) : !data || data.length === 0 ? (
+            )}
+            {!isLoading && (!data || data.length === 0) && (
               <div className="flex items-center justify-center h-40 text-muted-foreground">
                 No category data
               </div>
-            ) : (
+            )}
+            {!isLoading && data && data.length > 0 && (
               <div className="space-y-1">
                 {data.map((cat, catIndex) => {
                   const isExpanded = expandedType === cat.type;
