@@ -52,6 +52,8 @@ export interface Payment {
   project?: {
     id: string;
     name: string;
+    type?: string;
+    category?: string;
     client?: string;
     location?: {
       city: string;

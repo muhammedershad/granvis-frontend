@@ -11,6 +11,11 @@ import {
   UpdatePaymentDto,
 } from "@/types/payment";
 
+export interface PaymentInsightsParams {
+  startDate?: string;
+  endDate?: string;
+}
+
 export const paymentsApi = apiSlice.injectEndpoints({
   endpoints: (builder) => ({
     // Get all payments with filters
@@ -80,6 +85,21 @@ export const paymentsApi = apiSlice.injectEndpoints({
       ],
     }),
 
+    // Get payment insights for analytics
+    getPaymentInsights: builder.query<Payment[], PaymentInsightsParams>({
+      query: (params) => {
+        const searchParams = new URLSearchParams();
+        if (params.startDate) {
+          searchParams.append("startDate", params.startDate);
+        }
+        if (params.endDate) {
+          searchParams.append("endDate", params.endDate);
+        }
+        return `/payments/insights?${searchParams.toString()}`;
+      },
+      providesTags: [{ type: "Payment" as const, id: "INSIGHTS" }],
+    }),
+
     // Get single payment
     getPaymentById: builder.query<Payment, string>({
       query: (id) => `/payments/${id}`,
@@ -95,6 +115,7 @@ export const paymentsApi = apiSlice.injectEndpoints({
       }),
       invalidatesTags: (result) => [
         { type: "Payment" as const, id: "LIST" },
+        { type: "Payment" as const, id: "INSIGHTS" },
         { type: "Payment" as const, id: `PROJECT_${result?.projectId}` },
         {
           type: "Payment" as const,
@@ -120,6 +141,7 @@ export const paymentsApi = apiSlice.injectEndpoints({
       }),
       invalidatesTags: (result) => [
         { type: "Payment" as const, id: "LIST" },
+        { type: "Payment" as const, id: "INSIGHTS" },
         { type: "Payment" as const, id: `PROJECT_${result?.projectId}` },
         {
           type: "Payment" as const,
@@ -152,6 +174,7 @@ export const paymentsApi = apiSlice.injectEndpoints({
       invalidatesTags: (result, _error, { id }) => [
         { type: "Payment" as const, id },
         { type: "Payment" as const, id: "LIST" },
+        { type: "Payment" as const, id: "INSIGHTS" },
         { type: "Payment" as const, id: `PROJECT_${result?.projectId}` },
         {
           type: "Payment" as const,
@@ -175,6 +198,7 @@ export const paymentsApi = apiSlice.injectEndpoints({
       invalidatesTags: (result, _error, { id }) => [
         { type: "Payment" as const, id },
         { type: "Payment" as const, id: "LIST" },
+        { type: "Payment" as const, id: "INSIGHTS" },
         { type: "Payment" as const, id: `PROJECT_${result?.projectId}` },
         {
           type: "Payment" as const,
@@ -201,6 +225,7 @@ export const paymentsApi = apiSlice.injectEndpoints({
       }),
       invalidatesTags: (_result, _error, { projectId, milestoneId }) => [
         { type: "Payment" as const, id: "LIST" },
+        { type: "Payment" as const, id: "INSIGHTS" },
         { type: "Payment" as const, id: `PROJECT_${projectId}` },
         { type: "Payment" as const, id: `PROJECT_${projectId}_SUMMARY` },
         { type: "Payment" as const, id: `MILESTONE_${milestoneId}` },
@@ -237,6 +262,7 @@ export const {
   useGetPaymentsByMilestoneQuery,
   useGetPaymentsByInvoiceQuery,
   useGetProjectPaymentSummaryQuery,
+  useGetPaymentInsightsQuery,
   useGetPaymentByIdQuery,
   useCreatePaymentMutation,
   useCreateInvoicePaymentMutation,

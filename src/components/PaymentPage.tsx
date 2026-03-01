@@ -34,8 +34,7 @@ import {
   DialogTrigger,
 } from "./ui/dialog";
 import { InvoicesSection } from "./invoices/InvoicesSection";
-import { PaymentReports } from "./PaymentReports";
-import { PaymentStatistics } from "./PaymentStatistics";
+import { PaymentInsights } from "./PaymentInsights";
 import { InvoiceGenerationModal } from "./InvoiceGenerationModal";
 import { useGetGlobalInvoiceSummaryQuery } from "@/lib/api/invoicesApi";
 import { useGetClientsQuery } from "@/lib/api/clientsApi";
@@ -270,18 +269,15 @@ export function PaymentPage() {
 
       {/* Tabs */}
       <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList className="grid w-full grid-cols-2 lg:grid-cols-5 gap-1">
+        <TabsList className="grid w-full grid-cols-2 lg:grid-cols-4 gap-1">
           <TabsTrigger value="overview" className="text-xs sm:text-sm">
             Overview
           </TabsTrigger>
           <TabsTrigger value="invoices" className="text-xs sm:text-sm">
             Invoices
           </TabsTrigger>
-          <TabsTrigger value="reports" className="text-xs sm:text-sm">
-            Reports
-          </TabsTrigger>
-          <TabsTrigger value="statistics" className="text-xs sm:text-sm">
-            Statistics
+          <TabsTrigger value="insights" className="text-xs sm:text-sm">
+            Insights
           </TabsTrigger>
           <TabsTrigger value="targets" className="text-xs sm:text-sm">
             Targets
@@ -339,18 +335,10 @@ export function PaymentPage() {
                 <Button
                   variant="outline"
                   className="w-full justify-start bg-white/50 dark:bg-white/5 border-white/30 dark:border-white/10 hover:bg-white/70 dark:hover:bg-white/10 transition-all duration-300"
-                  onClick={() => setActiveTab("reports")}
-                >
-                  <FileText className="w-4 h-4 mr-2 text-orange-600 dark:text-orange-400" />
-                  Generate Report
-                </Button>
-                <Button
-                  variant="outline"
-                  className="w-full justify-start bg-white/50 dark:bg-white/5 border-white/30 dark:border-white/10 hover:bg-white/70 dark:hover:bg-white/10 transition-all duration-300"
-                  onClick={() => setActiveTab("statistics")}
+                  onClick={() => setActiveTab("insights")}
                 >
                   <TrendingUp className="w-4 h-4 mr-2 text-cyan-600 dark:text-cyan-400" />
-                  View Statistics
+                  View Insights
                 </Button>
               </CardContent>
             </Card>
@@ -362,14 +350,9 @@ export function PaymentPage() {
           <InvoicesSection />
         </TabsContent>
 
-        {/* Reports Tab */}
-        <TabsContent value="reports" className="mt-8 space-y-6">
-          <PaymentReports />
-        </TabsContent>
-
-        {/* Statistics Tab */}
-        <TabsContent value="statistics" className="mt-8 space-y-6">
-          <PaymentStatistics />
+        {/* Insights Tab */}
+        <TabsContent value="insights" className="mt-8 space-y-6">
+          <PaymentInsights />
         </TabsContent>
 
         {/* Targets Tab */}
