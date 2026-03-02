@@ -17,6 +17,7 @@ export const apiSlice = createApi({
     "PaymentTarget",
     "FirmSettings",
     "Invoice",
+    "Dashboard",
   ],
   // Configure caching behavior
   keepUnusedDataFor: 60, // Keep unused data for 60 seconds
