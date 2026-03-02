@@ -13,7 +13,7 @@ import { RootState } from "@/store/store";
 const mutex = new Mutex();
 
 const baseQuery = fetchBaseQuery({
-  baseUrl: process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000/api/v1",
+  baseUrl: process.env.NEXT_PUBLIC_API_URL,
   credentials: "include",
   prepareHeaders: (headers) => {
     const token = getCookie("accessToken");
@@ -43,7 +43,7 @@ const handleLogout = async (api: BaseQueryApi) => {
     const accessToken = getCookie("accessToken");
     if (accessToken) {
       await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000/api/v1"}/auth/logout`,
+        `${process.env.NEXT_PUBLIC_API_URL}/auth/logout`,
         {
           method: "POST",
           headers: {

@@ -14,6 +14,7 @@ interface User {
   firstName: string;
   lastName: string;
   avatar?: string;
+  avatarKey?: string;
   isActive: boolean;
   role: IAuthRoles;
   username?: string;

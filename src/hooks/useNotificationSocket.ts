@@ -11,8 +11,7 @@ import { Notification } from "@/types/notification";
 
 const SOCKET_URL =
   process.env.NEXT_PUBLIC_WS_URL ||
-  process.env.NEXT_PUBLIC_API_URL?.replace("/api/v1", "") ||
-  "http://localhost:4000";
+  process.env.NEXT_PUBLIC_API_URL?.replace("/api/v1", "");
 
 export function useNotificationSocket() {
   const socketRef = useRef<Socket | null>(null);

@@ -6,4 +6,5 @@
 export const UPLOAD_PATHS = {
   EMPLOYEE_AVATARS: "griha-local/employee-avatars",
   CLIENT_AVATARS: "griha-local/client-avatars",
+  USER_AVATARS: "griha-local/user-avatars",
 } as const;

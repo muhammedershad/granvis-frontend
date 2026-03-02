@@ -159,7 +159,7 @@ export function ClientTableView({
                   <div className="flex items-center space-x-3">
                     <Avatar className="w-10 h-10 border-2 border-white/40 dark:border-white/10 shadow-sm">
                       <AvatarImage
-                        src={`${getCloudFrontUrl(client.avatarKey)}`}
+                        src={getCloudFrontUrl(client.avatarKey) ?? undefined}
                         alt={client.name}
                       />
                       <AvatarFallback className="bg-gradient-to-br from-purple-500 to-blue-500 text-white">

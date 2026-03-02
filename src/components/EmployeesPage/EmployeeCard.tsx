@@ -118,7 +118,7 @@ export function EmployeeCard({
           <div className="flex items-center space-x-3">
             <Avatar className="w-12 h-12 border-2 border-white/40 dark:border-white/10 shadow-lg shadow-gray-200/50 dark:shadow-black/30">
               <AvatarImage
-                src={`${getCloudFrontUrl(employee.avatarKey)}`}
+                src={getCloudFrontUrl(employee.avatarKey) ?? undefined}
                 alt={employee.name}
               />
               <AvatarFallback className="bg-gradient-to-br from-purple-500 to-blue-500 text-white">

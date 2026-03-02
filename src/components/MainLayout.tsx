@@ -23,7 +23,8 @@ type PageType =
   | "calendar"
   | "budget"
   | "enquiries"
-  | "notifications";
+  | "notifications"
+  | "profile";
 
 const MainLayout = ({ children }: { children: React.ReactNode }) => {
   const router = useRouter();
@@ -99,6 +100,8 @@ const MainLayout = ({ children }: { children: React.ReactNode }) => {
         return "Payment Management";
       case "notifications":
         return "Notifications";
+      case "profile":
+        return "Profile";
       case "calendar":
         return "Calendar & Schedule";
       case "budget":
