@@ -62,8 +62,8 @@ export function AddEmployeePersonalSection({
   const [isCheckingPhone, setIsCheckingPhone] = useState(false);
 
   // Use lazy query hooks for email and phone availability checks
-  const [checkEmailTrigger] = employeesApi.useLazyCheckEmailAvailabilityQuery();
-  const [checkPhoneTrigger] = employeesApi.useLazyCheckPhoneAvailabilityQuery();
+  const [checkEmailTrigger] = employeesApi.useLazyCheckEmployeeEmailAvailabilityQuery();
+  const [checkPhoneTrigger] = employeesApi.useLazyCheckEmployeePhoneAvailabilityQuery();
 
   // Use the image crop hook
   const {
