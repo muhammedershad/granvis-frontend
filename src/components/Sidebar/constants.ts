@@ -4,8 +4,8 @@ import {
   Building2,
   CreditCard,
   Home,
+  LogOut,
   Palette,
-  Settings,
   TreePine,
   UserCheck,
 } from "lucide-react";
@@ -96,7 +96,7 @@ export const projectTypes = [
 export const bottomItems = [
   {
     title: "Logout",
-    icon: Settings,
+    icon: LogOut,
     page: "logout",
     link: "/",
   },

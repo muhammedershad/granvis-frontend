@@ -1,11 +1,14 @@
-import { Menu, Search, Settings, User } from "lucide-react";
+import Link from "next/link";
+import { Menu } from "lucide-react";
 import { Button } from "./ui/button";
-import { Input } from "./ui/input";
+import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
 import { useSidebar } from "./SidebarProvider";
 import { ThemeToggle } from "./ThemeToggle";
 import { NotificationDropdown } from "./NotificationDropdown";
-import { getAuthDetails } from "@/store/slices/authSlice";
+import { type IAuthRoles, getAuthDetails } from "@/store/slices/authSlice";
 import { useSelector } from "react-redux";
+import { getRolePrefix } from "./Sidebar/utils";
+import { getAvatarUrl } from "@/lib/utils/cloudfront";
 
 interface DashboardHeaderProps {
   title?: string;
@@ -18,8 +21,10 @@ export function DashboardHeader({
 }: DashboardHeaderProps) {
   const { isMobile, toggleMobileSidebar } = useSidebar();
   const { user } = useSelector(getAuthDetails);
-
-  console.warn("user:", user);
+  const rolePrefix = user?.role ? getRolePrefix(user.role as IAuthRoles) : "";
+  const profileLink = rolePrefix ? `${rolePrefix}/profile` : "#";
+  const avatarUrl = getAvatarUrl(user?.avatarKey, user?.avatar);
+  const initials = `${user?.firstName?.charAt(0) || ""}${user?.lastName?.charAt(0) || ""}`;
 
   const getWelcomeMessage = () => {
     switch (title) {
@@ -69,23 +74,6 @@ export function DashboardHeader({
         </div>
 
         <div className="flex items-center space-x-2 md:space-x-4">
-          <div className="relative hidden sm:block">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
-            <Input
-              placeholder="Search..."
-              className="pl-10 w-48 md:w-64 bg-white/60 dark:bg-muted/50 border-white/40 dark:border-border text-foreground placeholder:text-muted-foreground focus:bg-white/80 dark:focus:bg-muted focus:ring-2 focus:ring-blue-500/30 transition-all duration-300 shadow-sm"
-            />
-          </div>
-
-          {/* Mobile search button */}
-          <Button
-            variant="ghost"
-            size="icon"
-            className="text-muted-foreground hover:text-foreground hover:bg-white/60 dark:hover:bg-muted transition-all duration-300 sm:hidden shadow-sm"
-          >
-            <Search className="w-5 h-5" />
-          </Button>
-
           {/* Theme toggle */}
           <ThemeToggle />
 
@@ -93,17 +81,17 @@ export function DashboardHeader({
             onNavigateToNotifications={onNavigateToNotifications || (() => {})}
           />
 
-          <Button
-            variant="ghost"
-            size="icon"
-            className="text-muted-foreground hover:text-foreground hover:bg-white/60 dark:hover:bg-muted transition-all duration-300 hidden sm:flex shadow-sm"
+          <Link
+            href={profileLink}
+            className="shrink-0 rounded-full transition-all duration-300 hover:ring-2 hover:ring-purple-500/30"
           >
-            <Settings className="w-5 h-5" />
-          </Button>
-
-          <div className="w-8 h-8 md:w-10 md:h-10 bg-gradient-to-br from-blue-500 to-purple-500 rounded-full flex items-center justify-center shadow-lg shadow-blue-200/50 dark:shadow-blue-500/25 cursor-pointer hover:shadow-xl hover:shadow-blue-300/60 dark:hover:shadow-blue-500/40 transition-all duration-300">
-            <User className="w-4 h-4 md:w-5 md:h-5 text-white" />
-          </div>
+            <Avatar className="w-8 h-8 md:w-10 md:h-10 shadow-lg shadow-blue-200/50 dark:shadow-blue-500/25">
+              {avatarUrl && <AvatarImage src={avatarUrl} alt={initials} />}
+              <AvatarFallback className="bg-gradient-to-br from-blue-500 to-purple-500 text-white text-xs md:text-sm font-medium">
+                {initials}
+              </AvatarFallback>
+            </Avatar>
+          </Link>
         </div>
       </div>
     </header>

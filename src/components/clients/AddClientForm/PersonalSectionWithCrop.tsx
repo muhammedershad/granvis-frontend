@@ -63,7 +63,8 @@ export function PersonalSectionWithCrop({
   const [isCheckingPhone, setIsCheckingPhone] = useState(false);
 
   // Use lazy query hook for phone availability check
-  const [checkPhoneTrigger] = clientsApi.useLazyCheckPhoneAvailabilityQuery();
+  const [checkPhoneTrigger] =
+    clientsApi.useLazyCheckClientPhoneAvailabilityQuery();
 
   // Handle phone blur - validate and check uniqueness
   const handlePhoneBlur = async () => {

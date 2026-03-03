@@ -58,7 +58,7 @@ export const clientsApi = apiSlice.injectEndpoints({
     }),
 
     // Check if email is available
-    checkEmailAvailability: builder.query<
+    checkClientEmailAvailability: builder.query<
       { available: boolean; message?: string },
       string
     >({
@@ -70,7 +70,7 @@ export const clientsApi = apiSlice.injectEndpoints({
     }),
 
     // Check if phone is available
-    checkPhoneAvailability: builder.query<
+    checkClientPhoneAvailability: builder.query<
       { available: boolean; message?: string },
       string
     >({
@@ -215,8 +215,8 @@ export const clientsApi = apiSlice.injectEndpoints({
 export const {
   useGetClientsQuery,
   useGetClientByIdQuery,
-  useCheckEmailAvailabilityQuery,
-  useCheckPhoneAvailabilityQuery,
+  useCheckClientEmailAvailabilityQuery,
+  useCheckClientPhoneAvailabilityQuery,
   useGetClientStatisticsQuery,
   useSearchClientsQuery,
   useCreateClientMutation,

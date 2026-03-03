@@ -7,6 +7,8 @@ const cloudfrontHostname = cloudfrontDomain
   : null;
 
 const nextConfig: NextConfig = {
+  // Use separate output dir for builds so it doesn't clobber the dev server's .next
+  ...(process.env.BUILD_DIR ? { distDir: process.env.BUILD_DIR } : {}),
   images: {
     remotePatterns: [
       {

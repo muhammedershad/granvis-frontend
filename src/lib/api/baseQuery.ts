@@ -13,7 +13,7 @@ import { RootState } from "@/store/store";
 const mutex = new Mutex();
 
 const baseQuery = fetchBaseQuery({
-  baseUrl: process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000/api/v1",
+  baseUrl: process.env.NEXT_PUBLIC_API_URL,
   credentials: "include",
   prepareHeaders: (headers) => {
     const token = getCookie("accessToken");
@@ -42,17 +42,14 @@ const handleLogout = async (api: BaseQueryApi) => {
   try {
     const accessToken = getCookie("accessToken");
     if (accessToken) {
-      await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000/api/v1"}/auth/logout`,
-        {
-          method: "POST",
-          headers: {
-            Authorization: `Bearer ${accessToken}`,
-            "Content-Type": "application/json",
-          },
-          credentials: "include",
-        }
-      );
+      await fetch(`${process.env.NEXT_PUBLIC_API_URL}/auth/logout`, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+          "Content-Type": "application/json",
+        },
+        credentials: "include",
+      });
     }
   } catch (error) {
     // Silently fail - we still want to clear local state even if backend logout fails

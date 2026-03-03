@@ -8,6 +8,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { useSelector } from "react-redux";
 import { useNotificationSocket } from "@/hooks/useNotificationSocket";
+import { Loader2 } from "lucide-react";
 
 type PageType =
   | "dashboard"
@@ -23,7 +24,8 @@ type PageType =
   | "calendar"
   | "budget"
   | "enquiries"
-  | "notifications";
+  | "notifications"
+  | "profile";
 
 const MainLayout = ({ children }: { children: React.ReactNode }) => {
   const router = useRouter();
@@ -33,6 +35,20 @@ const MainLayout = ({ children }: { children: React.ReactNode }) => {
   const accessToken = getCookie("accessToken");
   const { isCollapsed, isMobile } = useSidebar();
   const [currentPage, setCurrentPage] = useState<PageType>("dashboard");
+  const [isAuthChecked, setIsAuthChecked] = useState(false);
+
+  // Client-side auth guard (fallback for middleware)
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (!isAuthenticated || !accessToken) {
+        router.push("/sign-in");
+      } else {
+        setIsAuthChecked(true);
+      }
+    }, 100);
+
+    return () => clearTimeout(timer);
+  }, [isAuthenticated, accessToken, router]);
 
   // Establish WebSocket connection for real-time notifications
   useNotificationSocket();
@@ -43,28 +59,16 @@ const MainLayout = ({ children }: { children: React.ReactNode }) => {
     setCurrentPage(path as PageType);
   }, [pathname]);
 
-  useEffect(() => {
-    // Give a small delay to ensure Redux state is fully rehydrated
-    const timer = setTimeout(() => {
-      //   if (!isAuthenticated || !accessToken) {
-      //     router.push('/sign-in');
-      //   }
-    }, 100);
-
-    return () => clearTimeout(timer);
-  }, [isAuthenticated, accessToken, router]);
-
-  // Show loading screen while checking authentication
-  // if (isChecking || !isAuthenticated) {
-  //     return (
-  //         <div className="min-h-screen bg-gradient-to-br from-gray-50 via-blue-50/30 to-indigo-50/50 dark:from-gray-900 dark:via-black dark:to-gray-900 flex items-center justify-center">
-  //             <div className="text-center space-y-4">
-  //                 <Loader2 className="w-12 h-12 text-purple-500 dark:text-purple-400 mx-auto animate-spin" />
-  //                 <p className="text-muted-foreground">Loading your dashboard...</p>
-  //             </div>
-  //         </div>
-  //     );
-  // }
+  if (!isAuthChecked) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-gray-50 via-blue-50/30 to-indigo-50/50 dark:from-gray-900 dark:via-black dark:to-gray-900 flex items-center justify-center">
+        <div className="text-center space-y-4">
+          <Loader2 className="w-12 h-12 text-purple-500 dark:text-purple-400 mx-auto animate-spin" />
+          <p className="text-muted-foreground">Loading your dashboard...</p>
+        </div>
+      </div>
+    );
+  }
 
   const handleNavigateToNotifications = () => {
     setCurrentPage("notifications");
@@ -99,6 +103,8 @@ const MainLayout = ({ children }: { children: React.ReactNode }) => {
         return "Payment Management";
       case "notifications":
         return "Notifications";
+      case "profile":
+        return "Profile";
       case "calendar":
         return "Calendar & Schedule";
       case "budget":

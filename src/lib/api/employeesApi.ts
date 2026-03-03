@@ -86,7 +86,7 @@ export const employeesApi = apiSlice.injectEndpoints({
     }),
 
     // Check if email is available
-    checkEmailAvailability: builder.query<
+    checkEmployeeEmailAvailability: builder.query<
       { available: boolean; message?: string },
       string
     >({
@@ -98,7 +98,7 @@ export const employeesApi = apiSlice.injectEndpoints({
     }),
 
     // Check if phone is available
-    checkPhoneAvailability: builder.query<
+    checkEmployeePhoneAvailability: builder.query<
       { available: boolean; message?: string },
       string
     >({
@@ -192,8 +192,8 @@ export const employeesApi = apiSlice.injectEndpoints({
 export const {
   useGetEmployeesQuery,
   useGetEmployeeStatisticsQuery,
-  useCheckEmailAvailabilityQuery,
-  useCheckPhoneAvailabilityQuery,
+  useCheckEmployeeEmailAvailabilityQuery,
+  useCheckEmployeePhoneAvailabilityQuery,
   useGetManagersQuery,
   useGetEmployeeByIdQuery,
   useGetEmployeesByManagerQuery,
