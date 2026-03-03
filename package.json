@@ -8,7 +8,7 @@
     "build:fast": "BUILD_DIR=.next-build next build --no-lint",
     "check": "npm run lint && npx tsc --noEmit",
     "start": "next start",
-    "lint": "eslint . --fix",
+    "lint": "eslint src/ --fix && prettier --write src/",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "lint:format": "npm run lint && npm run format"
