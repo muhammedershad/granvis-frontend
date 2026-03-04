@@ -26,9 +26,8 @@ export const AccountantDashboard = () => {
       title="Accountant Dashboard"
       subtitle="Financial overview and payment tracking"
       icon={Calculator}
-      iconColor="from-emerald-500 to-emerald-600"
-      lightGradient="from-emerald-50/80 via-green-50/60 to-cyan-50/80"
-      darkGradient="from-emerald-500/5 via-green-500/5 to-cyan-500/5"
+      iconBgClass="bg-emerald-500/10 border-emerald-500/20"
+      iconTextClass="text-emerald-600 dark:text-emerald-400"
       isLoading={isLoading}
       isError={isError}
       refetch={refetch}

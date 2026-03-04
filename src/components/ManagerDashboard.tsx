@@ -27,9 +27,8 @@ export const ManagerDashboard = () => {
       title="Manager Dashboard"
       subtitle="Team and project management overview"
       icon={Users}
-      iconColor="from-blue-500 to-blue-600"
-      lightGradient="from-blue-50/80 via-indigo-50/60 to-purple-50/80"
-      darkGradient="from-blue-500/5 via-indigo-500/5 to-purple-500/5"
+      iconBgClass="bg-blue-500/10 border-blue-500/20"
+      iconTextClass="text-blue-600 dark:text-blue-400"
       isLoading={isLoading}
       isError={isError}
       refetch={refetch}

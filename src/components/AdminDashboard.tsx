@@ -34,9 +34,8 @@ export const AdminDashboard = () => {
       title="Admin Dashboard"
       subtitle="Organization-wide management and oversight"
       icon={ShieldCheck}
-      iconColor="from-purple-500 to-purple-600"
-      lightGradient="from-purple-50/80 via-indigo-50/60 to-blue-50/80"
-      darkGradient="from-purple-500/5 via-indigo-500/5 to-blue-500/5"
+      iconBgClass="bg-purple-500/10 border-purple-500/20"
+      iconTextClass="text-purple-600 dark:text-purple-400"
       isLoading={isLoading}
       isError={isError}
       refetch={refetch}

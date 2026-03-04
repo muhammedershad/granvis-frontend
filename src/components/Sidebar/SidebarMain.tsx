@@ -115,7 +115,12 @@ export function SidebarMain({
           />
 
           <div className="flex-1 overflow-y-auto py-4">
-            <nav className="space-y-1 px-3">
+            <nav
+              className={cn(
+                "space-y-1 transition-all duration-300 ease-in-out",
+                isCollapsed && !isMobile ? "px-2" : "px-3"
+              )}
+            >
               <NavigationLinks
                 items={navigationItems}
                 currentPage={currentPage}
@@ -124,40 +129,56 @@ export function SidebarMain({
                 onNavClick={handleNavClick}
               />
 
-              {(!isCollapsed || isMobile) && userRole && (
-                <div className="pt-6">
-                  <div className="px-3 pb-2">
-                    <h3 className="text-xs text-muted-foreground/70 uppercase tracking-wide">
-                      Project Types
-                    </h3>
-                  </div>
-                  <div className="space-y-1">
-                    {projectTypesWithLinks.map((item) => {
-                      const Icon = item.icon;
-                      return (
-                        <Link
-                          key={item.title}
-                          href={item.link || "#"}
-                          onClick={(e) =>
-                            handleNavClick(item.page, item.link, e)
-                          }
-                          className="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm text-muted-foreground hover:text-foreground hover:bg-muted transition-all duration-200"
-                        >
-                          <Icon className="w-4 h-4 flex-shrink-0" />
-                          <span className="text-left">{item.title}</span>
-                        </Link>
-                      );
-                    })}
+              {userRole && (
+                <div
+                  className="overflow-hidden transition-all duration-300 ease-in-out"
+                  style={{
+                    maxHeight: !isCollapsed || isMobile ? "200px" : "0px",
+                    opacity: !isCollapsed || isMobile ? 1 : 0,
+                  }}
+                >
+                  <div className="pt-6">
+                    <div className="px-3 pb-2">
+                      <h3 className="text-xs text-muted-foreground/70 uppercase tracking-wide whitespace-nowrap">
+                        Project Types
+                      </h3>
+                    </div>
+                    <div className="space-y-1">
+                      {projectTypesWithLinks.map((item) => {
+                        const Icon = item.icon;
+                        return (
+                          <Link
+                            key={item.title}
+                            href={item.link || "#"}
+                            onClick={(e) =>
+                              handleNavClick(item.page, item.link, e)
+                            }
+                            className="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm text-muted-foreground hover:text-foreground hover:bg-muted transition-all duration-200"
+                          >
+                            <Icon className="w-4 h-4 flex-shrink-0" />
+                            <span className="text-left whitespace-nowrap">
+                              {item.title}
+                            </span>
+                          </Link>
+                        );
+                      })}
+                    </div>
                   </div>
                 </div>
               )}
             </nav>
           </div>
 
-          <div className="border-t border-border p-3">
+          <div
+            className={cn(
+              "border-t border-border transition-all duration-300 ease-in-out",
+              isCollapsed && !isMobile ? "p-2" : "p-3"
+            )}
+          >
             <nav className="space-y-1">
               {bottomItems.map((item) => {
                 const Icon = item.icon;
+                const showLabel = !isCollapsed || isMobile;
                 return (
                   <Link
                     key={item.page}
@@ -165,12 +186,22 @@ export function SidebarMain({
                     onClick={(e) =>
                       handleNavClick(item.page, item?.link || "", e)
                     }
-                    className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm text-muted-foreground hover:text-foreground hover:bg-muted transition-all duration-200"
+                    className={cn(
+                      "w-full flex items-center rounded-lg text-sm text-muted-foreground hover:text-foreground hover:bg-muted transition-all duration-300",
+                      showLabel ? "px-3 py-2.5" : "px-0 py-2.5 justify-center"
+                    )}
                   >
                     <Icon className="w-5 h-5 flex-shrink-0" />
-                    {(!isCollapsed || isMobile) && (
-                      <span className="text-left">{item.title}</span>
-                    )}
+                    <span
+                      className="text-left whitespace-nowrap overflow-hidden transition-all duration-300 ease-in-out"
+                      style={{
+                        width: showLabel ? "100%" : "0px",
+                        opacity: showLabel ? 1 : 0,
+                        marginLeft: showLabel ? "12px" : "0px",
+                      }}
+                    >
+                      {item.title}
+                    </span>
                   </Link>
                 );
               })}

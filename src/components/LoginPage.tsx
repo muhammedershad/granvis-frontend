@@ -12,7 +12,6 @@ import { Card, CardContent, CardHeader, CardTitle } from "./ui/card";
 import {
   AlertCircle,
   ArrowRight,
-  Building2,
   Eye,
   EyeOff,
   Lock,
@@ -21,6 +20,7 @@ import {
   Sparkles,
   Zap,
 } from "lucide-react";
+import Image from "next/image";
 import Link from "next/link";
 import { ThemeToggle } from "./ThemeToggle";
 import { useLoginMutation } from "@/lib/api/apiSlice";
@@ -31,9 +31,12 @@ import { Alert, AlertDescription } from "./ui/alert";
 
 export function LoginPage() {
   const [showPassword, setShowPassword] = useState(false);
+  const [isNavigating, setIsNavigating] = useState(false);
   const router = useRouter();
   const dispatch = useDispatch();
   const [login, { isLoading }] = useLoginMutation();
+
+  const isSubmitting = isLoading || isNavigating;
 
   const {
     register,
@@ -52,7 +55,8 @@ export function LoginPage() {
     try {
       const response = await login(data).unwrap();
 
-      console.warn("Login successful:", response);
+      // Keep loading state seamlessly through post-login steps
+      setIsNavigating(true);
 
       // Store tokens in cookies
       setCookie("accessToken", response?.tokens?.accessToken, 1); // 1 day
@@ -120,7 +124,7 @@ export function LoginPage() {
         <ThemeToggle />
       </div>
 
-      {/* Animated background elements - only show in dark theme */}
+      {/* Animated background elements - dark theme */}
       <div className="fixed inset-0 overflow-hidden pointer-events-none opacity-0 dark:opacity-100 transition-opacity duration-500">
         <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-purple-500/10 rounded-full blur-3xl animate-pulse"></div>
         <div
@@ -133,30 +137,46 @@ export function LoginPage() {
         ></div>
       </div>
 
-      {/* Light theme background pattern */}
-      <div className="fixed inset-0 overflow-hidden pointer-events-none opacity-100 dark:opacity-0 transition-opacity duration-500 bg-gradient-to-br from-blue-50/50 via-indigo-50/30 to-purple-50/50"></div>
-
-      {/* Subtle grid overlay */}
-      <div
-        className="fixed inset-0 opacity-5 dark:opacity-5 pointer-events-none"
-        style={{
-          backgroundImage: `
-          linear-gradient(rgba(0, 0, 0, 0.1) 1px, transparent 1px),
-          linear-gradient(90deg, rgba(0, 0, 0, 0.1) 1px, transparent 1px)
-        `,
-          backgroundSize: "50px 50px",
-        }}
-      ></div>
+      {/* Animated background elements - light theme */}
+      <div className="fixed inset-0 overflow-hidden pointer-events-none opacity-100 dark:opacity-0 transition-opacity duration-500 bg-gradient-to-br from-purple-100/80 via-blue-50/60 to-indigo-100/80">
+        <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-purple-300/40 rounded-full blur-3xl animate-pulse"></div>
+        <div
+          className="absolute top-3/4 right-1/4 w-96 h-96 bg-blue-300/40 rounded-full blur-3xl animate-pulse"
+          style={{ animationDelay: "1s" }}
+        ></div>
+        <div
+          className="absolute bottom-1/4 left-1/3 w-96 h-96 bg-cyan-300/30 rounded-full blur-3xl animate-pulse"
+          style={{ animationDelay: "2s" }}
+        ></div>
+      </div>
 
       {/* Main Content */}
       <div className="w-full max-w-md relative z-10">
         {/* Logo/Brand Section */}
         <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-purple-500 to-blue-500 rounded-2xl mb-4 relative">
-            <Building2 className="w-8 h-8 text-white" />
-            <div className="absolute inset-0 bg-gradient-to-br from-purple-400/20 to-blue-400/20 rounded-2xl blur-lg"></div>
+          <div className="inline-block mb-4 relative">
+            {/* Dark theme logo (white version) */}
+            <Image
+              src="/logo-dark-theme.png"
+              alt="Griha Architects"
+              width={200}
+              height={200}
+              className="hidden dark:block"
+              priority
+            />
+            {/* Light theme logo (dark version) */}
+            <Image
+              src="/logo-light-theme.png"
+              alt="Griha Architects"
+              width={200}
+              height={200}
+              className="block dark:hidden"
+              priority
+            />
           </div>
-          <h1 className="text-3xl text-foreground mb-2">Griha Architects</h1>
+          <h1 className="text-3xl text-foreground mb-1">
+            Griha Architects and Builders
+          </h1>
           <p className="text-muted-foreground">
             Welcome back to your application
           </p>
@@ -265,12 +285,12 @@ export function LoginPage() {
               {/* Login Button */}
               <Button
                 type="submit"
-                disabled={isLoading}
+                disabled={isSubmitting}
                 className="w-full bg-gradient-to-r from-purple-500 to-blue-500 hover:from-purple-600 hover:to-blue-600 text-white border-0 h-11 relative overflow-hidden group"
               >
                 <div className="absolute inset-0 bg-gradient-to-r from-purple-400/20 to-blue-400/20 opacity-0 group-hover:opacity-100 transition-opacity"></div>
                 <span className="relative flex items-center justify-center space-x-2">
-                  {isLoading ? (
+                  {isSubmitting ? (
                     <>
                       <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
                       <span>Signing in...</span>

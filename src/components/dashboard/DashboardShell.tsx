@@ -12,9 +12,8 @@ interface DashboardShellProps {
   title: string;
   subtitle: string;
   icon: LucideIcon;
-  iconColor: string;
-  lightGradient: string;
-  darkGradient: string;
+  iconBgClass: string;
+  iconTextClass: string;
   isLoading: boolean;
   isError: boolean;
   refetch: () => void;
@@ -26,9 +25,8 @@ export function DashboardShell({
   title,
   subtitle,
   icon: Icon,
-  iconColor,
-  lightGradient,
-  darkGradient,
+  iconBgClass,
+  iconTextClass,
   isLoading,
   isError,
   refetch,
@@ -38,30 +36,20 @@ export function DashboardShell({
   return (
     <div className="space-y-6">
       {/* Header */}
-      <Card className="backdrop-blur-xl bg-white/70 dark:bg-black/20 border-white/20 dark:border-white/10 p-6 relative overflow-hidden shadow-xl dark:shadow-2xl shadow-gray-200/50 dark:shadow-black/50">
-        <div
-          className={`absolute inset-0 bg-gradient-to-br ${lightGradient} opacity-100 dark:opacity-0 transition-opacity duration-300`}
-        />
-        <div
-          className={`absolute inset-0 bg-gradient-to-br ${darkGradient} opacity-0 dark:opacity-100 transition-opacity duration-300`}
-        />
-        <div className="relative flex items-center justify-between">
-          <div className="flex-1">
-            <h1 className="text-3xl font-bold tracking-tight text-foreground">
-              {title}
-            </h1>
-            <p className="text-muted-foreground mt-1">{subtitle}</p>
+      <div className="flex flex-col space-y-4 md:flex-row md:items-center md:justify-between md:space-y-0">
+        <div className="flex items-center gap-3">
+          <div className={`p-2 rounded-lg border ${iconBgClass}`}>
+            <Icon className={`h-6 w-6 ${iconTextClass}`} />
           </div>
-          <div className="flex items-center gap-4">
-            <DateRangeFilter onChange={onDateChange} />
-            <div
-              className={`w-16 h-16 rounded-xl bg-gradient-to-br ${iconColor} flex items-center justify-center shadow-lg`}
-            >
-              <Icon className="w-8 h-8 text-white" />
-            </div>
+          <div>
+            <h1 className="text-foreground">{title}</h1>
+            <p className="text-muted-foreground">{subtitle}</p>
           </div>
         </div>
-      </Card>
+        <div className="flex items-center gap-2">
+          <DateRangeFilter onChange={onDateChange} />
+        </div>
+      </div>
 
       {/* Error State */}
       {isError && (

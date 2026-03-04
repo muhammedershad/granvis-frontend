@@ -29,9 +29,8 @@ export const EmployeeDashboard = () => {
       title="My Dashboard"
       subtitle="Your personal workspace overview"
       icon={User}
-      iconColor="from-indigo-500 to-indigo-600"
-      lightGradient="from-indigo-50/80 via-blue-50/60 to-purple-50/80"
-      darkGradient="from-indigo-500/5 via-blue-500/5 to-purple-500/5"
+      iconBgClass="bg-indigo-500/10 border-indigo-500/20"
+      iconTextClass="text-indigo-600 dark:text-indigo-400"
       isLoading={isLoading}
       isError={isError}
       refetch={refetch}

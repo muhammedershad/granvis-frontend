@@ -28,9 +28,8 @@ export const SuperAdminDashboard = () => {
       title="Super Admin Dashboard"
       subtitle="Complete system oversight and control"
       icon={Shield}
-      iconColor="from-red-500 to-red-600"
-      lightGradient="from-red-50/80 via-purple-50/60 to-blue-50/80"
-      darkGradient="from-red-500/5 via-purple-500/5 to-blue-500/5"
+      iconBgClass="bg-red-500/10 border-red-500/20"
+      iconTextClass="text-red-600 dark:text-red-400"
       isLoading={isLoading}
       isError={isError}
       refetch={refetch}
