@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useDebounce } from "@/hooks/useDebounce";
-import { AlertCircle, Grid3X3, List, Loader2, Plus } from "lucide-react";
+import { AlertCircle, Grid3X3, List, Loader2, Plus, Users } from "lucide-react";
 import { Button } from "../ui/button";
 import { Card } from "../ui/card";
 import {
@@ -65,11 +65,16 @@ function ErrorState({ error }: { error: unknown }) {
   return (
     <div className="space-y-6">
       <div className="flex flex-col space-y-4 md:flex-row md:items-center md:justify-between md:space-y-0">
-        <div>
-          <h1 className="text-foreground">Employee Management</h1>
-          <p className="text-muted-foreground">
-            Manage your team members and their information
-          </p>
+        <div className="flex items-center gap-3">
+          <div className="p-2 bg-indigo-500/10 rounded-lg border border-indigo-500/20">
+            <Users className="h-6 w-6 text-indigo-600 dark:text-indigo-400" />
+          </div>
+          <div>
+            <h1 className="text-foreground">Employee Management</h1>
+            <p className="text-muted-foreground">
+              Manage your team members and their information
+            </p>
+          </div>
         </div>
       </div>
 
@@ -476,11 +481,16 @@ export function EmployeesPageContent({ onEmployeeSelect }: EmployeesPageProps) {
   return (
     <div className="space-y-6">
       <div className="flex flex-col space-y-4 md:flex-row md:items-center md:justify-between md:space-y-0">
-        <div>
-          <h1 className="text-foreground">Employee Management</h1>
-          <p className="text-muted-foreground">
-            Manage your team members and their information
-          </p>
+        <div className="flex items-center gap-3">
+          <div className="p-2 bg-indigo-500/10 rounded-lg border border-indigo-500/20">
+            <Users className="h-6 w-6 text-indigo-600 dark:text-indigo-400" />
+          </div>
+          <div>
+            <h1 className="text-foreground">Employee Management</h1>
+            <p className="text-muted-foreground">
+              Manage your team members and their information
+            </p>
+          </div>
         </div>
 
         <div className="flex items-center space-x-2">

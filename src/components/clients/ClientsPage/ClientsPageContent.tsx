@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useDebounce } from "@/hooks/useDebounce";
-import { AlertCircle, Grid3X3, List, Loader2, Plus } from "lucide-react";
+import { AlertCircle, Grid3X3, List, Loader2, Plus, Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import {
@@ -489,11 +489,16 @@ export function ClientsPageContent({ onClientSelect }: ClientsPageProps) {
   return (
     <div className="space-y-6">
       <div className="flex flex-col space-y-4 md:flex-row md:items-center md:justify-between md:space-y-0">
-        <div>
-          <h1 className="text-foreground">Client Management</h1>
-          <p className="text-muted-foreground">
-            Manage your clients and their project relationships
-          </p>
+        <div className="flex items-center gap-3">
+          <div className="p-2 bg-purple-500/10 rounded-lg border border-purple-500/20">
+            <Users className="h-6 w-6 text-purple-600 dark:text-purple-400" />
+          </div>
+          <div>
+            <h1 className="text-foreground">Client Management</h1>
+            <p className="text-muted-foreground">
+              Manage your clients and their project relationships
+            </p>
+          </div>
         </div>
 
         <div className="flex items-center space-x-2">

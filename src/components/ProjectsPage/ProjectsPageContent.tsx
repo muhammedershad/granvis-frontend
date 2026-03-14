@@ -4,6 +4,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import {
   AlertCircle,
   Building2,
+  FolderKanban,
   Grid3X3,
   List,
   Loader2,
@@ -89,11 +90,16 @@ interface PageHeaderProps {
 function PageHeader({ viewType, setViewType, onNewProject }: PageHeaderProps) {
   return (
     <div className="flex flex-col space-y-4 md:flex-row md:items-center md:justify-between md:space-y-0">
-      <div>
-        <h1 className="text-foreground">Project Management</h1>
-        <p className="text-muted-foreground">
-          Track and manage your architectural projects
-        </p>
+      <div className="flex items-center gap-3">
+        <div className="p-2 bg-orange-500/10 rounded-lg border border-orange-500/20">
+          <FolderKanban className="h-6 w-6 text-orange-600 dark:text-orange-400" />
+        </div>
+        <div>
+          <h1 className="text-foreground">Project Management</h1>
+          <p className="text-muted-foreground">
+            Track and manage your architectural projects
+          </p>
+        </div>
       </div>
 
       <div className="flex items-center space-x-2">

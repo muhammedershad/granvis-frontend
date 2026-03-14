@@ -304,18 +304,16 @@ export function EnquiryPage() {
   return (
     <div className="space-y-8">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-6">
-        <div className="space-y-2">
-          <div className="flex items-center gap-3">
-            <div className="p-2 bg-gradient-to-br from-blue-500/10 to-purple-500/10 rounded-xl border border-blue-200/50 dark:border-blue-800/50">
-              <MessageCircle className="h-6 w-6 text-blue-600 dark:text-blue-400" />
-            </div>
-            <div>
-              <h1 className="text-foreground">Enquiry Management</h1>
-              <p className="text-muted-foreground">
-                Transform enquiries into successful projects
-              </p>
-            </div>
+      <div className="flex flex-col space-y-4 md:flex-row md:items-center md:justify-between md:space-y-0">
+        <div className="flex items-center gap-3">
+          <div className="p-2 bg-blue-500/10 rounded-lg border border-blue-500/20">
+            <MessageCircle className="h-6 w-6 text-blue-600 dark:text-blue-400" />
+          </div>
+          <div>
+            <h1 className="text-foreground">Enquiry Management</h1>
+            <p className="text-muted-foreground">
+              Transform enquiries into successful projects
+            </p>
           </div>
         </div>
 

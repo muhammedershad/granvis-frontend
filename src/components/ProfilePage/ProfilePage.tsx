@@ -82,11 +82,18 @@ export function ProfilePage() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div>
-        <h1 className="text-foreground">Profile</h1>
-        <p className="text-muted-foreground">
-          Manage your personal information and account settings
-        </p>
+      <div className="flex flex-col space-y-4 md:flex-row md:items-center md:justify-between md:space-y-0">
+        <div className="flex items-center gap-3">
+          <div className="p-2 bg-violet-500/10 rounded-lg border border-violet-500/20">
+            <UserIcon className="h-6 w-6 text-violet-600 dark:text-violet-400" />
+          </div>
+          <div>
+            <h1 className="text-foreground">Profile</h1>
+            <p className="text-muted-foreground">
+              Manage your personal information and account settings
+            </p>
+          </div>
+        </div>
       </div>
 
       {/* Profile Overview */}

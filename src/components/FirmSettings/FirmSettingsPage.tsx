@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Building2, Loader2, Plus } from "lucide-react";
+import { Building2, Loader2, Plus, Settings } from "lucide-react";
 import { Button } from "../ui/button";
 import { Card } from "../ui/card";
 import { FirmSettingsCard } from "./FirmSettingsCard";
@@ -65,11 +65,16 @@ export function FirmSettingsPage() {
     <div className="space-y-6">
       {/* Header */}
       <div className="flex flex-col space-y-4 md:flex-row md:items-center md:justify-between md:space-y-0">
-        <div>
-          <h1 className="text-foreground">Firm Settings</h1>
-          <p className="text-muted-foreground">
-            Manage firm profiles used on invoices
-          </p>
+        <div className="flex items-center gap-3">
+          <div className="p-2 bg-slate-500/10 rounded-lg border border-slate-500/20">
+            <Settings className="h-6 w-6 text-slate-600 dark:text-slate-400" />
+          </div>
+          <div>
+            <h1 className="text-foreground">Firm Settings</h1>
+            <p className="text-muted-foreground">
+              Manage firm profiles used on invoices
+            </p>
+          </div>
         </div>
 
         <div className="flex items-center space-x-2">

@@ -452,13 +452,16 @@ export function CRMPage() {
     <div className="space-y-6">
       {/* Header with enhanced styling */}
       <div className="flex flex-col space-y-4 md:flex-row md:items-center md:justify-between md:space-y-0">
-        <div>
-          <h1 className="text-3xl font-semibold bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 dark:from-white dark:via-gray-100 dark:to-white bg-clip-text text-transparent">
-            Office CRM
-          </h1>
-          <p className="text-gray-600 dark:text-gray-400 mt-1">
-            Attendance tracking and leave management
-          </p>
+        <div className="flex items-center gap-3">
+          <div className="p-2 bg-teal-500/10 rounded-lg border border-teal-500/20">
+            <CalendarDays className="h-6 w-6 text-teal-600 dark:text-teal-400" />
+          </div>
+          <div>
+            <h1 className="text-foreground">Office CRM</h1>
+            <p className="text-muted-foreground">
+              Attendance tracking and leave management
+            </p>
+          </div>
         </div>
 
         <div className="flex items-center space-x-2">
