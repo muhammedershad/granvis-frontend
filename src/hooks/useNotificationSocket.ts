@@ -35,7 +35,18 @@ export function useNotificationSocket() {
               label: notification.actionLabel || "View",
               onClick: () => {
                 if (notification.actionUrl) {
-                  window.location.href = notification.actionUrl;
+                  try {
+                    const url = new URL(
+                      notification.actionUrl,
+                      window.location.origin
+                    );
+                    if (url.origin === window.location.origin) {
+                      window.location.href =
+                        url.pathname + url.search + url.hash;
+                    }
+                  } catch {
+                    // Malformed URL — ignore
+                  }
                 }
               },
             }
