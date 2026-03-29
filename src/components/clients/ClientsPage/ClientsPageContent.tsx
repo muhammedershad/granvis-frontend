@@ -282,9 +282,19 @@ export function ClientsPageContent({ onClientSelect }: ClientsPageProps) {
   const pathname = usePathname();
   const searchParams = useSearchParams();
 
-  const [currentPage, setCurrentPage] = useState(1);
+  const [currentPage, setCurrentPage] = useState(() => {
+    const page = searchParams.get("page");
+    return page ? parseInt(page, 10) : 1;
+  });
   const [viewType, setViewType] = useState<ClientViewType>("cards");
-  const [filters, setFilters] = useState<ClientFilters>(DEFAULT_FILTERS);
+  const [filters, setFilters] = useState<ClientFilters>(() => ({
+    search: searchParams.get("search") || "",
+    companyType: searchParams.get("companyType") || "all",
+    status: searchParams.get("status") || "all",
+    priority: searchParams.get("priority") || "all",
+    architecturalStyle: searchParams.get("architecturalStyle") || "all",
+    source: searchParams.get("source") || "all",
+  }));
   const [sort, setSort] = useState<ClientSort>({
     field: "name",
     direction: "asc",
@@ -293,18 +303,18 @@ export function ClientsPageContent({ onClientSelect }: ClientsPageProps) {
   const [clientToDelete, setClientToDelete] = useState<string | null>(null);
 
   const debouncedSearchTerm = useDebounce(filters.search, 500);
-  const debouncedSearchForUrl = useDebounce(filters.search, 1000);
 
+  // Sync dropdown filters & page from URL (browser back/forward).
+  // Search is never synced from URL — the input is the source of truth.
   useEffect(() => {
-    const urlFilters: ClientFilters = {
-      search: searchParams.get("search") || "",
+    setFilters((prev) => ({
+      ...prev,
       status: searchParams.get("status") || "all",
       priority: searchParams.get("priority") || "all",
       architecturalStyle: searchParams.get("architecturalStyle") || "all",
       companyType: searchParams.get("companyType") || "all",
       source: searchParams.get("source") || "all",
-    };
-    setFilters(urlFilters);
+    }));
 
     const page = searchParams.get("page");
     if (page) {
@@ -312,6 +322,7 @@ export function ClientsPageContent({ onClientSelect }: ClientsPageProps) {
     }
   }, [searchParams]);
 
+  // Reset to page 1 when search changes
   useEffect(() => {
     if (debouncedSearchTerm !== filters.search) {
       return;
@@ -321,18 +332,16 @@ export function ClientsPageContent({ onClientSelect }: ClientsPageProps) {
     }
   }, [debouncedSearchTerm, currentPage, filters.search]);
 
-  // Update URL when debounced search changes (1 second delay)
+  // Update URL after debounce without triggering Next.js navigation.
+  // Using replaceState avoids component remount that would reset the search input.
   useEffect(() => {
-    const currentUrlSearch = searchParams.get("search") || "";
-    if (debouncedSearchForUrl !== currentUrlSearch) {
-      const newFilters = { ...filters, search: debouncedSearchForUrl };
-      const params = buildURLParams(newFilters, 1);
-      const queryString = params.toString();
-      router.push(queryString ? `${pathname}?${queryString}` : pathname);
-      setCurrentPage(1);
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- only trigger on debounced search change to avoid re-render loops
-  }, [debouncedSearchForUrl]);
+    const urlFilters = { ...filters, search: debouncedSearchTerm };
+    const params = buildURLParams(urlFilters, currentPage);
+    const queryString = params.toString();
+    const newUrl = queryString ? `${pathname}?${queryString}` : pathname;
+    window.history.replaceState(null, "", newUrl);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- only update URL on debounced search, not every keystroke
+  }, [debouncedSearchTerm, currentPage, pathname]);
 
   const apiFilters = useMemo(
     () => buildApiFilters(filters, debouncedSearchTerm, currentPage),

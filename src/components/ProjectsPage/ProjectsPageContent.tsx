@@ -189,33 +189,39 @@ function useURLFiltersSync(
   searchParams: URLSearchParams
 ) {
   const router = useRouter();
-  const [currentPage, setCurrentPage] = useState(1);
-  const [filters, setFilters] = useState<ProjectFilters>({
-    search: "",
-    type: "all",
-    status: "all",
-    priority: "all",
+  const [currentPage, setCurrentPage] = useState(() => {
+    const page = searchParams.get("page");
+    return page ? parseInt(page, 10) : 1;
+  });
+  const [filters, setFilters] = useState<ProjectFilters>(() => ({
+    search: searchParams.get("search") || "",
+    type: searchParams.get("type") || "all",
+    status: searchParams.get("status") || "all",
+    priority: searchParams.get("priority") || "all",
     client: "",
-    projectManager: "",
+    projectManager: searchParams.get("projectManager") || "",
+  }));
+  const [sort, setSort] = useState<ProjectSort>(() => {
+    const sortField = searchParams.get("sortBy");
+    const sortDir = searchParams.get("sortOrder");
+    return {
+      field: (sortField as keyof Project) || "createdAt",
+      direction: (sortDir as "asc" | "desc") || "desc",
+    };
   });
-  const [sort, setSort] = useState<ProjectSort>({
-    field: "createdAt",
-    direction: "desc",
-  });
-  const [isInitialMount, setIsInitialMount] = useState(true);
 
   const debouncedSearchTerm = useDebounce(filters.search, 500);
 
+  // Sync dropdown filters, sort & page from URL (browser back/forward).
+  // Search is never synced from URL — the input is the source of truth.
   useEffect(() => {
-    const urlFilters: ProjectFilters = {
-      search: searchParams.get("search") || "",
+    setFilters((prev) => ({
+      ...prev,
       type: searchParams.get("type") || "all",
       status: searchParams.get("status") || "all",
       priority: searchParams.get("priority") || "all",
-      client: "",
       projectManager: searchParams.get("projectManager") || "",
-    };
-    setFilters(urlFilters);
+    }));
 
     const page = searchParams.get("page");
     if (page) {
@@ -230,8 +236,6 @@ function useURLFiltersSync(
         direction: (sortDir as "asc" | "desc") || "desc",
       });
     }
-
-    setIsInitialMount(false);
   }, [searchParams]);
 
   const updateURLParams = useCallback(
@@ -246,13 +250,18 @@ function useURLFiltersSync(
     [sort, router, projectsBasePath]
   );
 
+  // Update URL after debounce — only on debounced search, not every keystroke
   useEffect(() => {
-    if (!isInitialMount) {
-      setCurrentPage(1);
-      const updatedFilters = { ...filters, search: debouncedSearchTerm };
-      updateURLParams(updatedFilters, 1);
-    }
-  }, [debouncedSearchTerm, filters, isInitialMount, updateURLParams]);
+    const urlFilters = { ...filters, search: debouncedSearchTerm };
+    const params = buildURLParams(urlFilters, 1, sort);
+    const queryString = params.toString();
+    const newUrl = queryString
+      ? `${projectsBasePath}?${queryString}`
+      : projectsBasePath;
+    window.history.replaceState(null, "", newUrl);
+    setCurrentPage(1);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- only update URL on debounced search, not every keystroke
+  }, [debouncedSearchTerm]);
 
   const handleFilterChange = useCallback(
     (newFilters: Partial<ProjectFilters>) => {

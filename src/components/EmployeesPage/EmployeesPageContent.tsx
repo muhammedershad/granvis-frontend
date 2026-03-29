@@ -251,15 +251,18 @@ export function EmployeesPageContent({ onEmployeeSelect }: EmployeesPageProps) {
   const pathname = usePathname();
   const searchParams = useSearchParams();
 
-  const [currentPage, setCurrentPage] = useState(1);
-  const [viewType, setViewType] = useState<EmployeeViewType>("cards");
-  const [filters, setFilters] = useState<EmployeeFilters>({
-    search: "",
-    department: "all",
-    position: "all",
-    employmentStatus: "all",
-    employmentType: "all",
+  const [currentPage, setCurrentPage] = useState(() => {
+    const page = searchParams.get("page");
+    return page ? parseInt(page, 10) : 1;
   });
+  const [viewType, setViewType] = useState<EmployeeViewType>("cards");
+  const [filters, setFilters] = useState<EmployeeFilters>(() => ({
+    search: searchParams.get("search") || "",
+    department: searchParams.get("department") || "all",
+    position: searchParams.get("position") || "all",
+    employmentStatus: searchParams.get("employmentStatus") || "all",
+    employmentType: searchParams.get("employmentType") || "all",
+  }));
   const [sort, setSort] = useState<EmployeeSort>({
     field: "name",
     direction: "asc",
@@ -267,17 +270,18 @@ export function EmployeesPageContent({ onEmployeeSelect }: EmployeesPageProps) {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [employeeToDelete, setEmployeeToDelete] = useState<string | null>(null);
 
-  const debouncedSearchTerm = useDebounce(filters.search, 1000);
+  const debouncedSearchTerm = useDebounce(filters.search, 500);
 
+  // Sync dropdown filters & page from URL (browser back/forward).
+  // Search is never synced from URL — the input is the source of truth.
   useEffect(() => {
-    const urlFilters: EmployeeFilters = {
-      search: searchParams.get("search") || "",
+    setFilters((prev) => ({
+      ...prev,
       department: searchParams.get("department") || "all",
       position: searchParams.get("position") || "all",
       employmentStatus: searchParams.get("employmentStatus") || "all",
       employmentType: searchParams.get("employmentType") || "all",
-    };
-    setFilters(urlFilters);
+    }));
 
     const page = searchParams.get("page");
     if (page) {
@@ -285,6 +289,7 @@ export function EmployeesPageContent({ onEmployeeSelect }: EmployeesPageProps) {
     }
   }, [searchParams]);
 
+  // Reset to page 1 when search changes
   useEffect(() => {
     if (debouncedSearchTerm !== filters.search) {
       return;
@@ -294,18 +299,22 @@ export function EmployeesPageContent({ onEmployeeSelect }: EmployeesPageProps) {
     }
   }, [debouncedSearchTerm, currentPage, filters.search]);
 
-  // Update URL when debounced search term changes or when page/other filters change
+  // Update URL after debounce for search, immediately for dropdown filters
   useEffect(() => {
-    const newFilters = { ...filters, search: debouncedSearchTerm };
-    updateURLParams(newFilters, currentPage);
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- individual filter fields listed to avoid re-triggering on object identity changes
+    const urlFilters = { ...filters, search: debouncedSearchTerm };
+    const params = buildURLParams(urlFilters, currentPage);
+    const queryString = params.toString();
+    const newUrl = queryString ? `${pathname}?${queryString}` : pathname;
+    window.history.replaceState(null, "", newUrl);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- search uses debouncedSearchTerm to avoid per-keystroke updates; dropdown filters listed individually
   }, [
     debouncedSearchTerm,
-    currentPage,
     filters.department,
     filters.position,
     filters.employmentStatus,
     filters.employmentType,
+    currentPage,
+    pathname,
   ]);
 
   const apiFilters = useMemo(
@@ -379,12 +388,6 @@ export function EmployeesPageContent({ onEmployeeSelect }: EmployeesPageProps) {
       terminated: 0,
     };
   }, [apiStats]);
-
-  const updateURLParams = (newFilters: EmployeeFilters, page: number = 1) => {
-    const params = buildURLParams(newFilters, page);
-    const queryString = params.toString();
-    router.push(queryString ? `${pathname}?${queryString}` : pathname);
-  };
 
   const handleSort = (field: keyof Employee) => {
     setSort((prev) => ({
