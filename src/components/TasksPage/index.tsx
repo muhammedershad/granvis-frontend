@@ -88,7 +88,7 @@ export default function TasksPage({
     sortBy: "createdAt",
     sortOrder: "desc",
     page: 1,
-    limit: 10,
+    limit: 12,
   });
 
   // Dialog states
@@ -186,7 +186,7 @@ export default function TasksPage({
           description: data.description,
           assignedTo: data.assignedTo,
           project: data.project,
-          milestone: data.milestone,
+          milestone: data.milestone || undefined,
           priority: (data.priority as TaskPriority) || undefined,
           dueDate: data.dueDate,
           estimatedHours:
@@ -216,7 +216,7 @@ export default function TasksPage({
             description: data.description,
             assignedTo: data.assignedTo,
             project: data.project,
-            milestone: data.milestone,
+            milestone: data.milestone || undefined,
             priority: (data.priority as TaskPriority) || undefined,
             dueDate: data.dueDate,
             estimatedHours:

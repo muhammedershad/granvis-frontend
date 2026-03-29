@@ -46,6 +46,7 @@ interface PersonalSectionProps {
     preview: string | null,
     blob: Blob | null
   ) => void;
+  onApiError?: (field: string, message: string | null) => void;
 }
 
 export function AddEmployeePersonalSection({
@@ -57,6 +58,7 @@ export function AddEmployeePersonalSection({
   errors,
   formData,
   onImageChange,
+  onApiError,
 }: PersonalSectionProps) {
   const [isCheckingEmail, setIsCheckingEmail] = useState(false);
   const [isCheckingPhone, setIsCheckingPhone] = useState(false);
@@ -103,13 +105,12 @@ export function AddEmployeePersonalSection({
       const result = await checkEmailTrigger(formData.email).unwrap();
 
       if (!result.available) {
-        setError("email", {
-          type: "manual",
-          message: result.message || "Email already exists",
-        });
+        const msg = result.message || "Email already exists";
+        setError("email", { type: "manual", message: msg });
+        onApiError?.("email", msg);
       } else {
-        // Clear any previous email errors if email is available
         clearErrors("email");
+        onApiError?.("email", null);
       }
     } catch (error) {
       console.error("Error checking email availability:", error);
@@ -133,13 +134,12 @@ export function AddEmployeePersonalSection({
       const result = await checkPhoneTrigger(formData.phone).unwrap();
 
       if (!result.available) {
-        setError("phone", {
-          type: "manual",
-          message: result.message || "Phone number already exists",
-        });
+        const msg = result.message || "Phone number already exists";
+        setError("phone", { type: "manual", message: msg });
+        onApiError?.("phone", msg);
       } else {
-        // Clear any previous phone errors if phone is available
         clearErrors("phone");
+        onApiError?.("phone", null);
       }
     } catch (error) {
       console.error("Error checking phone availability:", error);

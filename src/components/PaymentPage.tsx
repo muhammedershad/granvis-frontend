@@ -77,7 +77,7 @@ export function PaymentPage() {
     error: paymentsError,
   } = useGetPaymentsQuery({
     page: 1,
-    limit: 10,
+    limit: 12,
   });
 
   const { data: clientsData } = useGetClientsQuery({});

@@ -35,7 +35,7 @@ import { ClientCard } from "./ClientCard";
 import { ClientTableView } from "./ClientTableView";
 import { ClientPagination } from "./ClientPagination";
 
-const ITEMS_PER_PAGE = 8;
+const ITEMS_PER_PAGE = 12;
 
 const DEFAULT_FILTERS: ClientFilters = {
   search: "",

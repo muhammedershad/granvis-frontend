@@ -32,7 +32,7 @@ import { EmployeeCard } from "./EmployeeCard";
 import { EmployeeTableView } from "./EmployeeTableView";
 import { EmployeePagination } from "./EmployeePagination";
 
-const ITEMS_PER_PAGE = 8;
+const ITEMS_PER_PAGE = 12;
 
 interface EmployeesPageProps {
   onEmployeeSelect?: (employeeId: string) => void;
@@ -204,10 +204,10 @@ function buildApiFilters(
     params.department = filters.department;
   }
   if (filters.employmentStatus !== "all") {
-    params.employmentStatus = filters.employmentStatus;
+    params.status = filters.employmentStatus;
   }
   if (filters.employmentType !== "all") {
-    params.employmentType = filters.employmentType;
+    params.type = filters.employmentType;
   }
   if (filters.position !== "all") {
     params.position = filters.position;
@@ -343,39 +343,22 @@ export function EmployeesPageContent({ onEmployeeSelect }: EmployeesPageProps) {
 
   const [deleteEmployee] = useDeleteEmployeeMutation();
 
-  const departments = useMemo(() => {
-    if (apiStats?.byDepartment) {
-      return Object.keys(apiStats.byDepartment);
-    }
-    return [
-      "architecture",
-      "interior",
-      "landscape",
-      "construction",
-      "drafting",
-      "accountant",
-      "admin",
-      "marketing",
-    ];
-  }, [apiStats?.byDepartment]);
+  const departments = [
+    "architecture",
+    "interior",
+    "landscape",
+    "construction",
+    "drafting",
+    "accountant",
+    "admin",
+    "marketing",
+  ];
 
-  const positions = useMemo(() => {
-    return ["all"];
-  }, []);
+  const positions = ["all"];
 
-  const employmentStatuses = useMemo(() => {
-    if (apiStats?.byEmploymentStatus) {
-      return Object.keys(apiStats.byEmploymentStatus);
-    }
-    return ["Active", "Inactive", "On Leave", "Terminated"];
-  }, [apiStats?.byEmploymentStatus]);
+  const employmentStatuses = ["Active", "Inactive", "On Leave"];
 
-  const employmentTypes = useMemo(() => {
-    if (apiStats?.byEmploymentType) {
-      return Object.keys(apiStats.byEmploymentType);
-    }
-    return ["Full-time", "Part-time", "Contract", "Intern"];
-  }, [apiStats?.byEmploymentType]);
+  const employmentTypes = ["Full-time", "Part-time", "Contract", "Intern"];
 
   const stats = useMemo(() => {
     if (apiStats) {

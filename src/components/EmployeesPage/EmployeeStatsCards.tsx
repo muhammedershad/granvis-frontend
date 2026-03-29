@@ -1,12 +1,12 @@
 import { Card } from "../ui/card";
-import { AlertCircle, CheckCircle, Clock, UserX, Users } from "lucide-react";
+import { AlertCircle, CheckCircle, Clock, Users } from "lucide-react";
 
 interface EmployeeStats {
   total: number;
   active: number;
   inactive: number;
   onLeave: number;
-  terminated: number;
+  terminated?: number;
 }
 
 interface EmployeeStatsCardsProps {
@@ -15,7 +15,7 @@ interface EmployeeStatsCardsProps {
 
 export function EmployeeStatsCards({ stats }: EmployeeStatsCardsProps) {
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
       <Card className="p-4 backdrop-blur-xl bg-white/70 dark:bg-black/20 border-white/20 dark:border-white/10 relative overflow-hidden shadow-xl shadow-gray-200/50 dark:shadow-black/50">
         <div className="absolute inset-0 bg-gradient-to-br from-blue-100/60 to-purple-50/40 opacity-100 dark:opacity-0 transition-opacity duration-300"></div>
         <div className="absolute inset-0 bg-gradient-to-br from-blue-500/5 to-purple-500/5 opacity-0 dark:opacity-100 transition-opacity duration-300"></div>
@@ -72,19 +72,6 @@ export function EmployeeStatsCards({ stats }: EmployeeStatsCardsProps) {
         </div>
       </Card>
 
-      <Card className="p-4 backdrop-blur-xl bg-white/70 dark:bg-black/20 border-white/20 dark:border-white/10 relative overflow-hidden shadow-xl shadow-gray-200/50 dark:shadow-black/50">
-        <div className="absolute inset-0 bg-gradient-to-br from-red-100/60 to-rose-50/40 opacity-100 dark:opacity-0 transition-opacity duration-300"></div>
-        <div className="absolute inset-0 bg-gradient-to-br from-red-500/5 to-rose-500/5 opacity-0 dark:opacity-100 transition-opacity duration-300"></div>
-        <div className="relative flex items-center space-x-3">
-          <div className="p-3 bg-red-500/20 rounded-xl border border-red-500/30 shadow-lg shadow-red-200/50 dark:shadow-red-500/20">
-            <UserX className="w-6 h-6 text-red-600 dark:text-red-400" />
-          </div>
-          <div>
-            <p className="text-muted-foreground text-sm">Terminated</p>
-            <p className="text-foreground text-2xl">{stats.terminated}</p>
-          </div>
-        </div>
-      </Card>
     </div>
   );
 }

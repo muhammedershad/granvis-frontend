@@ -62,6 +62,11 @@ export function AddEmployeeForm({ onSuccess, onCancel }: AddEmployeeFormProps) {
   const [managerOpen, setManagerOpen] = useState(false);
   const [isUploadingImage, setIsUploadingImage] = useState(false);
 
+  // Track API-level duplicate errors so they persist across section toggles
+  const [apiErrors, setApiErrors] = useState<
+    Record<string, string | null>
+  >({ email: null, phone: null });
+
   // Only fetch managers when employment section is opened
   const { data: managers = [] } = useGetManagersQuery(undefined, {
     skip: !shouldFetchManagers,
@@ -212,13 +217,33 @@ export function AddEmployeeForm({ onSuccess, onCancel }: AddEmployeeFormProps) {
     }
   };
 
+  const reapplyApiErrors = (
+    fieldsToValidate: Array<keyof CreateEmployeeFormInput>
+  ): boolean => {
+    let hasErrors = false;
+    for (const [field, message] of Object.entries(apiErrors)) {
+      if (!message) { continue; }
+      if (!fieldsToValidate.includes(field as keyof CreateEmployeeFormInput)) {
+        continue;
+      }
+      setError(field as keyof CreateEmployeeFormInput, {
+        type: "manual",
+        message,
+      });
+      hasErrors = true;
+    }
+    return hasErrors;
+  };
+
   const handleSectionChange = async (sectionId: string) => {
     if (expandedSection === sectionId) {
       const fieldsToValidate = getFieldsToValidate(sectionId);
 
       if (fieldsToValidate.length > 0) {
         const isValid = await trigger(fieldsToValidate);
-        if (!isValid) {
+        const hasApiDuplicates = reapplyApiErrors(fieldsToValidate);
+
+        if (!isValid || hasApiDuplicates) {
           toast.error("Validation Error", {
             description: "Please fix all errors before closing this section",
           });
@@ -292,6 +317,9 @@ export function AddEmployeeForm({ onSuccess, onCancel }: AddEmployeeFormProps) {
                 errors={errors}
                 formData={formData}
                 onImageChange={handleImageChange}
+                onApiError={(field, message) =>
+                  setApiErrors((prev) => ({ ...prev, [field]: message }))
+                }
               />
             )}
           </div>

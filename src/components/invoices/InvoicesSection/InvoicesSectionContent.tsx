@@ -18,7 +18,7 @@ import { type InvoiceFilters, InvoiceFiltersCard } from "./InvoiceFiltersCard";
 import { InvoiceTableView } from "./InvoiceTableView";
 import { InvoicePagination } from "./InvoicePagination";
 
-const ITEMS_PER_PAGE = 10;
+const ITEMS_PER_PAGE = 12;
 
 const DEFAULT_FILTERS: InvoiceFilters = {
   search: "",

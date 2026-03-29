@@ -43,7 +43,7 @@ import { ProjectCardView } from "./ProjectCardView";
 import { ProjectTableView } from "./ProjectTableView";
 import { ProjectPagination } from "./ProjectPagination";
 
-const ITEMS_PER_PAGE = 8;
+const ITEMS_PER_PAGE = 12;
 
 function LoadingState() {
   return (

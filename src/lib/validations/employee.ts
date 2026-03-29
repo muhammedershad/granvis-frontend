@@ -73,7 +73,6 @@ export const createEmployeeFormSchema = z
       .string()
       .trim()
       .min(1, "Last name is required")
-      .min(2, "Last name must be at least 2 characters")
       .max(50, "Last name must not exceed 50 characters")
       .regex(
         nameRegex,
@@ -159,7 +158,7 @@ export const createEmployeeFormSchema = z
       message: "Invalid employment type",
     }),
     role: z.enum(
-      ["employee", "admin", "manager", "super_admin", "accountant"],
+      ["employee", "admin", "manager", "accountant"],
       {
         message: "Invalid role selected",
       }

@@ -23,7 +23,6 @@ export const getAllowedRolesToCreate = (
   switch (currentUserRole) {
     case IAuthRoles.SUPER_ADMIN:
       return [
-        IAuthRoles.SUPER_ADMIN,
         IAuthRoles.ADMIN,
         IAuthRoles.MANAGER,
         IAuthRoles.EMPLOYEE,
@@ -51,8 +50,7 @@ export const getRoleOptions = (
 ): Array<{ value: string; label: string }> => {
   const allowedRoles = getAllowedRolesToCreate(currentUserRole);
 
-  const roleMap: Record<IAuthRoles, string> = {
-    [IAuthRoles.SUPER_ADMIN]: "Super Admin",
+  const roleMap: Partial<Record<IAuthRoles, string>> = {
     [IAuthRoles.ADMIN]: "Admin",
     [IAuthRoles.MANAGER]: "Manager",
     [IAuthRoles.EMPLOYEE]: "Employee",
@@ -61,6 +59,6 @@ export const getRoleOptions = (
 
   return allowedRoles.map((role) => ({
     value: role,
-    label: roleMap[role],
+    label: roleMap[role] || role,
   }));
 };

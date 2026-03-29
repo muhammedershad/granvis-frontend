@@ -141,12 +141,6 @@ const EmailForm = memo(
                   {getErrorIcon(errorTypeRef.current)}
                   <AlertDescription>
                     {errors.root?.message}
-                    {errorTypeRef.current === "deactivated" && (
-                      <span className="block mt-1 text-xs">
-                        Please contact your administrator to reactivate your
-                        account.
-                      </span>
-                    )}
                   </AlertDescription>
                 </Alert>
               </div>
